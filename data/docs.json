@@ -1,0 +1,16 @@
+[
+  { "id": "ug-reg-2566", "title": "ข้อบังคับมหาวิทยาลัยเชียงใหม่ ว่าด้วยการศึกษาระดับปริญญาตรี พ.ศ. 2566", "kind": "regulation", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-1.pdf" },
+  { "id": "exam-reg-2564", "title": "ข้อบังคับมหาวิทยาลัยเชียงใหม่ ว่าด้วยการสอบของนักศึกษา พ.ศ. 2564", "kind": "regulation", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-19.pdf" },
+  { "id": "summer-reg", "title": "ข้อบังคับมหาวิทยาลัยเชียงใหม่ ว่าด้วยการเปิดภาคฤดูร้อน สำหรับการศึกษาระดับปริญญาตรี", "kind": "regulation", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-18.pdf" },
+  { "id": "discipline-reg-2564", "title": "ข้อบังคับมหาวิทยาลัยเชียงใหม่ ว่าด้วยวินัยและการดำเนินการทางวินัยนักศึกษา พ.ศ. 2564", "kind": "regulation", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-22.pdf" },
+  { "id": "ug-standard-2566", "title": "ประกาศมหาวิทยาลัยเชียงใหม่ เรื่อง เกณฑ์มาตรฐานการศึกษาระดับปริญญาตรี พ.ศ. 2566", "kind": "announcement", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-2-10.pdf" },
+  { "id": "credit-transfer", "title": "ประกาศมหาวิทยาลัยเชียงใหม่ เรื่อง การโอนและการเทียบโอนหน่วยกิต ของนักศึกษาระดับปริญญาตรี", "kind": "announcement", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-2-9.pdf" },
+  { "id": "ug-fee-2566", "title": "ระเบียบมหาวิทยาลัยเชียงใหม่ ว่าด้วยค่าธรรมเนียมการศึกษาระดับปริญญาตรี พ.ศ. 2566", "kind": "regulation", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/u/cmu-reg-u-3-1.pdf" },
+  { "id": "calendar-2569", "title": "ประกาศมหาวิทยาลัยเชียงใหม่ เรื่อง ปฏิทินการศึกษา ระบบทวิภาค ประจำปีการศึกษา 2569", "kind": "calendar", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/69/CMU-Academic-Calendar-2569.pdf" },
+  { "id": "enroll-announce-2-2569", "title": "ประกาศสำนักทะเบียนและประมวลผล เรื่อง แนวปฏิบัติและกำหนดการลงทะเบียนกระบวนวิชา ภาคการศึกษาที่ 2/2569", "kind": "announcement", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/69/CMU-Announcement-Enrollment-2-2569.pdf" },
+  { "id": "enroll-dates-2-2569", "title": "กำหนดการสำคัญ สำหรับการลงทะเบียนกระบวนวิชา ภาคการศึกษาที่ 2/2569", "kind": "calendar", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/69/CMU-Important-Enrollment-2-2569.pdf" },
+  { "id": "guide-w", "title": "คู่มือการถอนกระบวนวิชา (โดยได้รับอักษรลำดับขั้น W)", "kind": "guide", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/CMU-Grade-W-ForStudent-th.pdf" },
+  { "id": "guide-i", "title": "คู่มือการขอรับอักษรลำดับขั้น I (การวัดผลยังไม่สิ้นสุด)", "kind": "guide", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/CMU-Grade-I-ForStudent-th.pdf" },
+  { "id": "guide-v", "title": "คู่มือการขออักษรลำดับขั้น V (เข้าร่วมศึกษา)", "kind": "guide", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/CMU-Grade-V-ForStudent-th.pdf" },
+  { "id": "guide-credit-limit", "title": "แนวปฏิบัติการขอลงทะเบียนกระบวนวิชาน้อยกว่าหรือเกินกว่าจำนวนหน่วยกิตที่ข้อบังคับกำหนด", "kind": "guide", "url": "https://www.reg.cmu.ac.th/webreg/reg-files/CMU-UG-Over-Under-Credit-Limit-Request.pdf" }
+]
