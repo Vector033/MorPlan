@@ -60,6 +60,7 @@ type Row = {
   p95ms: number;
 };
 const rows: Row[] = [];
+let ablation = { strategy: "", recall1: 0, recall5: 0, mrr: 0 };
 const SIGNALS: Signal[] = ["dense", "coverage", "combined"];
 const scores = new Map<string, AbstainCase[]>();
 const misses: Record<string, string[]> = {};
@@ -99,6 +100,21 @@ for (const strategy of STRATEGIES) {
       p95ms: percentile(times, 95),
     });
   }
+}
+
+// Ablation: the best setup without query rewriting.
+{
+  retrieval.rewrite = false;
+  const plain = new Map<string, number[]>();
+  for (const q of questions) plain.set(q.id, await retrieval.embedQuery(q.question));
+  const strategy = [...rows].filter((r) => r.retriever === "hybrid").sort((a, b) => b.recall5 - a.recall5 || b.mrr - a.mrr)[0].strategy;
+  const ranks: (number | null)[] = [];
+  for (const q of answerable) {
+    const { hits } = await retrieval.retrieve(q.question, strategy, "hybrid", 10, plain.get(q.id));
+    ranks.push(firstGoldRank(hits.map((h) => h.chunk), q));
+  }
+  ablation = { strategy, recall1: recallAt(ranks, 1), recall5: recallAt(ranks, 5), mrr: mrr(ranks) };
+  retrieval.rewrite = true;
 }
 
 // Abstention: tune the threshold on the dev split, report on test.
@@ -190,6 +206,8 @@ const md = [
   ``,
   `evidence@3: the gold quote appears verbatim in one of the top 3 chunks.`,
   ``,
+  `Ablation, ${ablation.strategy} + hybrid **without** query rewriting: R@1 ${pct(ablation.recall1)}, R@5 ${pct(ablation.recall5)}, MRR ${ablation.mrr.toFixed(3)}.`,
+  ``,
   `## "ไม่พบ" (abstention), hybrid, threshold tuned on dev split, scored on test split`,
   ``,
   `| chunking | signal | threshold | accuracy | balanced acc. | correct refusals | false refusals |`,
@@ -214,6 +232,7 @@ writeFileSync(
     date: new Date().toISOString(),
     model: embedder.model,
     rows,
+    ablation,
     abstain,
     best: { strategy: best.strategy, signal: bestAbstain.signal, threshold: bestAbstain.threshold },
     e2e,

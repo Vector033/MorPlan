@@ -41,7 +41,7 @@ export function CourseSearch() {
         inputMode="search"
         autoComplete="off"
       />
-      <ul className="mt-2 flex max-h-[45vh] flex-col gap-1 overflow-y-auto lg:max-h-[38vh]" aria-live="polite">
+      <ul className="mt-2 flex max-h-[30vh] flex-col gap-1 overflow-y-auto lg:max-h-[38vh]" aria-live="polite">
         {results.length === 0 && <li className="p-2 text-sm text-muted">ไม่พบวิชาที่ตรงกับ “{q}”</li>}
         {results.slice(0, 60).map((c) => {
           const wanted = plan.courseNos.includes(c.courseNo);

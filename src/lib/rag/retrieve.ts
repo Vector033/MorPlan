@@ -2,6 +2,7 @@ import { Bm25Index } from "./bm25";
 import { chunkPages } from "./chunk";
 import { cosine, type Embedder } from "./embed";
 import { rrf } from "./fuse";
+import { rewriteQuery } from "./rewrite";
 import type { Chunk, DocMeta, Hit, Page, Retriever, Strategy } from "./types";
 
 /** Vector search backend: pgvector in the app, in-memory in tests. */
@@ -34,6 +35,8 @@ export class Retrieval {
     readonly docs: Map<string, DocMeta>,
     private embedder: Embedder,
     private dense: DenseStore,
+    /** Map everyday words to the documents' vocabulary first (see rewrite.ts). */
+    public rewrite = true,
   ) {}
 
   chunksFor(strategy: Strategy): Chunk[] {
@@ -55,8 +58,9 @@ export class Retrieval {
     return idx;
   }
 
-  async retrieve(question: string, strategy: Strategy, retriever: Retriever, k = 10, queryVector?: number[]): Promise<RetrieveResult> {
+  async retrieve(raw: string, strategy: Strategy, retriever: Retriever, k = 10, queryVector?: number[]): Promise<RetrieveResult> {
     this.chunksFor(strategy);
+    const question = this.rewrite ? rewriteQuery(raw) : raw;
     const wantDense = retriever !== "bm25";
     const wantBm25 = retriever !== "dense";
     const pool = Math.max(k, 20);
@@ -82,7 +86,7 @@ export class Retrieval {
   }
 
   embedQuery(question: string) {
-    return this.embedder.embed([question], "query").then((v) => v[0]);
+    return this.embedder.embed([this.rewrite ? rewriteQuery(question) : question], "query").then((v) => v[0]);
   }
 }
 
