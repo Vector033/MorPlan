@@ -62,7 +62,7 @@ export function CourseSearch() {
                     {c.credits ? `${c.credits} นก. · ` : ""}
                     {c.sections.length} ตอน
                   </span>
-                  <span className="block truncate text-sm">{c.title}</span>
+                  <span className="block truncate text-sm" title={c.title}>{c.title}</span>
                 </button>
                 <button
                   type="button"

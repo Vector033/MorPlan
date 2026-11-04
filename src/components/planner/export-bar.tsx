@@ -68,7 +68,7 @@ export function ExportBar({ calendarRef }: { calendarRef: RefObject<HTMLDivEleme
         รูปภาพ
       </button>
       {shareUrl && (
-        <p className="w-full text-xs text-muted sm:w-auto" role="status">
+        <p className="anim-rise w-full text-xs text-muted sm:w-auto" role="status">
           คัดลอกลิงก์แล้ว:{" "}
           <a className="font-medium text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent" href={shareUrl} target="_blank" rel="noreferrer">
             {shareUrl}

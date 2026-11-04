@@ -21,7 +21,7 @@ export function CompareView() {
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-6 sm:px-4">
       <header className="flex flex-wrap items-end justify-between gap-2 border-b-4 border-ink pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">เทียบแผน</h1>
+          <h1 className="text-title font-bold sm:text-display">เทียบแผน</h1>
           <p className="text-sm text-muted">ดูทุกแผนพร้อมกัน เลือกแผนที่ชอบแล้วกลับไปแก้ที่หน้าตาราง</p>
         </div>
         <Link href="/" className="btn">

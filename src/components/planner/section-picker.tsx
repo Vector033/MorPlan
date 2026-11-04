@@ -24,7 +24,7 @@ export function SectionPicker({ courseNo, onClose }: { courseNo: string; onClose
       ref={ref}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && ref.current?.close()}
-      className="m-auto w-[min(560px,calc(100vw-1.5rem))] border-2 border-ink bg-white p-0 text-ink backdrop:bg-ink/50"
+      className="anim-modal m-auto w-[min(560px,calc(100vw-1.5rem))] border-2 border-ink bg-white p-0 text-ink backdrop:bg-ink/50"
       aria-labelledby="picker-title"
     >
       <div className="flex items-start justify-between gap-3 bg-ink p-4 text-white">

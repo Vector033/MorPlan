@@ -80,7 +80,7 @@ export function AskForm() {
 
       <ol className="flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (
-          <li key={turns.length - i} className="border-t-4 border-ink pt-4">
+          <li key={turns.length - i} className="anim-rise border-t-4 border-ink pt-4">
             <p className="text-xl font-bold">{t.question}</p>
             {!t.answer && !t.error && <p className="mt-3 animate-pulse text-sm text-muted">กำลังค้นในเอกสาร…</p>}
             {t.error && (
@@ -98,7 +98,7 @@ export function AskForm() {
 
 function AnswerView({ a }: { a: Answer }) {
   return (
-    <div className="mt-3 flex flex-col gap-3 text-sm">
+    <div className="anim-rise mt-3 flex flex-col gap-3 text-sm">
       {a.status === "not_found" ? (
         <p className="bg-[#f4f4f4] p-4 text-base">
           <strong>ไม่พบ</strong> ในเอกสารที่ MorPlan มี ลองถามด้วยคำอื่น หรือสอบถามสำนักทะเบียนฯ / คณะโดยตรง
@@ -109,8 +109,8 @@ function AnswerView({ a }: { a: Answer }) {
 
       {a.citations.length > 0 && (
         <ul className="flex flex-col gap-2">
-          {a.citations.map((c) => (
-            <li key={`${c.docId}:${c.page}`} className="border border-ink p-3">
+          {a.citations.map((c, i) => (
+            <li key={`${c.docId}:${c.page}`} className="anim-rise border border-ink p-3" style={{ "--i": i + 1 } as React.CSSProperties}>
               <a href={c.url} target="_blank" rel="noreferrer" className="font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent">
                 [{c.n}] {c.title} · หน้า {c.page}
               </a>

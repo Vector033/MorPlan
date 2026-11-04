@@ -9,7 +9,7 @@ export default function ImportPage() {
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-3 py-6 sm:px-4">
       <header className="border-b-4 border-ink pb-4">
         <p className="eyebrow">ขั้นแรก</p>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">นำเข้าวิชาจาก reg</h1>
+        <h1 className="text-title font-bold sm:text-display">นำเข้าวิชาจาก reg</h1>
         <p className="mt-3 max-w-2xl text-sm text-muted">
           ตั้งแต่มี พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล หน้าค้นหากระบวนวิชาของ reg ต้องล็อกอินก่อน MorPlan จึงไม่ดึงข้อมูลเอง
           และ<strong className="text-ink"> ไม่เคยขอ username หรือ password ของ reg</strong>

@@ -28,7 +28,7 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
       <div className="flex flex-wrap items-end justify-between gap-3 border-b-4 border-ink pb-4">
         <div>
           <p className="eyebrow">ตารางที่แชร์ · อ่านอย่างเดียว</p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{name}</h1>
+          <h1 className="text-title font-bold sm:text-display">{name}</h1>
           <p className="text-sm text-muted">
             ภาคการศึกษา {term} · {sections.length} วิชา · {sections.reduce((n, s) => n + (s.credits ?? 0), 0)} หน่วยกิต · สร้างเมื่อ{" "}
             {thaiDate(createdAt.slice(0, 10))}

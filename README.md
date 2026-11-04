@@ -49,6 +49,16 @@ Page-level recall; a hit counts only if a retrieved chunk is on a gold page.
 
 Known limitation: the central regulations are scanned images, and Tesseract misreads Thai digits (๔↔๕, ๖/๘→๒). 13 answerable questions have a key number the OCR text gets wrong. They are tagged `ocrMismatch`, which is why every citation links to the original page. The questions were drafted with AI help from the documents. The numbers were checked against rendered page images, and a human should still spot-check them.
 
+## Security and privacy
+
+- **No reg/CMU credentials, ever.** Section data is pasted by the student and parsed in the browser.
+- **CSP with per-request nonces** (`script-src 'nonce-…' 'strict-dynamic'`, `frame-ancestors 'none'`, `object-src 'none'`), plus nosniff, `X-Frame-Options: DENY`, strict referrer and permissions policies, HSTS, no `X-Powered-By`, and `no-store` on API responses. See `src/proxy.ts` and `next.config.ts`.
+- **CSRF:** every state-changing API requires same-origin JSON (which forces a CORS preflight that is never granted). Sign-out checks Origin, and server actions are origin-checked by Next.js.
+- **Rate limits in Postgres** for ask, share, events, workspace sync and sign-in/sign-up. The keys are salted SHA-256 hashes, so no IP address is stored.
+- **Input bounds:** every client-supplied section, plan and share snapshot goes through length-capped zod schemas before it reaches the database.
+- **Database:** RLS is on, and the Supabase `anon`/`authenticated` roles have no table privileges. Only the server's own connection reads or writes. The session cookie is `httpOnly` + `SameSite=Lax`.
+- **Checks:** `src/lib/security/guard.test.ts` covers the guards, `e2e/security.spec.ts` covers headers, forged requests and CSP violations, and Dependabot watches dependencies.
+
 ## Stack
 
 Next.js 16 (App Router) · TypeScript · Tailwind 4 · @dnd-kit · Supabase (Auth + Postgres + pgvector) · Drizzle · zod · `@huggingface/transformers` (multilingual-e5-small, in process) · Gemini REST (optional) · Tesseract `tha` in Docker for OCR · Vitest + fast-check · Playwright · GitHub Actions.

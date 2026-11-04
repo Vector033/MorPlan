@@ -135,7 +135,7 @@ function BlockView({ item, color, clash, compact }: { item: Item; color: string;
   const { section: s, meeting: m } = item;
   return (
     <div
-      className={`relative h-full overflow-hidden text-left ${color} ${
+      className={`anim-pop relative h-full overflow-hidden text-left ${color} ${
         clash ? "outline-3 -outline-offset-3 outline-accent" : ""
       } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"}`}
     >
@@ -206,7 +206,7 @@ function GhostSlot({ item, ghost, top }: { item: Item; ghost: Ghost; top: (m: nu
   return (
     <div
       ref={setNodeRef}
-      className={`absolute inset-x-0.5 z-10 flex flex-col justify-center border-2 px-1 text-center text-[11px] font-semibold ${
+      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center border-2 px-1 text-center text-[11px] font-semibold ${
         ghost.clash ? "border-accent bg-accent-soft text-danger" : "border-ink bg-white text-ink"
       } ${isOver ? (ghost.clash ? "bg-accent text-white" : "bg-ink text-white") : "border-dashed"}`}
       style={{ top: top(item.meeting.start) + 1, height: Math.max(top(item.meeting.end) - top(item.meeting.start) - 2, 18) }}

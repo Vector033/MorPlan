@@ -8,7 +8,7 @@ export default function AskPage() {
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-3 py-6 sm:px-4">
       <header className="border-b-4 border-ink pb-4">
         <p className="eyebrow">ระเบียบ ข้อบังคับ ปฏิทิน</p>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">ถามเรื่องระเบียบการศึกษา</h1>
+        <h1 className="text-title font-bold sm:text-display">ถามเรื่องระเบียบการศึกษา</h1>
         <p className="mt-3 max-w-2xl text-sm text-muted">
           ตอบจากข้อบังคับ ประกาศ ปฏิทินการศึกษา และคู่มือของสำนักทะเบียนฯ ที่เผยแพร่สาธารณะ พร้อมอ้างอิงชื่อเอกสารและหน้า
           ถ้าเอกสารไม่มีคำตอบ ระบบจะตอบว่า “ไม่พบ”

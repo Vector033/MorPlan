@@ -27,6 +27,24 @@
   --radius-2xl: 0px;
   --radius: 0px;
 
+  /*
+   * Type scale by role. Thai stacks vowels and tone marks above and below the
+   * line, so line-heights sit a step looser than Latin defaults (display 1.3,
+   * body 1.65) to keep marks from colliding or clipping.
+   */
+  --text-display: 3rem;
+  --text-display--line-height: 1.3;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 2rem;
+  --text-title--line-height: 1.3;
+  --text-title--letter-spacing: -0.015em;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.35;
+  --text-heading--letter-spacing: -0.01em;
+  --text-base--line-height: 1.65;
+  --text-sm--line-height: 1.6;
+  --text-xs--line-height: 1.5;
+
   --shadow-sm: none;
   --shadow-md: none;
   --shadow-lg: none;
@@ -42,9 +60,10 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: "tnum";
+  line-height: 1.65;
 }
 
+/* Course codes, times, counts: one width per digit so columns and counters never shift. */
 .font-mono {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
@@ -52,10 +71,22 @@ body {
 
 h1,
 h2,
-h3,
+h3 {
+  text-wrap: balance;
+}
+
 p,
 li {
   text-wrap: pretty;
+}
+
+a {
+  text-underline-position: from-font;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: #fff;
 }
 
 :focus-visible {
@@ -74,10 +105,10 @@ li {
     @apply inline-flex items-center justify-center gap-1.5 px-2 py-1.5 text-sm text-muted underline-offset-4 hover:text-ink hover:underline;
   }
   .input {
-    @apply w-full border border-ink bg-white px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent focus:outline-2 focus:outline-offset-0 focus:outline-accent;
+    @apply w-full border border-ink bg-white px-3 py-2 text-base outline-none sm:text-sm placeholder:text-muted focus:border-accent focus:outline-2 focus:outline-offset-0 focus:outline-accent;
   }
   .label {
-    @apply mb-1.5 block text-xs font-semibold tracking-wide text-ink;
+    @apply mb-1.5 block text-xs font-semibold text-ink;
   }
   .card {
     @apply border border-ink bg-white;
@@ -87,10 +118,102 @@ li {
     @apply flex items-center justify-between gap-2 bg-ink px-3 py-2 text-sm font-semibold text-white;
   }
   .eyebrow {
-    @apply text-xs font-semibold text-muted;
+    @apply mb-1 block text-xs font-semibold text-muted;
   }
   .kbd {
     @apply border border-line bg-white px-1 font-mono text-[11px] text-ink;
+  }
+}
+
+/*
+ * Motion. Swiss signage moves little and crisply: short ease-out entrances on
+ * the thing that just changed, colour-only hovers, nothing on data or on
+ * keyboard-driven repeats. Under reduced motion every transform is dropped and
+ * only opacity/colour remain.
+ */
+:root {
+  --ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-press: 100ms;
+  --dur-fast: 120ms;
+  --dur-ui: 180ms;
+  --dur-panel: 220ms;
+}
+
+.btn,
+.btn-primary,
+.btn-ghost {
+  transition-property: color, background-color, border-color, transform;
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), var(--dur-press);
+  transition-timing-function: ease, ease, ease, var(--ease-ui);
+}
+.btn:active,
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.bar {
+  transition: background-color 200ms ease;
+}
+
+/* A section just placed or swapped onto the calendar. */
+.anim-pop {
+  transition:
+    opacity var(--dur-ui) var(--ease-ui),
+    transform var(--dur-ui) var(--ease-ui);
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* Ghost slots while dragging: fade only, they appear on every pick-up. */
+.anim-fade {
+  transition: opacity var(--dur-fast) var(--ease-ui);
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* New answers and panels; set --i on siblings for a 50ms stagger. */
+.anim-rise {
+  transition:
+    opacity var(--dur-panel) var(--ease-ui),
+    transform var(--dur-panel) var(--ease-ui);
+  transition-delay: calc(var(--i, 0) * 50ms);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+dialog.anim-modal[open] {
+  transition:
+    opacity 200ms var(--ease-ui),
+    transform 200ms var(--ease-ui);
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+dialog.anim-modal[open]::backdrop {
+  transition: background-color 200ms var(--ease-ui);
+  @starting-style {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:active,
+  .btn-primary:active {
+    transform: none;
+  }
+  .anim-pop,
+  .anim-rise,
+  dialog.anim-modal[open] {
+    transition-property: opacity;
+    @starting-style {
+      transform: none;
+    }
   }
 }
 

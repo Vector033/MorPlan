@@ -107,7 +107,7 @@ export function Planner() {
           <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b-4 border-ink pb-4">
             <div>
               <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
-              <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-5xl">ตารางเรียน</h1>
+              <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
             </div>
             <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
               <Stat value={placed.length} label="วิชา" />
@@ -191,7 +191,7 @@ function Stat({ value, label, alert = false }: { value: number; label: string; a
   return (
     <div className="flex flex-col-reverse">
       <dt className={`mt-1.5 text-xs font-semibold ${alert ? "text-danger" : "text-muted"}`}>{label}</dt>
-      <dd className={`font-mono text-3xl leading-none font-bold sm:text-5xl ${alert ? "text-accent" : ""}`}>{value}</dd>
+      <dd className={`font-mono text-title leading-none font-bold sm:text-display ${alert ? "text-accent" : ""}`}>{value}</dd>
     </div>
   );
 }
@@ -289,7 +289,7 @@ function TrayItem({
         </span>
         <span className="min-w-0">
           <span className="block font-mono text-sm font-bold">{courseNo}</span>
-          <span className="block truncate text-xs text-muted">{title}</span>
+          <span className="block truncate text-xs text-muted" title={title}>{title}</span>
         </span>
       </button>
       <button type="button" onClick={onPick} className={placed ? "btn-ghost px-2 text-xs text-ink" : "btn min-h-8 px-2 text-xs"}>
