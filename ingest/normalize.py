@@ -2,22 +2,28 @@
 import re
 import unicodedata
 
-TONE = "\u0e48-\u0e4b"  # mai ek .. mai chattawa
-THAI = "\u0e00-\u0e7f"
+TONE = "่-๋"  # mai ek .. mai chattawa
+UPPER = "ัิ-ฺ็-๎"  # vowels and marks written above/below the consonant
+THAI = "฀-๿"
 
 
 def normalize_thai(text: str) -> str:
     text = unicodedata.normalize("NFC", text)
-    text = re.sub("[\u200b\u200c\u200d\ufeff\u00ad]", "", text)
+    text = re.sub(r"[\u0000-\u0008\u000b\u000c\u000e-\u001f​‌‍﻿­]", "", text)
     # Decomposed sara am (nikhahit + sara aa) -> sara am.
-    text = text.replace("\u0e4d\u0e32", "\u0e33")
+    text = text.replace("ํา", "ำ")
     # Tone mark must come before sara am: น + ำ + ้  ->  น + ้ + ำ
-    text = re.sub(f"\u0e33([{TONE}])", "\1\u0e33", text)
-    # Doubled combining marks from OCR.
-    text = re.sub(f"([{TONE}\u0e31\u0e34-\u0e3a\u0e47\u0e4c\u0e4d])\1+", "\1", text)
-    # Tesseract sometimes puts a space before a combining mark or after a leading vowel.
-    text = re.sub(f" +([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e])", "\1", text)
-    text = re.sub(f"([\u0e40-\u0e44]) +([{THAI}])", "\1\2", text)
+    text = re.sub(rf"ำ([{TONE}])", r"\1" + "ำ", text)
+    # Doubled marks from OCR.
+    text = re.sub(rf"([{UPPER}])\1+", r"\1", text)
+    # Tesseract sometimes puts a space before a mark or after a leading vowel.
+    text = re.sub(rf" +([{UPPER}])", r"\1", text)
+    text = re.sub(rf"([เ-ไ]) +([{THAI}])", r"\1\2", text)
+    # Grade letters after "อักษรลำดับขั้น" are Latin; OCR reads them as look-alikes.
+    text = re.sub(r"(อักษรลำดับขั้น)\s*[wWบ๒](?![A-Za-z])", r"\1 W", text)
+    text = re.sub(r"(อักษรลำดับขั้น)\s*[|lI1](?![A-Za-z0-9])", r"\1 I", text)
+    text = re.sub(r"(อักษรลำดับขั้น)\s*[vVง](?=\s|$)", r"\1 V", text)
+    text = re.sub(r"(อักษรลำดับขั้น)\s*[pP](?![A-Za-z])", r"\1 P", text)
     text = text.replace("\r", "")
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" *\n *", "\n", text)

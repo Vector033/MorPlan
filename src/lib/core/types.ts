@@ -30,7 +30,8 @@ export type Section = {
   note?: string;
 };
 
-export type Plan = { id: string; name: string; sectionIds: string[] };
+/** `courseNos` are the courses the student wants this term; `sectionIds` the ones placed on the calendar. */
+export type Plan = { id: string; name: string; courseNos: string[]; sectionIds: string[] };
 
 export type Workspace = {
   version: 1;

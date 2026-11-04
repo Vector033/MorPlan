@@ -82,7 +82,7 @@ function parseRecord(
   // A course heading row ("204211 OBJECT-ORIENTED PROGRAMMING 3") with its sections below.
   if (secs.length === 0 && firstMeeting < 0) return { header: true };
   if (secs.length === 0) return { error: "ไม่พบหมายเลขตอน (section)" };
-  const lec = secs[0];
+  const lec = secs[0]!;
   const lab = secs[1] ?? "000";
 
   const credits = /(?<![\d.])(\d(?:\.\d)?)(?:\s*\(\d+-\d+-\d+\))?(?![\d.])/.exec(head.replace(/\d{3}/g, " "));
