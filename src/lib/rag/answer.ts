@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { LlmProvider } from "./llm";
 import type { Retrieval, Signal } from "./retrieve";
 import { tokenize } from "./tokenize";
-import { NOT_FOUND, OFFICIAL_NOTICE, type Answer, type Citation, type Hit, type Strategy } from "./types";
+import { NOT_FOUND, OFFICIAL_NOTICE, type Answer, type Citation, type Hit, type Retriever, type Strategy } from "./types";
 
 export type AnswerOptions = {
   strategy: Strategy;
@@ -10,6 +10,8 @@ export type AnswerOptions = {
   threshold: number;
   /** Which retrieval signal the threshold applies to (default: query-term coverage). */
   signal?: Signal;
+  /** "hybrid" needs the embedding model; "bm25" runs anywhere (used on serverless). */
+  retriever?: Retriever;
   llm: LlmProvider | null;
   passages?: number;
 };
@@ -30,7 +32,7 @@ const schema = z.object({
 export async function answerQuestion(question: string, retrieval: Retrieval, opts: AnswerOptions): Promise<Answer> {
   const started = performance.now();
   const q = question.trim().slice(0, 500);
-  const { hits, signals } = await retrieval.retrieve(q, opts.strategy, "hybrid", opts.passages ?? 6);
+  const { hits, signals } = await retrieval.retrieve(q, opts.strategy, opts.retriever ?? "hybrid", opts.passages ?? 6);
   const topScore = signals[opts.signal ?? "coverage"];
   const base = { notice: OFFICIAL_NOTICE, topScore };
   const done = (a: Omit<Answer, "latencyMs" | "notice" | "topScore">): Answer => ({

@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ["@huggingface/transformers", "onnxruntime-node"],
+  // Production answers with BM25 only (RAG_RETRIEVER=bm25), so keep the ~400 MB
+  // embedding runtime out of the serverless bundle.
+  outputFileTracingExcludes: {
+    "/api/ask": ["node_modules/onnxruntime-node/**", "node_modules/onnxruntime-web/**", "node_modules/@huggingface/**", "node_modules/sharp/**", "node_modules/@img/**"],
+  },
 };
 
 export default nextConfig;

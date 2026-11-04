@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { events } from "@/db/schema";
 import { answerQuestion } from "@/lib/rag/answer";
-import { RAG_SIGNAL, RAG_STRATEGY, RAG_THRESHOLD } from "@/lib/rag/config";
+import { RAG_RETRIEVER, RAG_SIGNAL, RAG_STRATEGY, RAG_THRESHOLD } from "@/lib/rag/config";
 import { getLlm, LlmError } from "@/lib/rag/llm";
 import { getRetrieval } from "@/lib/rag/server";
 
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       strategy: RAG_STRATEGY,
       threshold: RAG_THRESHOLD,
       signal: RAG_SIGNAL,
+      retriever: RAG_RETRIEVER,
       llm: getLlm(),
     });
     // Counts only: the question text is not stored.

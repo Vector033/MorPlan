@@ -77,6 +77,7 @@ for (const strategy of STRATEGIES) {
       const { hits, signals } = await retrieval.retrieve(q.question, strategy, retriever, 10, vectors.get(q.id));
       times.push(performance.now() - t0 + (retriever === "bm25" ? 0 : embedMs));
       if (retriever === "hybrid") for (const sig of SIGNALS) cases[sig].push({ score: signals[sig], answerable: q.answerable });
+      if (retriever === "bm25") cases.coverage.push({ score: signals.coverage, answerable: q.answerable });
       if (!q.answerable) continue;
       const ranked = hits.map((h) => h.chunk);
       const rank = firstGoldRank(ranked, q);
@@ -85,7 +86,8 @@ for (const strategy of STRATEGIES) {
       if (q.quote && ranked.slice(0, 3).some((c) => c.text.includes(q.quote!))) evidence++;
       if (retriever === "hybrid" && (rank === null || rank > 5)) (misses[strategy] ??= []).push(q.id);
     }
-    if (retriever === "hybrid") for (const sig of SIGNALS) scores.set(`${strategy}|${sig}`, cases[sig]);
+    if (retriever === "hybrid") for (const sig of SIGNALS) scores.set(`${strategy}|hybrid|${sig}`, cases[sig]);
+    if (retriever === "bm25") scores.set(`${strategy}|bm25|coverage`, cases.coverage);
     rows.push({
       strategy,
       retriever,
@@ -119,25 +121,34 @@ for (const strategy of STRATEGIES) {
 
 // Abstention: tune the threshold on the dev split, report on test.
 const abstain = STRATEGIES.flatMap((strategy) =>
-  SIGNALS.map((signal) => {
-    const cases = scores.get(`${strategy}|${signal}`)!;
+  [...SIGNALS.map((signal) => ["hybrid", signal] as const), ["bm25", "coverage"] as const].map(([retriever, signal]) => {
+    const cases = scores.get(`${strategy}|${retriever}|${signal}`)!;
     const withId = questions.map((q, i) => ({ ...cases[i], split: split(q.id) }));
     const dev = withId.filter((c) => c.split === "dev");
     const t = bestThreshold(dev);
-    return { strategy, signal, devBalanced: abstention(dev, t).balancedAccuracy, ...abstention(withId.filter((c) => c.split === "test"), t) };
+    return {
+      strategy,
+      retriever: retriever as Retriever,
+      signal: signal as Signal,
+      devBalanced: abstention(dev, t).balancedAccuracy,
+      ...abstention(withId.filter((c) => c.split === "test"), t),
+    };
   }),
 );
 
 const best = [...rows].filter((r) => r.retriever === "hybrid").sort((a, b) => b.recall5 - a.recall5 || b.mrr - a.mrr)[0];
 // Signal chosen on dev only.
-const bestAbstain = abstain.filter((a) => a.strategy === best.strategy).sort((a, b) => b.devBalanced - a.devBalanced)[0];
+const bestAbstain = abstain
+  .filter((a) => a.strategy === best.strategy && a.retriever === "hybrid")
+  .sort((a, b) => b.devBalanced - a.devBalanced)[0];
+// Lexical-only setup for hosts that can't run the embedding model (Vercel functions).
+const lexical = abstain.find((a) => a.strategy === best.strategy && a.retriever === "bm25")!;
 
 // End-to-end answers on the test split with the chosen setup (LLM when a key is set).
 const llm = getLlm();
 const testQs = questions.filter((q) => split(q.id) === "test");
 const judge = z.object({ supported: z.boolean(), correct: z.boolean() });
-let e2e: Record<string, number | string> = {};
-{
+async function endToEnd(cfg: { retriever: Retriever; signal: Signal; threshold: number }) {
   const lat: number[] = [];
   let cost = 0;
   let correctStatus = 0;
@@ -146,12 +157,7 @@ let e2e: Record<string, number | string> = {};
   let correct = 0;
   let judged = 0;
   for (const q of testQs) {
-    const a = await answerQuestion(q.question, retrieval, {
-      strategy: best.strategy,
-      threshold: bestAbstain.threshold,
-      signal: bestAbstain.signal,
-      llm,
-    });
+    const a = await answerQuestion(q.question, retrieval, { strategy: best.strategy, ...cfg, llm });
     lat.push(a.latencyMs);
     cost += a.costUsd;
     if ((a.status === "answered") === q.answerable) correctStatus++;
@@ -171,7 +177,8 @@ let e2e: Record<string, number | string> = {};
     }
   }
   const nAns = testQs.filter((q) => q.answerable).length;
-  e2e = {
+  return {
+    setup: `${best.strategy} + ${cfg.retriever}, ${cfg.signal} >= ${cfg.threshold.toFixed(3)}`,
     mode: llm ? llm.name : "extractive (no GEMINI_API_KEY)",
     questions: testQs.length,
     statusAccuracy: correctStatus / testQs.length,
@@ -180,8 +187,10 @@ let e2e: Record<string, number | string> = {};
     p50ms: percentile(lat, 50),
     p95ms: percentile(lat, 95),
     costPerQuestionUsd: cost / testQs.length,
-  };
+  } as Record<string, number | string>;
 }
+const e2e = await endToEnd({ retriever: "hybrid", signal: bestAbstain.signal, threshold: bestAbstain.threshold });
+const e2eLexical = await endToEnd({ retriever: "bm25", signal: "coverage", threshold: lexical.threshold });
 
 await sql.end();
 
@@ -208,21 +217,26 @@ const md = [
   ``,
   `Ablation, ${ablation.strategy} + hybrid **without** query rewriting: R@1 ${pct(ablation.recall1)}, R@5 ${pct(ablation.recall5)}, MRR ${ablation.mrr.toFixed(3)}.`,
   ``,
-  `## "ไม่พบ" (abstention), hybrid, threshold tuned on dev split, scored on test split`,
+  `## "ไม่พบ" (abstention), threshold tuned on dev split, scored on test split`,
   ``,
-  `| chunking | signal | threshold | accuracy | balanced acc. | correct refusals | false refusals |`,
-  `|---|---|---|---|---|---|---|`,
+  `| chunking | retriever | signal | threshold | accuracy | balanced acc. | correct refusals | false refusals |`,
+  `|---|---|---|---|---|---|---|---|`,
   ...abstain.map(
     (a) =>
-      `| ${a.strategy} | ${a.signal} | ${a.threshold.toFixed(3)} | ${pct(a.accuracy)} | ${pct(a.balancedAccuracy)} | ${pct(a.correctRefusal)} | ${pct(a.falseRefusal)} |`,
+      `| ${a.strategy} | ${a.retriever} | ${a.signal} | ${a.threshold.toFixed(3)} | ${pct(a.accuracy)} | ${pct(a.balancedAccuracy)} | ${pct(a.correctRefusal)} | ${pct(a.falseRefusal)} |`,
   ),
   ``,
   `Signals: dense = top cosine; coverage = share of the question's IDF weight found in a top-3 chunk; combined = coverage × dense.`,
   ``,
-  `## End to end (${best.strategy} + hybrid, ${bestAbstain.signal} ≥ ${bestAbstain.threshold.toFixed(3)}, test split)`,
+  `## End to end (test split)`,
   ``,
-  ...Object.entries(e2e).map(([k, v]) => `- ${k}: ${typeof v === "number" ? (v < 1 && k !== "costPerQuestionUsd" && !k.endsWith("ms") ? pct(v) : v.toFixed(k === "costPerQuestionUsd" ? 6 : 0)) : v}`),
-  ``,
+  ...[e2e, e2eLexical].flatMap((r) => [
+    ...Object.entries(r).map(
+      ([k, v]) =>
+        `- ${k}: ${typeof v === "number" ? (v < 1 && k !== "costPerQuestionUsd" && !k.endsWith("ms") ? pct(v) : v.toFixed(k === "costPerQuestionUsd" ? 6 : 0)) : v}`,
+    ),
+    ``,
+  ]),
 ].join("\n");
 
 mkdirSync("eval/results", { recursive: true });
@@ -235,7 +249,9 @@ writeFileSync(
     ablation,
     abstain,
     best: { strategy: best.strategy, signal: bestAbstain.signal, threshold: bestAbstain.threshold },
+    lexical: { strategy: best.strategy, signal: "coverage", threshold: lexical.threshold },
     e2e,
+    e2eLexical,
     misses,
   }, null, 2) + "\n",
 );

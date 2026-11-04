@@ -50,3 +50,6 @@ next-env.d.ts
 /.cache/
 /supabase/.temp/
 /.claude/
+
+.vercel
+.env*

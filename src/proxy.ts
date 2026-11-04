@@ -11,6 +11,8 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      // Own cookie name: every localhost app would otherwise share "sb-127-auth-token".
+      cookieOptions: { name: "sb-morplan-auth" },
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll(cookiesToSet, headers) {

@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-04T07:16:08.901Z",
+  "date": "2026-11-04T08:18:17.784Z",
   "model": "multilingual-e5-small-q8",
   "rows": [
     {
@@ -12,8 +12,8 @@
       "mrr": 0.7402818828680897,
       "docRecall5": 0.993103448275862,
       "evidence3": 0.7448275862068966,
-      "p50ms": 0.16580000000021755,
-      "p95ms": 0.42370000000028085
+      "p50ms": 0.19909999999981665,
+      "p95ms": 0.4181999999996151
     },
     {
       "strategy": "fixed",
@@ -25,8 +25,8 @@
       "mrr": 0.6425725232621786,
       "docRecall5": 0.9517241379310345,
       "evidence3": 0.5655172413793104,
-      "p50ms": 15.970331176470898,
-      "p95ms": 17.91573117647051
+      "p50ms": 16.604018823528826,
+      "p95ms": 17.81481882352957
     },
     {
       "strategy": "fixed",
@@ -38,8 +38,8 @@
       "mrr": 0.7261165845648603,
       "docRecall5": 0.9862068965517241,
       "evidence3": 0.7241379310344828,
-      "p50ms": 16.338631176470535,
-      "p95ms": 18.326331176470212
+      "p50ms": 16.80851882352956,
+      "p95ms": 17.970718823529317
     },
     {
       "strategy": "clause",
@@ -51,8 +51,8 @@
       "mrr": 0.7549781061850027,
       "docRecall5": 0.9793103448275862,
       "evidence3": 0.7862068965517242,
-      "p50ms": 0.21979999999985012,
-      "p95ms": 0.5500000000001819
+      "p50ms": 0.1728000000002794,
+      "p95ms": 0.30869999999958964
     },
     {
       "strategy": "clause",
@@ -64,8 +64,8 @@
       "mrr": 0.6443185550082102,
       "docRecall5": 0.9448275862068966,
       "evidence3": 0.593103448275862,
-      "p50ms": 16.18363117647079,
-      "p95ms": 18.336931176470735
+      "p50ms": 16.216918823528907,
+      "p95ms": 17.329318823529796
     },
     {
       "strategy": "clause",
@@ -77,8 +77,8 @@
       "mrr": 0.7216256157635466,
       "docRecall5": 0.993103448275862,
       "evidence3": 0.7103448275862069,
-      "p50ms": 15.920331176471171,
-      "p95ms": 16.832631176470223
+      "p50ms": 16.404818823529716,
+      "p95ms": 17.183318823529156
     },
     {
       "strategy": "paragraph",
@@ -90,8 +90,8 @@
       "mrr": 0.7820443349753694,
       "docRecall5": 0.993103448275862,
       "evidence3": 0.7448275862068966,
-      "p50ms": 0.18630000000030122,
-      "p95ms": 0.33870000000024447
+      "p50ms": 0.21459999999933643,
+      "p95ms": 0.43659999999999854
     },
     {
       "strategy": "paragraph",
@@ -103,8 +103,8 @@
       "mrr": 0.6231116584564861,
       "docRecall5": 0.9103448275862069,
       "evidence3": 0.5310344827586206,
-      "p50ms": 15.70383117647072,
-      "p95ms": 16.420331176471173
+      "p50ms": 16.94111882352947,
+      "p95ms": 19.62601882352967
     },
     {
       "strategy": "paragraph",
@@ -116,8 +116,8 @@
       "mrr": 0.7114997263273126,
       "docRecall5": 0.9724137931034482,
       "evidence3": 0.6827586206896552,
-      "p50ms": 16.099631176470957,
-      "p95ms": 16.788331176470656
+      "p50ms": 16.773618823529908,
+      "p95ms": 19.029718823529514
     }
   ],
   "ablation": {
@@ -129,6 +129,7 @@
   "abstain": [
     {
       "strategy": "fixed",
+      "retriever": "hybrid",
       "signal": "dense",
       "devBalanced": 0.7211538461538461,
       "threshold": 0.866579592227991,
@@ -139,6 +140,7 @@
     },
     {
       "strategy": "fixed",
+      "retriever": "hybrid",
       "signal": "coverage",
       "devBalanced": 0.7275641025641025,
       "threshold": 0.38030530603966495,
@@ -149,6 +151,7 @@
     },
     {
       "strategy": "fixed",
+      "retriever": "hybrid",
       "signal": "combined",
       "devBalanced": 0.7275641025641025,
       "threshold": 0.33069921945281827,
@@ -158,7 +161,19 @@
       "falseRefusal": 0.0821917808219178
     },
     {
+      "strategy": "fixed",
+      "retriever": "bm25",
+      "signal": "coverage",
+      "devBalanced": 0.6789529914529915,
+      "threshold": 0.5067350398229933,
+      "accuracy": 0.8235294117647058,
+      "balancedAccuracy": 0.7928082191780822,
+      "correctRefusal": 0.75,
+      "falseRefusal": 0.1643835616438356
+    },
+    {
       "strategy": "clause",
+      "retriever": "hybrid",
       "signal": "dense",
       "devBalanced": 0.6858974358974359,
       "threshold": 0.860243524269429,
@@ -169,6 +184,7 @@
     },
     {
       "strategy": "clause",
+      "retriever": "hybrid",
       "signal": "coverage",
       "devBalanced": 0.6965811965811965,
       "threshold": 0.5098793103457848,
@@ -179,6 +195,7 @@
     },
     {
       "strategy": "clause",
+      "retriever": "hybrid",
       "signal": "combined",
       "devBalanced": 0.7104700854700855,
       "threshold": 0.428284303784546,
@@ -188,7 +205,19 @@
       "falseRefusal": 0.20547945205479456
     },
     {
+      "strategy": "clause",
+      "retriever": "bm25",
+      "signal": "coverage",
+      "devBalanced": 0.703525641025641,
+      "threshold": 0.5352506137319747,
+      "accuracy": 0.788235294117647,
+      "balancedAccuracy": 0.7722602739726028,
+      "correctRefusal": 0.75,
+      "falseRefusal": 0.20547945205479456
+    },
+    {
       "strategy": "paragraph",
+      "retriever": "hybrid",
       "signal": "dense",
       "devBalanced": 0.6997863247863247,
       "threshold": 0.854837519507114,
@@ -199,6 +228,7 @@
     },
     {
       "strategy": "paragraph",
+      "retriever": "hybrid",
       "signal": "coverage",
       "devBalanced": 0.7136752136752136,
       "threshold": 0.38144273186255495,
@@ -209,6 +239,7 @@
     },
     {
       "strategy": "paragraph",
+      "retriever": "hybrid",
       "signal": "combined",
       "devBalanced": 0.7206196581196581,
       "threshold": 0.3076920217318129,
@@ -216,6 +247,17 @@
       "balancedAccuracy": 0.7157534246575342,
       "correctRefusal": 0.5,
       "falseRefusal": 0.06849315068493156
+    },
+    {
+      "strategy": "paragraph",
+      "retriever": "bm25",
+      "signal": "coverage",
+      "devBalanced": 0.6784188034188035,
+      "threshold": 0.3126776729214963,
+      "accuracy": 0.8941176470588236,
+      "balancedAccuracy": 0.6598173515981735,
+      "correctRefusal": 0.3333333333333333,
+      "falseRefusal": 0.013698630136986356
     }
   ],
   "best": {
@@ -223,13 +265,29 @@
     "signal": "combined",
     "threshold": 0.428284303784546
   },
+  "lexical": {
+    "strategy": "clause",
+    "signal": "coverage",
+    "threshold": 0.5352506137319747
+  },
   "e2e": {
+    "setup": "clause + hybrid, combined >= 0.428",
     "mode": "extractive (no GEMINI_API_KEY)",
     "questions": 85,
     "statusAccuracy": 0.788235294117647,
     "citesGoldPage": 0.7123287671232876,
     "p50ms": 8,
     "p95ms": 10,
+    "costPerQuestionUsd": 0
+  },
+  "e2eLexical": {
+    "setup": "clause + bm25, coverage >= 0.535",
+    "mode": "extractive (no GEMINI_API_KEY)",
+    "questions": 85,
+    "statusAccuracy": 0.788235294117647,
+    "citesGoldPage": 0.6986301369863014,
+    "p50ms": 1,
+    "p95ms": 1,
     "costPerQuestionUsd": 0
   },
   "misses": {
