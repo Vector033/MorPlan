@@ -2,6 +2,8 @@
 
 **Plan a CMU timetable by drag and drop, see class and exam clashes instantly, and ask the university's rules in Thai with page citations.**
 
+**Live:** https://morplan.vercel.app
+
 > ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่ — a student project, not affiliated with CMU or its Registration Office.
 
 ![Planner](docs/screenshots/planner.png)
@@ -42,6 +44,7 @@ Page-level recall; a hit counts only if a retrieved chunk is on a gold page.
 - **Query rewriting** (everyday words to document vocabulary: เทอม→ภาคการศึกษา, เกรดเฉลี่ย→ค่าลำดับขั้นสะสมเฉลี่ย, รีไทร์→พ้นสภาพ, …): R@5 goes from 89.0% to 91.7%.
 - **"ไม่พบ" (abstention):** the threshold is tuned on a dev split and scored on a held-out test split. Top cosine similarity barely separates answerable from unanswerable questions (balanced accuracy 58%). *Query-term coverage* does better: the share of the question's IDF weight found in a top chunk, × cosine. It reaches 77% balanced accuracy, with 75% correct refusals and 21% false refusals. The test split has only 12 unanswerable questions, so treat these numbers as rough.
 - **End to end** (extractive mode, test split): 78.8% get the right answer-vs-"ไม่พบ" decision, and 71.2% cite a gold page. Latency is about 8 ms p50 and 10 ms p95 once the model is loaded. Cost is $0 (local embeddings).
+- **Production runs the lexical setup** (clause chunks + BM25, coverage ≥ 0.535) because the embedding runtime is too big for a Vercel function. On the same test split it gets the same 78.8% answer-vs-"ไม่พบ" decisions, cites a gold page 69.9% of the time (vs 71.2% for hybrid), and takes ~1 ms per question. Set `RAG_RETRIEVER=bm25` to use it.
 - **Not measured yet:** answer *faithfulness* and *correctness* need an LLM judge. The runner does this automatically when `GEMINI_API_KEY` is set, and it also records Gemini cost per question.
 
 Known limitation: the central regulations are scanned images, and Tesseract misreads Thai digits (๔↔๕, ๖/๘→๒). 13 answerable questions have a key number the OCR text gets wrong. They are tagged `ocrMismatch`, which is why every citation links to the original page. The questions were drafted with AI help from the documents. The numbers were checked against rendered page images, and a human should still spot-check them.
@@ -82,5 +85,6 @@ npm run dev -- -p 3100
 
 ## Status
 
-- Not deployed yet; there are no real users or usage numbers yet (anonymous counters are in place: imports, shares, questions).
+- Deployed 2026-11-04 to Vercel (`morplan.vercel.app`) with a hosted Supabase project (Auth + Postgres) in ap-southeast-1. The Playwright suite runs against it with `E2E_BASE_URL=https://morplan.vercel.app npm run test:e2e`.
+- No real users or usage numbers yet; anonymous counters (imports, shares, questions) are in place.
 - The reg import parser was written without a real logged-in results page, because that page isn't public. A saved sample in `samples/` will become a test fixture.

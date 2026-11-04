@@ -1,6 +1,6 @@
 # MorPlan: จัดตารางเรียน มช. พร้อมถามระเบียบเป็นภาษาไทย
 
-> สถานะ (2026-11-04): milestone 1–5 ทำแล้วในเครื่อง (planner, share/ics, auth sync, RAG + eval 170 ข้อ) ยังไม่ deploy และยังไม่มีผู้ใช้จริง ดู README และ docs/superpowers/ · สร้างเมื่อ 2026-11-04 · ลำดับที่แนะนำ: **ตัวที่สอง และเป็นผลงานหลัก (flagship)**
+> สถานะ (2026-11-04): milestone 1–5 เสร็จ และ deploy แล้วที่ https://morplan.vercel.app (Vercel + Supabase โปรเจกต์ morplan, production ใช้ RAG แบบ BM25) ยังไม่มีผู้ใช้จริง ดู README และ docs/superpowers/ · สร้างเมื่อ 2026-11-04 · ลำดับที่แนะนำ: **ตัวที่สอง และเป็นผลงานหลัก (flagship)**
 > ชื่อมาจาก "มอ" ที่นักศึกษาใช้เรียกมหาวิทยาลัย บวกกับ Plan
 
 ## เจ้าของโปรเจกต์
