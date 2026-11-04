@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { events, shares } from "@/db/schema";
+import { guardMutation, LIMITS } from "@/lib/security/rate-limit";
 import { sectionSchema } from "@/lib/workspace/storage";
 
 const body = z.object({
@@ -13,6 +14,8 @@ const body = z.object({
 
 /** Store an immutable snapshot of one plan and return its read-only link id. */
 export async function POST(request: Request) {
+  const blocked = await guardMutation(request, LIMITS.share);
+  if (blocked) return blocked;
   const text = await request.text();
   if (text.length > 100_000) return NextResponse.json({ error: "too large" }, { status: 413 });
   let json: unknown;

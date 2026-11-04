@@ -6,26 +6,17 @@ import { answerQuestion } from "@/lib/rag/answer";
 import { RAG_RETRIEVER, RAG_SIGNAL, RAG_STRATEGY, RAG_THRESHOLD } from "@/lib/rag/config";
 import { getLlm, LlmError } from "@/lib/rag/llm";
 import { getRetrieval } from "@/lib/rag/server";
+import { guardMutation, LIMITS } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
 
 const body = z.object({ question: z.string().trim().min(3).max(500) });
 
-// Small per-process limiter: 20 questions per minute per client address.
-const hits = new Map<string, number[]>();
-function limited(key: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < 60_000);
-  recent.push(now);
-  hits.set(key, recent);
-  return recent.length > 20;
-}
-
 export async function POST(request: Request) {
+  const blocked = await guardMutation(request, LIMITS.ask);
+  if (blocked) return blocked;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "พิมพ์คำถามอย่างน้อย 3 ตัวอักษร" }, { status: 400 });
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  if (limited(ip)) return NextResponse.json({ error: "ถามเร็วเกินไป รอสักครู่แล้วลองใหม่" }, { status: 429 });
 
   try {
     const answer = await answerQuestion(parsed.data.question, getRetrieval(), {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { events } from "@/db/schema";
+import { guardMutation, LIMITS } from "@/lib/security/rate-limit";
 
 // Anonymous counters for the usage numbers in the README. No ids, IPs or content are stored.
 const body = z.object({
@@ -10,6 +11,8 @@ const body = z.object({
 });
 
 export async function POST(request: Request) {
+  const blocked = await guardMutation(request, LIMITS.event);
+  if (blocked) return blocked;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "bad event" }, { status: 400 });
   await db.insert(events).values({ kind: parsed.data.kind, meta: parsed.data.count ? { count: parsed.data.count } : null });

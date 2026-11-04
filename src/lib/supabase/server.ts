@@ -9,7 +9,8 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       // Own cookie name: every localhost app would otherwise share "sb-127-auth-token".
-      cookieOptions: { name: "sb-morplan-auth" },
+      // httpOnly: only the server reads the session, so page scripts (or an XSS) never can.
+      cookieOptions: { name: "sb-morplan-auth", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" },
       cookies: {
         getAll: () => cookieStore.getAll(),
         setAll(cookiesToSet) {

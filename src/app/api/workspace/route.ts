@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { workspaces } from "@/db/schema";
 import { getOptionalUser } from "@/lib/auth";
+import { guardMutation, LIMITS } from "@/lib/security/rate-limit";
 import { parseWorkspace } from "@/lib/workspace/storage";
 
 export async function GET() {
@@ -15,6 +16,8 @@ export async function GET() {
 export async function PUT(request: Request) {
   const user = await getOptionalUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const blocked = await guardMutation(request, LIMITS.workspace, user.id);
+  if (blocked) return blocked;
   const text = await request.text();
   if (text.length > 2_000_000) return NextResponse.json({ error: "too large" }, { status: 413 });
   let raw: unknown;
