@@ -12,28 +12,32 @@ export function IssuesPanel() {
     [...placed].sort((a, b) => (a[kind]?.date ?? "9").localeCompare(b[kind]?.date ?? "9") || (a[kind]?.start ?? 0) - (b[kind]?.start ?? 0));
 
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <section className="card p-4" aria-labelledby="clash-h" aria-live="polite">
-        <h2 id="clash-h" className="mb-2 text-sm font-semibold">
+    <div className="grid gap-4 md:grid-cols-2">
+      <section className="card" aria-labelledby="clash-h" aria-live="polite">
+        <h2 id="clash-h" className={`bar ${conflicts.length ? "bg-accent" : ""}`}>
           สิ่งที่ชนกัน
+          <span className="font-mono text-xs text-white/80">{conflicts.length}</span>
         </h2>
+        <div className="p-4">
         {conflicts.length === 0 ? (
           <p className="text-sm text-muted">{placed.length ? "ไม่มีเวลาเรียนหรือวันสอบชนกัน" : "ยังไม่มีวิชาในตาราง"}</p>
         ) : (
           <ul className="flex flex-col gap-1.5 text-sm">
             {conflicts.map((c, i) => (
-              <li key={i} className="rounded-lg bg-danger-soft px-2.5 py-1.5 text-danger">
+              <li key={i} className="border-l-0 border-t border-line pt-1.5 font-medium text-danger first:border-t-0 first:pt-0">
                 {conflictText(c, byId)}
               </li>
             ))}
           </ul>
         )}
+        </div>
       </section>
 
-      <section className="card p-4" aria-labelledby="exam-h">
-        <h2 id="exam-h" className="mb-2 text-sm font-semibold">
+      <section className="card" aria-labelledby="exam-h">
+        <h2 id="exam-h" className="bar">
           ตารางสอบ
         </h2>
+        <div className="p-4">
         {placed.length === 0 ? (
           <p className="text-sm text-muted">วันสอบจะแสดงเมื่อวางวิชาลงตาราง</p>
         ) : (
@@ -42,7 +46,7 @@ export function IssuesPanel() {
               const clash = clashIds(kind);
               return (
                 <div key={kind}>
-                  <h3 className="mb-1 text-xs font-medium text-muted">{kind === "midterm" ? "กลางภาค" : "ปลายภาค"}</h3>
+                  <h3 className="mb-1.5 border-b border-ink pb-1 text-xs font-bold">{kind === "midterm" ? "กลางภาค" : "ปลายภาค"}</h3>
                   <ul className="flex flex-col gap-0.5">
                     {exams(kind).map((s) => (
                       <li key={s.id} className={clash.has(s.id) ? "font-medium text-danger" : ""}>
@@ -59,6 +63,7 @@ export function IssuesPanel() {
           วันสอบมาจากตารางสอบสาธารณะของสำนักทะเบียนฯ วิชาที่ภาควิชากำหนดเองอาจไม่มีในตารางนี้
           ตรวจสอบกับประกาศทางการอีกครั้ง
         </p>
+        </div>
       </section>
     </div>
   );

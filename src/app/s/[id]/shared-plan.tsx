@@ -25,10 +25,10 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 py-6 sm:px-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b-4 border-ink pb-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">ตารางที่แชร์ · อ่านอย่างเดียว</p>
-          <h1 className="text-2xl font-bold">{name}</h1>
+          <p className="eyebrow">ตารางที่แชร์ · อ่านอย่างเดียว</p>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">{name}</h1>
           <p className="text-sm text-muted">
             ภาคการศึกษา {term} · {sections.length} วิชา · {sections.reduce((n, s) => n + (s.credits ?? 0), 0)} หน่วยกิต · สร้างเมื่อ{" "}
             {thaiDate(createdAt.slice(0, 10))}
@@ -55,7 +55,7 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
 
       <div className="card overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-line text-xs text-muted">
+          <thead className="bg-ink text-xs text-white">
             <tr>
               <th className="p-3">วิชา</th>
               <th className="p-3">ตอน</th>

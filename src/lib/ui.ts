@@ -1,18 +1,20 @@
 import { DAY_TH, fmtTime } from "./core/time";
 import type { Conflict, ExamSlot, Meeting, Section } from "./core/types";
 
+// Transit-line colours (one per course, like subway lines on a Vignelli map).
+// Text colour is chosen per fill for >= 4.5:1 contrast. Red is reserved for clashes.
 // Literal class strings so Tailwind picks them up.
 export const COURSE_COLORS = [
-  { block: "bg-teal-50 border-teal-300 text-teal-950", dot: "bg-teal-500" },
-  { block: "bg-amber-50 border-amber-300 text-amber-950", dot: "bg-amber-500" },
-  { block: "bg-sky-50 border-sky-300 text-sky-950", dot: "bg-sky-500" },
-  { block: "bg-rose-50 border-rose-300 text-rose-950", dot: "bg-rose-500" },
-  { block: "bg-lime-50 border-lime-300 text-lime-950", dot: "bg-lime-600" },
-  { block: "bg-indigo-50 border-indigo-300 text-indigo-950", dot: "bg-indigo-500" },
-  { block: "bg-orange-50 border-orange-300 text-orange-950", dot: "bg-orange-500" },
-  { block: "bg-cyan-50 border-cyan-300 text-cyan-950", dot: "bg-cyan-600" },
-  { block: "bg-fuchsia-50 border-fuchsia-300 text-fuchsia-950", dot: "bg-fuchsia-500" },
-  { block: "bg-emerald-50 border-emerald-300 text-emerald-950", dot: "bg-emerald-600" },
+  { block: "bg-[#0039a6] text-white", dot: "bg-[#0039a6] text-white" },
+  { block: "bg-[#ff6319] text-ink", dot: "bg-[#ff6319] text-ink" },
+  { block: "bg-[#007a33] text-white", dot: "bg-[#007a33] text-white" },
+  { block: "bg-[#fccc0a] text-ink", dot: "bg-[#fccc0a] text-ink" },
+  { block: "bg-[#b933ad] text-white", dot: "bg-[#b933ad] text-white" },
+  { block: "bg-[#00a1de] text-ink", dot: "bg-[#00a1de] text-ink" },
+  { block: "bg-[#996633] text-white", dot: "bg-[#996633] text-white" },
+  { block: "bg-[#6cbe45] text-ink", dot: "bg-[#6cbe45] text-ink" },
+  { block: "bg-[#5c5c5c] text-white", dot: "bg-[#5c5c5c] text-white" },
+  { block: "bg-[#006983] text-white", dot: "bg-[#006983] text-white" },
 ];
 
 export function colorFor(courseNo: string, order: string[]) {

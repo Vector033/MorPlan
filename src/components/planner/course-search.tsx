@@ -28,7 +28,8 @@ export function CourseSearch() {
     : courses;
 
   return (
-    <section className="card p-3" aria-label="ค้นหาวิชา">
+    <section className="card" aria-label="ค้นหาวิชา">
+      <div className="p-3">
       <label htmlFor="course-q" className="label">
         ค้นหาด้วยรหัสหรือชื่อวิชา ({courses.length} วิชาในรายการของคุณ)
       </label>
@@ -41,21 +42,22 @@ export function CourseSearch() {
         inputMode="search"
         autoComplete="off"
       />
-      <ul className="mt-2 flex max-h-[30vh] flex-col gap-1 overflow-y-auto lg:max-h-[38vh]" aria-live="polite">
-        {results.length === 0 && <li className="p-2 text-sm text-muted">ไม่พบวิชาที่ตรงกับ “{q}”</li>}
+      </div>
+      <ul className="max-h-[30vh] divide-y divide-line overflow-y-auto border-t border-ink lg:max-h-[38vh]" aria-live="polite">
+        {results.length === 0 && <li className="p-3 text-sm text-muted">ไม่พบวิชาที่ตรงกับ “{q}”</li>}
         {results.slice(0, 60).map((c) => {
           const wanted = plan.courseNos.includes(c.courseNo);
           const expanded = open === c.courseNo;
           return (
-            <li key={c.courseNo} className="rounded-lg border border-transparent hover:border-line">
-              <div className="flex items-center gap-2 p-1.5">
+            <li key={c.courseNo} className="hover:bg-[#f4f4f4]">
+              <div className="flex items-center gap-2 px-3 py-2">
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
                   aria-expanded={expanded}
                   onClick={() => setOpen(expanded ? null : c.courseNo)}
                 >
-                  <span className="font-mono text-xs font-semibold">{c.courseNo}</span>{" "}
+                  <span className="font-mono text-sm font-bold">{c.courseNo}</span>{" "}
                   <span className="text-xs text-muted">
                     {c.credits ? `${c.credits} นก. · ` : ""}
                     {c.sections.length} ตอน
@@ -64,7 +66,7 @@ export function CourseSearch() {
                 </button>
                 <button
                   type="button"
-                  className={wanted ? "btn-ghost text-xs" : "btn text-xs"}
+                  className={wanted ? "btn-ghost text-xs" : "btn min-h-8 text-xs"}
                   disabled={wanted}
                   onClick={() => dispatch({ type: "wantCourse", courseNo: c.courseNo })}
                 >
@@ -72,7 +74,7 @@ export function CourseSearch() {
                 </button>
               </div>
               {expanded && (
-                <ul className="mx-1.5 mb-2 flex flex-col gap-1 border-l-2 border-line pl-2 text-xs">
+                <ul className="mx-3 mb-3 flex flex-col gap-2 border-t border-line pt-2 text-xs">
                   {c.sections.map((s) => (
                     <li key={s.id}>
                       <span className="font-medium">{sectionLabel(s)}</span>{" "}

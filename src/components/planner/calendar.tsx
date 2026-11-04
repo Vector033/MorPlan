@@ -43,9 +43,12 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
   return (
     <div ref={ref} className="bg-white" role="group" aria-label="ตารางเรียนรายสัปดาห์">
       <div className="grid" style={{ gridTemplateColumns: `${compact ? 28 : 44}px repeat(${shownDays.length}, minmax(0, 1fr))` }}>
-        <div />
+        <div className="border-b-2 border-ink" />
         {shownDays.map((d) => (
-          <div key={d} className={`border-b border-line text-center font-medium ${compact ? "py-0.5 text-[10px]" : "py-2 text-xs"}`}>
+          <div
+            key={d}
+            className={`border-b-2 border-ink text-left font-bold ${compact ? "px-1 py-0.5 text-[10px]" : "px-2 py-2 text-sm"}`}
+          >
             <span className="sm:hidden">{DAY_TH_SHORT[d]}</span>
             <span className="hidden sm:inline">{compact ? DAY_TH_SHORT[d] : DAY_TH[d]}</span>
           </div>
@@ -55,7 +58,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
           {hours.map((h) => (
             <div
               key={h}
-              className={`absolute right-1 -translate-y-1/2 font-mono text-muted ${compact ? "text-[8px]" : "text-[10px]"}`}
+              className={`absolute right-1.5 -translate-y-1/2 font-mono font-medium text-muted ${compact ? "text-[8px]" : "text-[11px]"}`}
               style={{ top: top(h * 60) }}
             >
               {h > startHour && `${String(h).padStart(2, "0")}${compact ? "" : ":00"}`}
@@ -69,10 +72,10 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
           return (
             <div key={day} className="relative border-l border-line" style={{ height }} data-day={day}>
               {hours.map((h) => (
-                <div key={h} className="absolute inset-x-0 border-t border-line/70" style={{ top: top(h * 60) }} />
+                <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: top(h * 60) }} />
               ))}
               {hours.map((h) => (
-                <div key={`h${h}`} className="absolute inset-x-0 border-t border-dashed border-line/40" style={{ top: top(h * 60 + 30) }} />
+                <div key={`h${h}`} className="absolute inset-x-0 border-t border-dotted border-line/80" style={{ top: top(h * 60 + 30) }} />
               ))}
 
               {dayItems.map((it, i) => {
@@ -80,8 +83,8 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                 const style: CSSProperties = {
                   top: top(it.meeting.start) + 1,
                   height: Math.max(top(it.meeting.end) - top(it.meeting.start) - 2, 14),
-                  left: `calc(${(lane.lane / lane.of) * 100}% + 2px)`,
-                  width: `calc(${100 / lane.of}% - 4px)`,
+                  left: `calc(${(lane.lane / lane.of) * 100}% + 1px)`,
+                  width: `calc(${100 / lane.of}% - 2px)`,
                 };
                 const block = (
                   <BlockView
@@ -109,7 +112,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                   c.kind === "time" ? (
                     <div
                       key={i}
-                      className="clash-hatch pointer-events-none absolute inset-x-0 border-y border-danger/50"
+                      className="clash-hatch pointer-events-none absolute inset-x-0 z-[5] border-y-2 border-accent"
                       style={{ top: top(c.start), height: top(c.end) - top(c.start) }}
                     />
                   ) : null,
@@ -132,26 +135,26 @@ function BlockView({ item, color, clash, compact }: { item: Item; color: string;
   const { section: s, meeting: m } = item;
   return (
     <div
-      className={`h-full overflow-hidden rounded-md border text-left shadow-sm ${color} ${
-        clash ? "ring-2 ring-danger ring-offset-1" : ""
-      } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-1.5 py-1 text-[11px] leading-snug"}`}
+      className={`relative h-full overflow-hidden text-left ${color} ${
+        clash ? "outline-3 -outline-offset-3 outline-accent" : ""
+      } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"}`}
     >
       <div className="flex items-start justify-between gap-1">
-        <span className="font-mono font-semibold">{s.courseNo}</span>
+        <span className={`font-mono font-bold ${compact ? "" : "text-[13px]"}`}>{s.courseNo}</span>
         {clash && !compact && (
-          <span className="rounded bg-danger px-1 text-[9px] font-semibold text-white" aria-label="ชน">
+          <span className="bg-accent px-1 text-[10px] font-bold text-white" aria-label="ชน">
             ชน
           </span>
         )}
       </div>
       {!compact && (
         <>
-          <div className="truncate opacity-80">{s.title}</div>
-          <div className="truncate opacity-70">
+          <div className="truncate font-medium">{s.title}</div>
+          <div className="truncate opacity-85">
             {sectionLabel(s)}
             {m.room ? ` · ${m.room}` : ""}
           </div>
-          <div className="font-mono opacity-60">
+          <div className="font-mono opacity-85">
             {fmtTime(m.start)}–{fmtTime(m.end)}
           </div>
         </>
@@ -182,7 +185,7 @@ function DraggableBlock({
     <button
       ref={setNodeRef}
       type="button"
-      className={`absolute touch-none select-none rounded-md transition-opacity ${isDragging ? "opacity-40" : ""}`}
+      className={`absolute touch-none select-none ${isDragging ? "opacity-30" : ""}`}
       style={style}
       {...listeners}
       {...attributes}
@@ -203,11 +206,9 @@ function GhostSlot({ item, ghost, top }: { item: Item; ghost: Ghost; top: (m: nu
   return (
     <div
       ref={setNodeRef}
-      className={`absolute inset-x-1 z-10 flex flex-col justify-center rounded-md border-2 border-dashed px-1 text-center text-[11px] font-medium transition ${
-        ghost.clash
-          ? "border-danger/70 bg-danger-soft/80 text-danger"
-          : "border-accent/70 bg-accent-soft/70 text-accent"
-      } ${isOver ? "scale-[1.03] border-solid shadow-lg" : ""}`}
+      className={`absolute inset-x-0.5 z-10 flex flex-col justify-center border-2 px-1 text-center text-[11px] font-semibold ${
+        ghost.clash ? "border-accent bg-accent-soft text-danger" : "border-ink bg-white text-ink"
+      } ${isOver ? (ghost.clash ? "bg-accent text-white" : "bg-ink text-white") : "border-dashed"}`}
       style={{ top: top(item.meeting.start) + 1, height: Math.max(top(item.meeting.end) - top(item.meeting.start) - 2, 18) }}
     >
       <span>{sectionLabel(item.section)}</span>

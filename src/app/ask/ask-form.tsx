@@ -41,7 +41,7 @@ export function AskForm() {
   return (
     <div className="flex flex-col gap-4">
       <form
-        className="card flex flex-col gap-2 p-3"
+        className="flex flex-col gap-3 border-2 border-ink p-3"
         onSubmit={(e) => {
           e.preventDefault();
           ask(q);
@@ -52,7 +52,7 @@ export function AskForm() {
         </label>
         <textarea
           id="ask-q"
-          className="input min-h-20 resize-y text-base"
+          className="min-h-24 w-full resize-y border-0 bg-white p-1 text-lg outline-none placeholder:text-muted"
           placeholder="เช่น ถอนวิชาได้ถึงวันไหน"
           value={q}
           maxLength={500}
@@ -67,7 +67,7 @@ export function AskForm() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
             {EXAMPLES.map((ex) => (
-              <button key={ex} type="button" className="rounded-full border border-line px-2.5 py-1 text-xs text-muted hover:text-ink" onClick={() => ask(ex)}>
+              <button key={ex} type="button" className="border border-line px-2.5 py-1 text-xs text-ink hover:border-ink hover:bg-ink hover:text-white" onClick={() => ask(ex)}>
                 {ex}
               </button>
             ))}
@@ -80,8 +80,8 @@ export function AskForm() {
 
       <ol className="flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (
-          <li key={turns.length - i} className="card p-4">
-            <p className="text-sm font-medium">{t.question}</p>
+          <li key={turns.length - i} className="border-t-4 border-ink pt-4">
+            <p className="text-xl font-bold">{t.question}</p>
             {!t.answer && !t.error && <p className="mt-3 animate-pulse text-sm text-muted">กำลังค้นในเอกสาร…</p>}
             {t.error && (
               <p className="mt-3 text-sm text-danger" role="alert">
@@ -100,7 +100,7 @@ function AnswerView({ a }: { a: Answer }) {
   return (
     <div className="mt-3 flex flex-col gap-3 text-sm">
       {a.status === "not_found" ? (
-        <p className="rounded-lg bg-stone-100 p-3">
+        <p className="bg-[#f4f4f4] p-4 text-base">
           <strong>ไม่พบ</strong> ในเอกสารที่ MorPlan มี ลองถามด้วยคำอื่น หรือสอบถามสำนักทะเบียนฯ / คณะโดยตรง
         </p>
       ) : (
@@ -110,17 +110,17 @@ function AnswerView({ a }: { a: Answer }) {
       {a.citations.length > 0 && (
         <ul className="flex flex-col gap-2">
           {a.citations.map((c) => (
-            <li key={`${c.docId}:${c.page}`} className="rounded-lg border border-line p-3">
-              <a href={c.url} target="_blank" rel="noreferrer" className="font-medium text-accent underline underline-offset-2">
+            <li key={`${c.docId}:${c.page}`} className="border border-ink p-3">
+              <a href={c.url} target="_blank" rel="noreferrer" className="font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent">
                 [{c.n}] {c.title} · หน้า {c.page}
               </a>
-              <blockquote className="mt-1 border-l-2 border-line pl-2 text-xs text-muted">{c.snippet}</blockquote>
+              <blockquote className="mt-2 text-xs text-muted">{c.snippet}</blockquote>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+      <p className="border-t-2 border-accent bg-accent-soft px-3 py-2 text-xs text-ink">
         <strong>{a.notice}</strong> ข้อความมาจากการแปลงเอกสารด้วย OCR อาจมีตัวเลขหรือคำผิด ดูหน้าเอกสารต้นฉบับจากลิงก์ด้านบน
       </p>
       <p className="text-[11px] text-muted">

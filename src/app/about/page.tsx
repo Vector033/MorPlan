@@ -6,8 +6,8 @@ export const metadata: Metadata = { title: "เกี่ยวกับ" };
 export default function AboutPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 text-sm leading-relaxed">
-      <header>
-        <h1 className="text-2xl font-bold">เกี่ยวกับ MorPlan</h1>
+      <header className="border-b-4 border-ink pb-4">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">เกี่ยวกับ MorPlan</h1>
         <p className="mt-2 text-base">
           MorPlan เป็นโปรเจกต์ของนักศึกษา <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong>{" "}
           และไม่เกี่ยวข้องกับสำนักทะเบียนและประมวลผล ข้อมูลทั้งหมดอาจผิดพลาดหรือล้าสมัย ตรวจสอบกับประกาศทางการอีกครั้งเสมอ
@@ -43,7 +43,7 @@ export default function AboutPage() {
         <ul className="list-disc space-y-1 pl-5">
           {docs.map((d) => (
             <li key={d.id}>
-              <a className="text-accent underline" href={d.url} target="_blank" rel="noreferrer">
+              <a className="font-medium text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent" href={d.url} target="_blank" rel="noreferrer">
                 {d.title}
               </a>
             </li>

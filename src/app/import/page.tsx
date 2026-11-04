@@ -7,21 +7,23 @@ export const metadata: Metadata = { title: "นำเข้าวิชา" };
 export default function ImportPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-3 py-6 sm:px-4">
-      <header>
-        <h1 className="text-2xl font-bold">นำเข้าวิชาจาก reg</h1>
-        <p className="mt-1 text-sm text-muted">
+      <header className="border-b-4 border-ink pb-4">
+        <p className="eyebrow">ขั้นแรก</p>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">นำเข้าวิชาจาก reg</h1>
+        <p className="mt-3 max-w-2xl text-sm text-muted">
           ตั้งแต่มี พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล หน้าค้นหากระบวนวิชาของ reg ต้องล็อกอินก่อน MorPlan จึงไม่ดึงข้อมูลเอง
           และ<strong className="text-ink"> ไม่เคยขอ username หรือ password ของ reg</strong>
         </p>
       </header>
 
-      <ol className="card grid gap-3 p-4 text-sm sm:grid-cols-3">
-        <li>
-          <span className="font-semibold">1. เปิด reg ในอีกแท็บ</span>
+      <ol className="grid border border-ink text-sm sm:grid-cols-3">
+        <li className="p-4">
+          <span className="block font-mono text-4xl font-bold">1</span>
+          <span className="font-semibold">เปิด reg ในอีกแท็บ</span>
           <p className="text-muted">
             ไปที่{" "}
             <a
-              className="text-accent underline"
+              className="font-medium text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent"
               href="https://www1.reg.cmu.ac.th/registrationoffice/searchcourse.php"
               target="_blank"
               rel="noreferrer"
@@ -31,12 +33,14 @@ export default function ImportPage() {
             แล้วล็อกอินที่เว็บ reg เอง
           </p>
         </li>
-        <li>
-          <span className="font-semibold">2. ค้นวิชาที่อยากลง</span>
+        <li className="border-t border-ink p-4 sm:border-t-0 sm:border-l">
+          <span className="block font-mono text-4xl font-bold">2</span>
+          <span className="font-semibold">ค้นวิชาที่อยากลง</span>
           <p className="text-muted">ค้นทีละวิชาหรือทั้งกลุ่ม เช่น รหัส 204 ตารางผลลัพธ์ต้องมี section วัน และเวลา</p>
         </li>
-        <li>
-          <span className="font-semibold">3. คัดลอกมาวางที่นี่</span>
+        <li className="border-t border-ink p-4 sm:border-t-0 sm:border-l">
+          <span className="block font-mono text-4xl font-bold">3</span>
+          <span className="font-semibold">คัดลอกมาวางที่นี่</span>
           <p className="text-muted">
             กด <span className="kbd">Ctrl</span>+<span className="kbd">A</span> แล้ว <span className="kbd">Ctrl</span>+
             <span className="kbd">C</span> หรือบันทึกหน้าเว็บ (<span className="kbd">Ctrl</span>+<span className="kbd">S</span>) แล้วอัปโหลดไฟล์

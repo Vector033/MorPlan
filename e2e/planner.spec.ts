@@ -65,7 +65,7 @@ test("place sections with the keyboard and see a clash", async ({ page }) => {
   await expect(live(page)).toContainText("ชนกับวิชาอื่น");
   await page.keyboard.press("Space");
 
-  await expect(page.getByText(/ชน \d+ จุด/)).toBeVisible();
+  await expect(page.getByLabel("สรุปแผนนี้")).toContainText(/จุดที่ชน\s*[1-9]/);
   await expect(page.getByText(/เวลาเรียนชน: 204101 กับ 206111 วันอังคาร 08:00–09:30/)).toBeVisible();
 });
 
@@ -76,7 +76,7 @@ test("section picker places a course without dragging", async ({ page }) => {
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: "วาง" }).first().click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText("1 วิชา · 3 หน่วยกิต")).toBeVisible();
+  await expect(page.getByLabel("สรุปแผนนี้")).toContainText(/วิชา\s*1\s*หน่วยกิต\s*3/);
 });
 
 test("workspace survives a reload", async ({ page }) => {

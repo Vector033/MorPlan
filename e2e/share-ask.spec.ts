@@ -25,7 +25,7 @@ test("share link opens read-only and can be copied into my plans", async ({ page
   await expect(view.locator('[aria-roledescription="วิชาที่ลากได้"]')).toHaveCount(0);
   await view.getByRole("button", { name: "คัดลอกเป็นแผนของฉัน" }).click();
   await expect(view).toHaveURL(/\/$/);
-  await expect(view.getByText("1 วิชา · 3 หน่วยกิต")).toBeVisible();
+  await expect(view.getByLabel("สรุปแผนนี้")).toContainText(/วิชา\s*1\s*หน่วยกิต\s*3/);
   await friend.close();
 });
 

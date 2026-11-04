@@ -42,10 +42,11 @@ export function ImportForm() {
   }
 
   return (
-    <section className="card flex flex-col gap-3 p-4" aria-labelledby="paste-h">
-      <h2 id="paste-h" className="font-semibold">
+    <section className="card" aria-labelledby="paste-h">
+      <h2 id="paste-h" className="bar">
         วางข้อมูล
       </h2>
+      <div className="flex flex-col gap-3 p-4">
       <textarea
         className="input min-h-40 font-mono text-xs"
         placeholder={"วางตารางผลค้นหาจาก reg ที่นี่\n204111  FUND OF COMP SCIENCE  001  000  3  TuF  0800-0930  RB5210 …"}
@@ -73,7 +74,7 @@ export function ImportForm() {
             <strong>{new Set(result.sections.map((s) => s.courseNo)).size}</strong> วิชา
           </p>
           {result.warnings.length > 0 && (
-            <details className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900" open={result.sections.length === 0}>
+            <details className="border-t-2 border-accent bg-accent-soft p-3 text-sm text-ink" open={result.sections.length === 0}>
               <summary className="cursor-pointer font-medium">อ่านไม่ได้ {result.warnings.length} บรรทัด</summary>
               <ul className="mt-2 list-disc pl-5 text-xs">
                 {result.warnings.slice(0, 30).map((w, i) => (
@@ -85,9 +86,9 @@ export function ImportForm() {
           )}
           {result.sections.length > 0 && (
             <>
-              <div className="max-h-80 overflow-auto rounded-lg border border-line">
+              <div className="max-h-80 overflow-auto border border-ink">
                 <table className="w-full text-left text-xs">
-                  <thead className="sticky top-0 bg-stone-50 text-muted">
+                  <thead className="sticky top-0 bg-ink text-white">
                     <tr>
                       <th className="p-2">วิชา</th>
                       <th className="p-2">ตอน</th>
@@ -118,6 +119,7 @@ export function ImportForm() {
           )}
         </div>
       )}
+      </div>
     </section>
   );
 }

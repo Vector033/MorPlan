@@ -10,15 +10,15 @@ export function PlanTabs() {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div role="tablist" aria-label="แผนตารางเรียน" className="flex flex-wrap gap-1 rounded-xl bg-stone-200/60 p-1">
+      <div role="tablist" aria-label="แผนตารางเรียน" className="flex flex-wrap border border-ink">
         {ws.plans.map((p) => (
           <button
             key={p.id}
             role="tab"
             aria-selected={p.id === plan.id}
             onClick={() => dispatch({ type: "setActive", id: p.id })}
-            className={`rounded-lg px-3 py-1 text-sm transition ${
-              p.id === plan.id ? "bg-white font-medium shadow-sm" : "text-muted hover:text-ink"
+            className={`border-r border-ink px-3 py-1.5 text-sm ${
+              p.id === plan.id ? "bg-ink font-semibold text-white" : "bg-white text-ink hover:bg-[#f4f4f4]"
             }`}
           >
             {p.name}
@@ -26,7 +26,7 @@ export function PlanTabs() {
         ))}
         {ws.plans.length < MAX_PLANS && (
           <button
-            className="rounded-lg px-2.5 py-1 text-sm text-muted hover:bg-white/70 hover:text-ink"
+            className="px-3 py-1.5 text-sm text-muted hover:bg-[#f4f4f4] hover:text-ink"
             onClick={() => dispatch({ type: "addPlan", copyFrom: plan.id })}
             title="สร้างแผนใหม่โดยคัดลอกแผนนี้"
           >

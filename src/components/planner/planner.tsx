@@ -86,8 +86,8 @@ export function Planner() {
       onDragCancel={() => setDragCourse(null)}
       accessibility={{ screenReaderInstructions, announcements: announcements((id) => courseFromId(id)) }}
     >
-      <div className="mx-auto grid w-full max-w-7xl gap-4 px-3 py-4 sm:px-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto">
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1">
           {ws.pool.length === 0 ? (
             <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections(EXAMS) })} />
           ) : (
@@ -103,28 +103,38 @@ export function Planner() {
           />
         </aside>
 
-        <main className="flex min-w-0 flex-col gap-3">
-          <PlanTabs />
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <p className="text-muted">
-              {placed.length} วิชา · {credits} หน่วยกิต
-              {conflicts.length > 0 ? (
-                <span className="ml-2 font-medium text-danger">· ชน {conflicts.length} จุด</span>
-              ) : placed.length > 0 ? (
-                <span className="ml-2 font-medium text-accent">· ไม่มีวิชาชน</span>
-              ) : null}
-            </p>
+        <main className="flex min-w-0 flex-col gap-4">
+          <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b-4 border-ink pb-4">
+            <div>
+              <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
+              <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-5xl">ตารางเรียน</h1>
+            </div>
+            <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
+              <Stat value={placed.length} label="วิชา" />
+              <Stat value={credits} label="หน่วยกิต" />
+              <Stat
+                value={conflicts.length}
+                label={conflicts.length ? "จุดที่ชน" : placed.length ? "ไม่มีวิชาชน" : "ชน"}
+                alert={conflicts.length > 0}
+              />
+            </dl>
+          </header>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <PlanTabs />
             <ExportBar calendarRef={calendarRef} />
           </div>
 
-          <div className="flex gap-1 md:hidden" role="tablist" aria-label="เลือกวัน">
+          <div className="grid grid-cols-5 border border-ink md:hidden" role="tablist" aria-label="เลือกวัน">
             {days.map((d) => (
               <button
                 key={d}
                 role="tab"
                 aria-selected={mobileDay === d}
                 onClick={() => setMobileDay(d)}
-                className={`flex-1 rounded-lg py-1.5 text-sm ${mobileDay === d ? "bg-ink text-white" : "bg-white text-muted"}`}
+                className={`border-l border-ink py-2 text-sm font-semibold first:border-l-0 ${
+                  mobileDay === d ? "bg-ink text-white" : "bg-white text-ink"
+                }`}
               >
                 {DAY_TH_SHORT[d]}
               </button>
@@ -166,14 +176,23 @@ export function Planner() {
 
       <DragOverlay dropAnimation={null}>
         {dragCourse ? (
-          <div className={`rounded-lg border px-3 py-2 text-sm font-medium shadow-xl ${colorFor(dragCourse, plan.courseNos).block}`}>
-            <span className="font-mono">{dragCourse}</span> {titleOf(dragCourse)}
+          <div className={`px-3 py-2 text-sm font-semibold outline-2 outline-ink ${colorFor(dragCourse, plan.courseNos).block}`}>
+            <span className="font-mono font-bold">{dragCourse}</span> {titleOf(dragCourse)}
           </div>
         ) : null}
       </DragOverlay>
 
       {picking && <SectionPicker courseNo={picking} onClose={() => setPicking(null)} />}
     </DndContext>
+  );
+}
+
+function Stat({ value, label, alert = false }: { value: number; label: string; alert?: boolean }) {
+  return (
+    <div className="flex flex-col-reverse">
+      <dt className={`mt-1.5 text-xs font-semibold ${alert ? "text-danger" : "text-muted"}`}>{label}</dt>
+      <dd className={`font-mono text-3xl leading-none font-bold sm:text-5xl ${alert ? "text-accent" : ""}`}>{value}</dd>
+    </div>
   );
 }
 
@@ -206,16 +225,16 @@ function Tray({
     <section
       ref={setNodeRef}
       aria-label="วิชาที่จะลง"
-      className={`card p-3 transition ${dragging ? "border-dashed border-accent" : ""} ${isOver ? "bg-accent-soft/50" : ""}`}
+      className={`card ${dragging ? "outline-2 outline-offset-2 outline-ink outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
     >
-      <h2 className="mb-2 flex items-center justify-between text-sm font-semibold">
+      <h2 className="bar">
         วิชาที่จะลง
-        <span className="text-xs font-normal text-muted">{courseNos.length} วิชา</span>
+        <span className="font-mono text-xs font-medium text-white/70">{courseNos.length} วิชา</span>
       </h2>
       {courseNos.length === 0 ? (
-        <p className="text-sm text-muted">ค้นหาแล้วกด “เพิ่ม” วิชาที่อยากลง แล้วลากมาวางบนตาราง</p>
+        <p className="p-3 text-sm text-muted">ค้นหาแล้วกด “เพิ่ม” วิชาที่อยากลง แล้วลากมาวางบนตาราง</p>
       ) : (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="divide-y divide-line">
           {courseNos.map((c) => (
             <TrayItem
               key={c}
@@ -255,22 +274,25 @@ function TrayItem({
   });
   const color = colorFor(courseNo, order);
   return (
-    <li className={`flex items-center gap-2 rounded-lg border border-line bg-white p-1.5 ${isDragging ? "opacity-40" : ""}`}>
+    <li className={`flex items-center gap-1 bg-white px-2 py-2 hover:bg-[#f4f4f4] ${isDragging ? "opacity-30" : ""}`}>
       <button
         ref={setNodeRef}
         type="button"
-        className="flex min-w-0 flex-1 touch-none items-center gap-2 rounded-md px-1 py-0.5 text-left"
+        className="flex min-w-0 flex-1 cursor-grab touch-none items-center gap-3 py-0.5 text-left active:cursor-grabbing"
           aria-label={`${courseNo} ${title} ${placed ? `วางแล้ว ตอน ${placed.lec}` : "ยังไม่ได้วาง"}`}
         {...listeners}
         {...attributes}
       >
-        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color.dot}`} aria-hidden />
+        {/* Subway-line bullet: the course colour with its line number (order in this plan). */}
+        <span className={`grid size-9 shrink-0 place-items-center rounded-full font-mono text-xs font-bold ${color.dot}`} aria-hidden>
+          {order.indexOf(courseNo) + 1}
+        </span>
         <span className="min-w-0">
-          <span className="block font-mono text-xs font-semibold">{courseNo}</span>
+          <span className="block font-mono text-sm font-bold">{courseNo}</span>
           <span className="block truncate text-xs text-muted">{title}</span>
         </span>
       </button>
-      <button type="button" onClick={onPick} className={placed ? "btn-ghost px-2 text-xs" : "btn px-2 text-xs"}>
+      <button type="button" onClick={onPick} className={placed ? "btn-ghost px-2 text-xs text-ink" : "btn min-h-8 px-2 text-xs"}>
         {placed ? `ตอน ${placed.lec === "000" ? placed.lab : placed.lec}` : "เลือกตอน"}
       </button>
       <button type="button" onClick={onRemove} className="btn-ghost px-1.5 text-xs" aria-label={`เอา ${courseNo} ออก`}>
@@ -284,7 +306,7 @@ function MobileDayList({ day, sections, onPick }: { day: Day; sections: Section[
   const tba = sections.filter((s) => s.meetings.every((m) => m.days.length === 0));
   if (sections.some((s) => s.meetings.some((m) => m.days.includes(day))) && tba.length === 0) return null;
   return (
-    <div className="border-t border-line p-3 text-sm text-muted">
+    <div className="border-t border-ink p-3 text-sm text-muted">
       {tba.length > 0 ? (
         <p>
           ไม่มีเวลาเรียนในตาราง (TBA):{" "}
@@ -303,13 +325,13 @@ function MobileDayList({ day, sections, onPick }: { day: Day; sections: Section[
 
 function EmptyPool({ onDemo }: { onDemo: () => void }) {
   return (
-    <section className="card p-4">
-      <h2 className="text-base font-semibold">เริ่มจากรายชื่อวิชาของคุณ</h2>
-      <p className="mt-1 text-sm text-muted">
+    <section className="card">
+      <h2 className="bar">เริ่มจากรายชื่อวิชาของคุณ</h2>
+      <p className="px-4 pt-4 text-sm text-muted">
         เปิดผลค้นหากระบวนวิชาใน reg ของ มช. (ล็อกอินที่เว็บ reg เอง) แล้วคัดลอกมาวางใน MorPlan
         MorPlan ไม่เคยขอรหัสผ่าน reg ของคุณ
       </p>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 p-4">
         <Link href="/import" className="btn-primary">
           นำเข้าจาก reg
         </Link>

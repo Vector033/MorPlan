@@ -58,9 +58,9 @@ export function ManualForm() {
   }
 
   return (
-    <details className="card p-4">
-      <summary className="cursor-pointer font-semibold">เพิ่มวิชาเอง</summary>
-      <form action={submit} className="mt-3 grid gap-3 text-sm sm:grid-cols-6">
+    <details className="card">
+      <summary className="bar cursor-pointer">เพิ่มวิชาเอง</summary>
+      <form action={submit} className="grid gap-3 p-4 text-sm sm:grid-cols-6">
         <Field label="รหัสวิชา" name="courseNo" placeholder="204111" className="sm:col-span-2" required inputMode="numeric" />
         <Field label="ชื่อวิชา" name="title" placeholder="FUND OF COMP SCIENCE" className="sm:col-span-4" />
         <Field label="ตอนบรรยาย" name="lec" placeholder="001" />
@@ -83,7 +83,7 @@ export function ManualForm() {
             </p>
           )}
           {added && (
-            <p className="text-accent" role="status">
+            <p className="font-semibold text-ink" role="status">
               {added}
             </p>
           )}

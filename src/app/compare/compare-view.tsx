@@ -19,9 +19,9 @@ export function CompareView() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-6 sm:px-4">
-      <header className="flex flex-wrap items-end justify-between gap-2">
+      <header className="flex flex-wrap items-end justify-between gap-2 border-b-4 border-ink pb-4">
         <div>
-          <h1 className="text-2xl font-bold">เทียบแผน</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">เทียบแผน</h1>
           <p className="text-sm text-muted">ดูทุกแผนพร้อมกัน เลือกแผนที่ชอบแล้วกลับไปแก้ที่หน้าตาราง</p>
         </div>
         <Link href="/" className="btn">
@@ -32,7 +32,7 @@ export function CompareView() {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="text-xs text-muted">
-            <tr className="border-b border-line">
+            <tr className="border-b-2 border-ink">
               <th className="p-2 font-medium" />
               {rows.map(({ plan }) => (
                 <th key={plan.id} className="p-2 font-semibold text-ink">
@@ -45,7 +45,7 @@ export function CompareView() {
             <Row label="วิชา / หน่วยกิต" cells={rows.map((r) => `${r.sections.length} / ${r.stats.credits}`)} />
             <Row
               label="ชน"
-              cells={rows.map((r) => (r.conflicts.length ? <span key={r.plan.id} className="font-medium text-danger">{r.conflicts.length} จุด</span> : <span key={r.plan.id} className="text-accent">ไม่มี</span>))}
+              cells={rows.map((r) => (r.conflicts.length ? <span key={r.plan.id} className="font-bold text-danger">{r.conflicts.length} จุด</span> : <span key={r.plan.id} className="font-medium text-ink">✓ ไม่มี</span>))}
             />
             <Row label="วันที่ต้องมาเรียน" cells={rows.map((r) => r.stats.days.map((d) => DAY_TH_SHORT[d]).join(" ") || "–")} />
             <Row label="วันว่าง (จ.–ศ.)" cells={rows.map((r) => r.stats.freeDays.map((d) => DAY_TH_SHORT[d]).join(" ") || "–")} />
@@ -59,9 +59,9 @@ export function CompareView() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map(({ plan, sections, conflicts }) => (
           <section key={plan.id} className="card overflow-hidden">
-            <div className="flex items-center justify-between border-b border-line px-3 py-2">
+            <div className="bar">
               <h2 className="text-sm font-semibold">{plan.name}</h2>
-              <Link href="/" className="text-xs text-accent underline" onClick={() => dispatch({ type: "setActive", id: plan.id })}>
+              <Link href="/" className="text-xs text-white underline underline-offset-4" onClick={() => dispatch({ type: "setActive", id: plan.id })}>
                 แก้แผนนี้
               </Link>
             </div>

@@ -9,14 +9,14 @@ export function LoginForm() {
 
   return (
     <form action={action} className="space-y-4">
-      <div className="grid grid-cols-2 rounded-lg bg-stone-200/60 p-1 text-sm">
+      <div className="grid grid-cols-2 border border-ink text-sm">
         {(["signin", "signup"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
             aria-pressed={mode === m}
-            className={`rounded-md py-1.5 ${mode === m ? "bg-white font-medium shadow-sm" : "text-muted"}`}
+            className={`py-2 ${mode === m ? "bg-ink font-semibold text-white" : "bg-white text-ink"}`}
           >
             {m === "signin" ? "เข้าสู่ระบบ" : "สร้างบัญชี"}
           </button>
@@ -44,7 +44,7 @@ export function LoginForm() {
         </p>
       )}
       {state.message && (
-        <p className="text-sm text-accent" role="status">
+        <p className="text-sm font-semibold text-ink" role="status">
           {state.message}
         </p>
       )}
