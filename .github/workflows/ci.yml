@@ -52,7 +52,7 @@ jobs:
             echo "DATABASE_URL=$DB_URL"
             echo "EMBEDDING_PROVIDER=local"
           } > .env.local
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .cache/hf
           key: hf-multilingual-e5-small-q8
