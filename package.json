@@ -11,7 +11,10 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "index": "tsx scripts/build-index.mts",
+    "eval": "tsx eval/run.mts",
+    "fetch:exams": "tsx scripts/fetch-exams.mts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

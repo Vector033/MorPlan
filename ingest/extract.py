@@ -84,7 +84,11 @@ def write(out_path: Path, rows: list[dict]) -> None:
     with out_path.open("w", encoding="utf-8") as f:
         for row in rows:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    print(f"wrote {len(rows)} pages to {out_path}")
+    # Same pages as a JSON array (one page per line) for the app to import at build time.
+    with out_path.with_suffix(".json").open("w", encoding="utf-8", newline="\n") as f:
+        body = ",\n".join(json.dumps({k: r[k] for k in ("docId", "page", "text")}, ensure_ascii=False) for r in rows)
+        f.write("[\n" + body + "\n]\n")
+    print(f"wrote {len(rows)} pages to {out_path} and {out_path.with_suffix('.json')}")
 
 
 if __name__ == "__main__":
