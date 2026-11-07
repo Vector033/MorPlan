@@ -1,6 +1,6 @@
 # MorPlan: จัดตารางเรียน มช. พร้อมถามระเบียบเป็นภาษาไทย
 
-> สถานะ (2026-11-07): live ที่ https://morplan.vercel.app · milestone 1–5 เสร็จ + Swiss redesign + security hardening (commit a3c4abd) · ยังไม่มีผู้ใช้จริง · session ถัดไป: อ่าน `CLAUDE_DESIGN_GUIDE.md` และงานที่เหลือใน README "Status" · สร้างเมื่อ 2026-11-04 · ลำดับที่แนะนำ: **ตัวที่สอง และเป็นผลงานหลัก (flagship)**
+> สถานะ (2026-11-07): live ที่ https://morplan.vercel.app · milestone 1–5 เสร็จ + Swiss redesign + security hardening + design pass (snap/shake/drawer, commit 97706c7) + FreeLLMAPI provider + eval เทียบโมเดล (commit 6328d7a) · production ยัง extractive ไม่ใช้ LLM · ยังไม่มีผู้ใช้จริง · งานที่เหลือใน README "Status" · สร้างเมื่อ 2026-11-04 · ลำดับที่แนะนำ: **ตัวที่สอง และเป็นผลงานหลัก (flagship)**
 > ชื่อมาจาก "มอ" ที่นักศึกษาใช้เรียกมหาวิทยาลัย บวกกับ Plan
 
 ## เจ้าของโปรเจกต์
