@@ -84,6 +84,15 @@ describe("parseRegImport", () => {
     expect(warnings[0]).toContain("204111");
   });
 
+  it("leaves the title empty instead of using the day code or room", () => {
+    const { sections, warnings } = parseRegImport(
+      "204490  001  000  3  MTh  0930-1100\n204306\t001\t000\t3\tTh\t0830-0930\tRB5210\n",
+    );
+    expect(warnings).toEqual([]);
+    expect(sections.map((s) => s.title)).toEqual(["", ""]);
+    expect(sections[0].meetings[0]).toMatchObject({ days: ["Mo", "Th"], start: 570, end: 660 });
+  });
+
   it("explains when nothing looks like a course list", () => {
     expect(parseRegImport("hello world").warnings).toEqual(["ไม่พบรหัสกระบวนวิชา 6 หลักในข้อมูลที่วาง"]);
   });

@@ -134,14 +134,17 @@ function guessTitle(cells: string[], courseNo: string): string {
   // right after the course number.
   const candidates = cells
     .map((c) => c.replace(courseNo, "").trim())
-    .filter((c) => /\p{L}{3,}/u.test(c) && !DAY_TIME.test(c) && !ROOM.test(c));
+    .filter((c) => /\p{L}{3,}/u.test(c) && !DAY_TIME.test(c) && !ROOM.test(c) && !DAYS_ONLY.test(c));
   DAY_TIME.lastIndex = 0;
   if (cells.length > 1 && candidates.length) return clean(candidates[0]);
   const joined = cells.join(" ");
   const after = joined.slice(joined.indexOf(courseNo) + 6);
   const m = /^[\s\d]*?([A-Za-z฀-๿][A-Za-z฀-๿ .&()'/-]*?)(?=\s+\d{3}\b|\s+\d\b|$)/.exec(after);
-  return m ? clean(m[1]) : "";
+  return m && !DAYS_ONLY.test(m[1].trim()) ? clean(m[1]) : "";
 }
+
+// A bare day code ("MTh", "TuF") is the DAY column, never a title.
+const DAYS_ONLY = /^(?:Mo|Tu|We|Th|Fr|Sa|Su|TT|M|W|F)+$/;
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
