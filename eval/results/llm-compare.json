@@ -1,0 +1,46 @@
+{
+  "judge": "claude-sonnet-4-5",
+  "setup": "clause + hybrid, combined >= 0.428",
+  "rows": [
+    {
+      "setup": "clause + hybrid, combined >= 0.428",
+      "mode": "freellmapi:typhoon-2.5-30b-a3b-instruct",
+      "judge": "freellmapi:claude-sonnet-4-5",
+      "questions": 85,
+      "statusAccuracy": 0.8,
+      "citesGoldPage": 0.6301369863013698,
+      "faithfulness": 0.6785714285714286,
+      "correctness": 0.75,
+      "judged": 56,
+      "p50ms": 1163,
+      "p95ms": 3052,
+      "costPerQuestionUsd": 0,
+      "date": "2026-11-07"
+    },
+    {
+      "setup": "clause + hybrid, combined >= 0.428",
+      "mode": "freellmapi:claude-haiku-4-5",
+      "judge": "freellmapi:claude-sonnet-4-5",
+      "questions": 85,
+      "statusAccuracy": 0.7411764705882353,
+      "citesGoldPage": 0.6712328767123288,
+      "faithfulness": 0.8235294117647058,
+      "correctness": 0.8823529411764706,
+      "judged": 51,
+      "p50ms": 1326,
+      "p95ms": 18991,
+      "costPerQuestionUsd": 0,
+      "date": "2026-11-07"
+    }
+  ],
+  "excluded": [
+    {
+      "mode": "freellmapi:gpt-oss-120b",
+      "reason": "free-tier 429, 31/85 errors"
+    },
+    {
+      "mode": "freellmapi:gemini-3-flash-preview",
+      "reason": "free-tier 429, 61/85 errors"
+    }
+  ]
+}

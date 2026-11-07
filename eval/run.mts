@@ -1,7 +1,7 @@
 // RAG evaluation. Usage: npm run eval   (needs local Supabase with `npm run index` done)
 // Writes eval/results/latest.json and eval/results/latest.md.
 import { config } from "dotenv";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { z } from "zod";
@@ -151,6 +151,8 @@ const lexical = abstain.find((a) => a.strategy === best.strategy && a.retriever 
 const compareModels = (process.env.EVAL_LLM_MODELS ?? "").split(",").map((m) => m.trim()).filter(Boolean);
 const judgeModel = process.env.EVAL_JUDGE_MODEL || "claude-sonnet-4-5";
 const baseLlm = compareModels.length ? null : getLlm();
+// Pace free tiers, e.g. EVAL_LLM_DELAY_MS=6000 for a 10-requests-a-minute model.
+const LLM_DELAY_MS = Number(process.env.EVAL_LLM_DELAY_MS ?? 0);
 const testQs = questions.filter((q) => split(q.id) === "test");
 const judge = z.object({ supported: z.boolean(), correct: z.boolean() });
 
@@ -160,8 +162,8 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
     try {
       return await fn();
     } catch (e) {
-      if (attempt >= 3) throw e;
-      await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+      if (attempt >= 5) throw e;
+      await new Promise((r) => setTimeout(r, 5000 * (attempt + 1)));
     }
   }
 }
@@ -180,6 +182,7 @@ async function endToEnd(
   let judged = 0;
   let errors = 0;
   for (const q of testQs) {
+    if (llm && LLM_DELAY_MS) await new Promise((r) => setTimeout(r, LLM_DELAY_MS));
     let a;
     try {
       a = await withRetry(() => answerQuestion(q.question, retrieval, { strategy: best.strategy, ...cfg, llm }));
@@ -315,4 +318,39 @@ writeFileSync(
   }, null, 2) + "\n",
 );
 writeFileSync("eval/results/latest.md", md);
+
+// The answer-model table accumulates across runs, so one rate-limited model can be rerun alone.
+if (llmCompare.length) {
+  const file = "eval/results/llm-compare.json";
+  type CmpRow = Record<string, number | string>;
+  type Excluded = { mode: string; reason: string };
+  const old: { rows?: CmpRow[]; excluded?: Excluded[] } = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+  const prev = old.rows ?? [];
+  const ran = new Set(llmCompare.map((r) => r.mode));
+  const today = new Date().toISOString().slice(0, 10);
+  const merged: CmpRow[] = [...prev.filter((r) => !ran.has(String(r.mode))), ...llmCompare.map((r) => ({ ...r, date: today }))];
+  // Models dropped by hand (e.g. quota hit mid-run) stay listed until they are rerun.
+  const excluded = (old.excluded ?? []).filter((x) => !ran.has(x.mode));
+  writeFileSync(file, JSON.stringify({ judge: judgeModel, setup: e2e.setup, rows: merged, excluded }, null, 2) + "\n");
+  writeFileSync(
+    "eval/results/llm-compare.md",
+    [
+      `# Answer models`,
+      ``,
+      `Test split (${testQs.length} questions), ${e2e.setup}. Judge: \`${judgeModel}\`, which is not one of the graded models. All calls go through FreeLLMAPI free tiers, so cost is $0; latency includes the local router.`,
+      ``,
+      `| model | answer vs "ไม่พบ" | cites gold page | faithfulness | correctness | judged | errors | p50 ms | p95 ms | run |`,
+      `|---|---|---|---|---|---|---|---|---|---|`,
+      ...merged.map(
+        (r) =>
+          `| ${r.mode} | ${pct(+r.statusAccuracy)} | ${pct(+r.citesGoldPage)} | ${pct(+r.faithfulness)} | ${pct(+r.correctness)} | ${r.judged} | ${r.errors ?? 0} | ${(+r.p50ms).toFixed(0)} | ${(+r.p95ms).toFixed(0)} | ${r.date} |`,
+      ),
+      ``,
+      `faithfulness: every claim is in the cited passages. correctness: agrees with the gold answer. Both over judged answered questions.`,
+      `Extractive baseline (no LLM, same setup): answer vs "ไม่พบ" ${pct(+e2e.statusAccuracy)}, cites gold page ${pct(+e2e.citesGoldPage)}.`,
+      ...excluded.map((x) => `Not reported: ${x.mode} (${x.reason}).`),
+      ``,
+    ].join("\n"),
+  );
+}
 console.log(md);

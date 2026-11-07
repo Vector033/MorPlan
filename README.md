@@ -45,7 +45,15 @@ Page-level recall; a hit counts only if a retrieved chunk is on a gold page.
 - **"ไม่พบ" (abstention):** the threshold is tuned on a dev split and scored on a held-out test split. Top cosine similarity barely separates answerable from unanswerable questions (balanced accuracy 58%). *Query-term coverage* does better: the share of the question's IDF weight found in a top chunk, × cosine. It reaches 77% balanced accuracy, with 75% correct refusals and 21% false refusals. The test split has only 12 unanswerable questions, so treat these numbers as rough.
 - **End to end** (extractive mode, test split): 78.8% get the right answer-vs-"ไม่พบ" decision, and 71.2% cite a gold page. Latency is about 8 ms p50 and 10 ms p95 once the model is loaded. Cost is $0 (local embeddings).
 - **Production runs the lexical setup** (clause chunks + BM25, coverage ≥ 0.535) because the embedding runtime is too big for a Vercel function. On the same test split it gets the same 78.8% answer-vs-"ไม่พบ" decisions, cites a gold page 69.9% of the time (vs 71.2% for hybrid), and takes ~1 ms per question. Set `RAG_RETRIEVER=bm25` to use it.
-- **Not measured yet:** answer *faithfulness* and *correctness* need an LLM judge. The runner does this automatically when `GEMINI_API_KEY` is set, and it also records Gemini cost per question.
+- **Answer models (local only):** each model writes the answer from the same retrieved passages, and a fixed judge (`claude-sonnet-4-5`, not one of the graded models) scores faithfulness (every claim is in the cited passages) and correctness (agrees with the gold answer). All calls go through a local FreeLLMAPI router (OpenAI-compatible, `127.0.0.1:31415`) on free tiers. Full table: [eval/results/llm-compare.md](eval/results/llm-compare.md).
+
+  | model | answer vs "ไม่พบ" | cites gold page | faithfulness | correctness | p50 / p95 ms |
+  |---|---|---|---|---|---|
+  | Typhoon 2.5 30B-A3B | **80.0%** | 63.0% | 67.9% | 75.0% | **1163** / 3052 |
+  | Claude Haiku 4.5 | 74.1% | 67.1% | **82.4%** | **88.2%** | 1326 / 18991 |
+  | extractive (no LLM) | 78.8% | **71.2%** | — | — | 8 / 10 |
+
+  Typhoon (Thai-tuned) is fast and refuses the least, but it adds claims the passages don't support more often than Haiku does. Neither beats the extractive answer at citing a gold page. gpt-oss-120b and Gemini 3 Flash hit the free-tier quota mid-run, so they are left out. **Production stays extractive** (BM25, no LLM); the LLM path only runs locally with `LLM_PROVIDER=freellmapi`.
 
 Known limitation: the central regulations are scanned images, and Tesseract misreads Thai digits (๔↔๕, ๖/๘→๒). 13 answerable questions have a key number the OCR text gets wrong. They are tagged `ocrMismatch`, which is why every citation links to the original page. The questions were drafted with AI help from the documents. The numbers were checked against rendered page images, and a human should still spot-check them.
 
@@ -87,9 +95,10 @@ npm run dev -- -p 3100
 
 | command | what |
 |---|---|
-| `npm test` | 104 unit tests (clash detection incl. property tests, parsers, ics, RAG, eval metrics) |
+| `npm test` | 120 unit tests (clash detection incl. property tests, parsers, ics, RAG, eval metrics) |
 | `npm run test:e2e` | Playwright: mouse drag, keyboard placement + clash, picker, share link, ask, phone view |
 | `npm run eval` | RAG evaluation → `eval/results/latest.{json,md}` |
+| `EVAL_LLM_MODELS=typhoon-2.5-30b-a3b-instruct,claude-haiku-4-5 npm run eval` | compare answer models through a local FreeLLMAPI router (`FREELLMAPI_KEY` in `.env.local`; optional `EVAL_JUDGE_MODEL`, `EVAL_LLM_DELAY_MS`) → `eval/results/llm-compare.{json,md}` |
 | `npm run fetch:exams 2/2569` | refresh the public exam timetable |
 | `docker build -t morplan-ingest ingest && docker run --rm -v "$PWD/data:/data" morplan-ingest` | re-OCR the corpus |
 
