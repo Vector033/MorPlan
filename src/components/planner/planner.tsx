@@ -21,13 +21,15 @@ import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
 import { EXAMS } from "@/lib/exams-data";
-import { colorFor } from "@/lib/ui";
+import { colorFor, conflictText } from "@/lib/ui";
 import { sectionsOfCourse } from "@/lib/workspace/reducer";
+import { AskDrawer } from "./ask-drawer";
 import { Calendar, type Ghost } from "./calendar";
 import { CourseSearch } from "./course-search";
 import { announcements, collision, resetKeyboardTarget, screenReaderInstructions, slotKeyboardCoordinates } from "./dnd";
 import { ExportBar } from "./export-bar";
 import { IssuesPanel } from "./issues-panel";
+import { useCountUp, usePlacementMotion } from "./motion";
 import { PlanTabs } from "./plan-tabs";
 import { SectionPicker } from "./section-picker";
 import { useWorkspace } from "./workspace-context";
@@ -58,6 +60,10 @@ export function Planner() {
     }));
   }, [dragCourse, ws, placed, placedByCourse]);
 
+  const motion = usePlacementMotion(plan.id, placed, conflicts);
+  const credits = placed.reduce((sum, s) => sum + (s.credits ?? 0), 0);
+  const shownCredits = useCountUp(credits);
+
   function onDragStart(e: DragStartEvent) {
     resetKeyboardTarget();
     setDragCourse((e.active.data.current as { courseNo: string }).courseNo);
@@ -72,7 +78,7 @@ export function Planner() {
 
   if (!ready) return <PlannerSkeleton />;
 
-  const credits = placed.reduce((sum, s) => sum + (s.credits ?? 0), 0);
+  const byId = new Map(ws.pool.map((s) => [s.id, s]));
   const days = [...DAYS.slice(0, 5), ...DAYS.slice(5).filter((d) => placed.some((s) => s.meetings.some((m) => m.days.includes(d))))];
 
   return (
@@ -111,7 +117,7 @@ export function Planner() {
             </div>
             <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
               <Stat value={placed.length} label="วิชา" />
-              <Stat value={credits} label="หน่วยกิต" />
+              <Stat value={shownCredits} label="หน่วยกิต" />
               <Stat
                 value={conflicts.length}
                 label={conflicts.length ? "จุดที่ชน" : placed.length ? "ไม่มีวิชาชน" : "ชน"}
@@ -122,7 +128,10 @@ export function Planner() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <PlanTabs />
-            <ExportBar calendarRef={calendarRef} />
+            <div className="flex flex-wrap items-center gap-2">
+              <AskDrawer />
+              <ExportBar calendarRef={calendarRef} />
+            </div>
           </div>
 
           <div className="grid grid-cols-5 border border-ink md:hidden" role="tablist" aria-label="เลือกวัน">
@@ -141,7 +150,19 @@ export function Planner() {
             ))}
           </div>
 
-          <div className="card overflow-hidden">
+          {conflicts.length > 0 && (
+            // Top-of-timetable alert: the first clash in words; the full list is in the panel below.
+            <a
+              href="#clash-h"
+              className="anim-rise flex items-center gap-3 bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-danger"
+            >
+              <span className="shrink-0 bg-white px-1.5 font-mono text-xs font-bold text-accent">ชน {conflicts.length}</span>
+              <span className="min-w-0 flex-1 truncate">{conflictText(conflicts[0], byId)}</span>
+              {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-white/85">ดูทั้งหมด ↓</span>}
+            </a>
+          )}
+
+          <div className="card overflow-hidden" style={{ viewTransitionName: "plan-calendar" }}>
             <div className="hidden md:block">
               <Calendar
                 ref={calendarRef}
@@ -149,6 +170,8 @@ export function Planner() {
                 order={plan.courseNos}
                 conflicts={conflicts}
                 ghosts={ghosts}
+                snapId={motion.snapId}
+                shakeIds={motion.shakeIds}
                 interactive
                 onBlockClick={(s) => setPicking(s.courseNo)}
               />
@@ -159,6 +182,8 @@ export function Planner() {
                 order={plan.courseNos}
                 conflicts={conflicts}
                 days={[mobileDay]}
+                snapId={motion.snapId}
+                shakeIds={motion.shakeIds}
                 onBlockClick={(s) => setPicking(s.courseNo)}
                 interactive={false}
               />
@@ -176,7 +201,7 @@ export function Planner() {
 
       <DragOverlay dropAnimation={null}>
         {dragCourse ? (
-          <div className={`px-3 py-2 text-sm font-semibold outline-2 outline-ink ${colorFor(dragCourse, plan.courseNos).block}`}>
+          <div className={`anim-lift border-2 border-ink px-3 py-2 text-sm font-semibold ${colorFor(dragCourse, plan.courseNos).block}`}>
             <span className="font-mono font-bold">{dragCourse}</span> {titleOf(dragCourse)}
           </div>
         ) : null}

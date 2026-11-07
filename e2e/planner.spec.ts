@@ -66,7 +66,10 @@ test("place sections with the keyboard and see a clash", async ({ page }) => {
   await page.keyboard.press("Space");
 
   await expect(page.getByLabel("สรุปแผนนี้")).toContainText(/จุดที่ชน\s*[1-9]/);
-  await expect(page.getByText(/เวลาเรียนชน: 204101 กับ 206111 วันอังคาร 08:00–09:30/)).toBeVisible();
+  const clash = /เวลาเรียนชน: 204101 กับ 206111 วันอังคาร 08:00–09:30/;
+  // Alert bar above the timetable, and the full list in the clash panel.
+  await expect(page.getByRole("link", { name: clash })).toBeVisible();
+  await expect(page.getByRole("region", { name: "สิ่งที่ชนกัน" }).getByText(clash)).toBeVisible();
 });
 
 test("section picker places a course without dragging", async ({ page }) => {
@@ -84,4 +87,14 @@ test("workspace survives a reload", async ({ page }) => {
   await want(page, "208101");
   await page.reload();
   await expect(trayItem(page, "208101")).toBeVisible();
+});
+
+test("regulations drawer opens from the planner and closes with Escape", async ({ page }) => {
+  await loadDemo(page);
+  await page.getByRole("button", { name: "ถามระเบียบ" }).click();
+  const drawer = page.getByRole("dialog", { name: "ถามเรื่องระเบียบการศึกษา" });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByLabel("คำถาม")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
 });

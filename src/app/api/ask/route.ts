@@ -19,12 +19,13 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "พิมพ์คำถามอย่างน้อย 3 ตัวอักษร" }, { status: 400 });
 
   try {
-    const answer = await answerQuestion(parsed.data.question, getRetrieval(), {
-      strategy: RAG_STRATEGY,
-      threshold: RAG_THRESHOLD,
-      signal: RAG_SIGNAL,
-      retriever: RAG_RETRIEVER,
-      llm: getLlm(),
+    const opts = { strategy: RAG_STRATEGY, threshold: RAG_THRESHOLD, signal: RAG_SIGNAL, retriever: RAG_RETRIEVER };
+    const llm = getLlm();
+    // If the model is down or slow, fall back to extractive passages rather than failing the question.
+    const answer = await answerQuestion(parsed.data.question, getRetrieval(), { ...opts, llm }).catch((e) => {
+      if (!llm) throw e;
+      console.warn("LLM failed, answering extractively:", e instanceof Error ? e.message : e);
+      return answerQuestion(parsed.data.question, getRetrieval(), { ...opts, llm: null });
     });
     // Counts only: the question text is not stored.
     await db

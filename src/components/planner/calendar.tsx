@@ -18,6 +18,10 @@ type Props = {
   interactive?: boolean;
   compact?: boolean;
   onBlockClick?: (s: Section) => void;
+  /** Section just dropped: plays the snap once. */
+  snapId?: string | null;
+  /** Sections in a clash the user just created: shake once. */
+  shakeIds?: ReadonlySet<string>;
 };
 
 type Item = { section: Section; meeting: Meeting; index: number; day: Day };
@@ -26,7 +30,7 @@ const HOUR_PX = 56;
 const COMPACT_HOUR_PX = 22;
 
 export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
-  { sections, order, conflicts, days, ghosts = [], interactive = false, compact = false, onBlockClick },
+  { sections, order, conflicts, days, ghosts = [], interactive = false, compact = false, onBlockClick, snapId, shakeIds },
   ref,
 ) {
   const items = toItems(sections);
@@ -91,6 +95,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                     item={it}
                     color={colorFor(it.section.courseNo, order).block}
                     clash={clashed.has(it.section.id)}
+                    motion={shakeIds?.has(it.section.id) ? "shake" : snapId === it.section.id ? "snap" : null}
                     compact={compact}
                   />
                 );
@@ -131,11 +136,24 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
   );
 });
 
-function BlockView({ item, color, clash, compact }: { item: Item; color: string; clash: boolean; compact: boolean }) {
+function BlockView({
+  item,
+  color,
+  clash,
+  motion,
+  compact,
+}: {
+  item: Item;
+  color: string;
+  clash: boolean;
+  motion: "snap" | "shake" | null;
+  compact: boolean;
+}) {
   const { section: s, meeting: m } = item;
+  const anim = motion === "shake" ? "animate-clash-shake" : motion === "snap" ? "animate-snap" : "";
   return (
     <div
-      className={`anim-pop relative h-full overflow-hidden text-left ${color} ${
+      className={`${anim} relative h-full overflow-hidden text-left ${color} ${
         clash ? "outline-3 -outline-offset-3 outline-accent" : ""
       } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"}`}
     >

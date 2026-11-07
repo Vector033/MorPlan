@@ -42,7 +42,11 @@ test("ask answers with a citation and the official-notice line", async ({ page }
   // Scope to the answer card: the footer carries the same notice.
   const card = page.locator("ol li").first();
   await expect(card.getByText("ตรวจสอบกับประกาศทางการอีกครั้ง")).toBeVisible({ timeout: 90_000 });
-  await expect(card.getByRole("link", { name: /หน้า \d+/ }).first()).toBeVisible();
+  // Citation chips show document + page; opening one reveals the passage and the source link.
+  const chip = card.getByText(/^หน้า \d+$/).first();
+  await expect(chip).toBeVisible();
+  await chip.click();
+  await expect(card.getByRole("link", { name: "เปิดหน้าเอกสารต้นฉบับ" }).first()).toBeVisible();
 });
 
 test("ask says ไม่พบ for something the documents never cover", async ({ page }) => {

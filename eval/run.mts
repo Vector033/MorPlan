@@ -8,7 +8,7 @@ import { z } from "zod";
 import { answerQuestion } from "../src/lib/rag/answer";
 import { loadDocs, loadPages } from "../src/lib/rag/corpus";
 import { getEmbedder } from "../src/lib/rag/embed";
-import { getLlm } from "../src/lib/rag/llm";
+import { freeLlm, getLlm, type LlmProvider } from "../src/lib/rag/llm";
 import { PgDenseStore } from "../src/lib/rag/pg-store";
 import { Retrieval, type Signal } from "../src/lib/rag/retrieve";
 import { STRATEGIES, type Retriever, type Strategy } from "../src/lib/rag/types";
@@ -144,11 +144,33 @@ const bestAbstain = abstain
 // Lexical-only setup for hosts that can't run the embedding model (Vercel functions).
 const lexical = abstain.find((a) => a.strategy === best.strategy && a.retriever === "bm25")!;
 
-// End-to-end answers on the test split with the chosen setup (LLM when a key is set).
-const llm = getLlm();
+// End-to-end answers on the test split with the chosen setup.
+// EVAL_LLM_MODELS (comma list of FreeLLMAPI model ids) compares answer models on the
+// hybrid setup, all graded by one fixed judge (EVAL_JUDGE_MODEL) so no model grades
+// itself. Without it, the base run uses getLlm() as both answerer and judge.
+const compareModels = (process.env.EVAL_LLM_MODELS ?? "").split(",").map((m) => m.trim()).filter(Boolean);
+const judgeModel = process.env.EVAL_JUDGE_MODEL || "claude-sonnet-4-5";
+const baseLlm = compareModels.length ? null : getLlm();
 const testQs = questions.filter((q) => split(q.id) === "test");
 const judge = z.object({ supported: z.boolean(), correct: z.boolean() });
-async function endToEnd(cfg: { retriever: Retriever; signal: Signal; threshold: number }) {
+
+/** Free tiers rate-limit and time out; retry a few times before counting an error. */
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+    }
+  }
+}
+
+async function endToEnd(
+  cfg: { retriever: Retriever; signal: Signal; threshold: number },
+  llm: LlmProvider | null,
+  grader: LlmProvider | null = llm,
+) {
   const lat: number[] = [];
   let cost = 0;
   let correctStatus = 0;
@@ -156,41 +178,62 @@ async function endToEnd(cfg: { retriever: Retriever; signal: Signal; threshold: 
   let faithful = 0;
   let correct = 0;
   let judged = 0;
+  let errors = 0;
   for (const q of testQs) {
-    const a = await answerQuestion(q.question, retrieval, { strategy: best.strategy, ...cfg, llm });
+    let a;
+    try {
+      a = await withRetry(() => answerQuestion(q.question, retrieval, { strategy: best.strategy, ...cfg, llm }));
+    } catch (e) {
+      errors++;
+      console.warn(`[${llm?.name}] ${q.id}: ${String(e).slice(0, 120)}`);
+      continue;
+    }
     lat.push(a.latencyMs);
     cost += a.costUsd;
     if ((a.status === "answered") === q.answerable) correctStatus++;
     if (q.answerable && a.citations.some((c) => c.docId === q.docId && q.pages.includes(c.page))) citedGold++;
-    if (llm && q.answerable && a.status === "answered") {
+    if (llm && grader && q.answerable && a.status === "answered") {
       const passages = a.citations.map((c) => c.snippet).join("\n");
-      const r = await llm.json({
-        system:
-          "You grade a Thai RAG answer. supported: every claim in ANSWER is stated in PASSAGES. correct: ANSWER agrees with GOLD. Reply JSON.",
-        prompt: `QUESTION: ${q.question}\nGOLD: ${q.answer}\nANSWER: ${a.text}\nPASSAGES:\n${passages}`,
-        schema: judge,
-      });
-      cost += llm.cost(r.inputTokens, r.outputTokens);
-      judged++;
-      if (r.data.supported) faithful++;
-      if (r.data.correct) correct++;
+      try {
+        const r = await withRetry(() =>
+          grader.json({
+            system:
+              "You grade a Thai RAG answer. supported: every claim in ANSWER is stated in PASSAGES. correct: ANSWER agrees with GOLD. Reply JSON.",
+            prompt: `QUESTION: ${q.question}\nGOLD: ${q.answer}\nANSWER: ${a.text}\nPASSAGES:\n${passages}`,
+            schema: judge,
+          }),
+        );
+        cost += grader.cost(r.inputTokens, r.outputTokens);
+        judged++;
+        if (r.data.supported) faithful++;
+        if (r.data.correct) correct++;
+      } catch (e) {
+        console.warn(`[judge] ${q.id}: ${String(e).slice(0, 120)}`);
+      }
     }
   }
   const nAns = testQs.filter((q) => q.answerable).length;
   return {
     setup: `${best.strategy} + ${cfg.retriever}, ${cfg.signal} >= ${cfg.threshold.toFixed(3)}`,
-    mode: llm ? llm.name : "extractive (no GEMINI_API_KEY)",
+    mode: llm ? llm.name : "extractive (no LLM)",
+    ...(llm && grader ? { judge: grader.name } : {}),
     questions: testQs.length,
     statusAccuracy: correctStatus / testQs.length,
     citesGoldPage: citedGold / nAns,
-    ...(llm ? { faithfulness: faithful / Math.max(1, judged), correctness: correct / Math.max(1, judged) } : {}),
+    ...(llm ? { faithfulness: faithful / Math.max(1, judged), correctness: correct / Math.max(1, judged), judged } : {}),
+    ...(errors ? { errors } : {}),
     p50ms: percentile(lat, 50),
     p95ms: percentile(lat, 95),
     costPerQuestionUsd: cost / testQs.length,
   } as Record<string, number | string>;
 }
-const e2e = await endToEnd({ retriever: "hybrid", signal: bestAbstain.signal, threshold: bestAbstain.threshold });
-const e2eLexical = await endToEnd({ retriever: "bm25", signal: "coverage", threshold: lexical.threshold });
+const hybridCfg = { retriever: "hybrid" as const, signal: bestAbstain.signal, threshold: bestAbstain.threshold };
+const e2e = await endToEnd(hybridCfg, baseLlm);
+const e2eLexical = await endToEnd({ retriever: "bm25", signal: "coverage", threshold: lexical.threshold }, baseLlm);
+const grader = compareModels.length ? freeLlm(judgeModel) : null;
+if (compareModels.length && !grader) throw new Error("EVAL_LLM_MODELS needs FREELLMAPI_KEY in .env.local");
+// Models run in parallel (different upstream providers); questions run in order within each.
+const llmCompare = await Promise.all(compareModels.map((m) => endToEnd(hybridCfg, freeLlm(m), grader)));
 
 await sql.end();
 
@@ -230,6 +273,21 @@ const md = [
   ``,
   `## End to end (test split)`,
   ``,
+  ...(llmCompare.length
+    ? [
+        `## Answer models (test split, ${e2e.setup}; judge \`${judgeModel}\`)`,
+        ``,
+        `| model | answer vs "ไม่พบ" | cites gold page | faithfulness | correctness | judged | errors | p50 ms | p95 ms |`,
+        `|---|---|---|---|---|---|---|---|---|`,
+        ...llmCompare.map(
+          (r) =>
+            `| ${r.mode} | ${pct(+r.statusAccuracy)} | ${pct(+r.citesGoldPage)} | ${pct(+r.faithfulness)} | ${pct(+r.correctness)} | ${r.judged} | ${r.errors ?? 0} | ${(+r.p50ms).toFixed(0)} | ${(+r.p95ms).toFixed(0)} |`,
+        ),
+        ``,
+        `faithfulness: every claim is in the cited passages. correctness: agrees with the gold answer. Both over judged answered questions.`,
+        ``,
+      ]
+    : []),
   ...[e2e, e2eLexical].flatMap((r) => [
     ...Object.entries(r).map(
       ([k, v]) =>
@@ -252,6 +310,7 @@ writeFileSync(
     lexical: { strategy: best.strategy, signal: "coverage", threshold: lexical.threshold },
     e2e,
     e2eLexical,
+    ...(llmCompare.length ? { judge: judgeModel, llmCompare } : {}),
     misses,
   }, null, 2) + "\n",
 );

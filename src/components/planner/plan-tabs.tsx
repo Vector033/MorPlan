@@ -1,24 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { MAX_PLANS } from "@/lib/workspace/reducer";
 import { useWorkspace } from "./workspace-context";
 
 export function PlanTabs() {
   const { ws, dispatch, plan, sync } = useWorkspace();
   const [renaming, setRenaming] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLSpanElement>(null);
+
+  // Slide the black bar under the active tab: transform only (translate + scaleX of a full-width bar).
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const bar = barRef.current;
+    if (!list || !bar) return;
+    const place = () => {
+      const tab = list.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+      if (!tab || !list.offsetWidth) return;
+      bar.style.transform = `translateX(${tab.offsetLeft}px) scaleX(${tab.offsetWidth / list.offsetWidth})`;
+    };
+    place();
+    // Enable the transition after the first placement so it never slides in from the left edge.
+    const id = requestAnimationFrame(() => bar.setAttribute("data-ready", ""));
+    const ro = new ResizeObserver(place);
+    ro.observe(list);
+    return () => {
+      cancelAnimationFrame(id);
+      ro.disconnect();
+    };
+  }, [plan.id, ws.plans]);
+
+  function switchTo(id: string) {
+    if (id === plan.id) return;
+    const go = () => dispatch({ type: "setActive", id });
+    // Cross-fade the timetable where View Transitions exist; plain swap elsewhere.
+    if (typeof document.startViewTransition === "function") document.startViewTransition(() => flushSync(go));
+    else go();
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div role="tablist" aria-label="แผนตารางเรียน" className="flex flex-wrap border border-ink">
+      <div ref={listRef} role="tablist" aria-label="แผนตารางเรียน" className="relative flex flex-wrap border border-ink">
         {ws.plans.map((p) => (
           <button
             key={p.id}
             role="tab"
             aria-selected={p.id === plan.id}
-            onClick={() => dispatch({ type: "setActive", id: p.id })}
-            className={`border-r border-ink px-3 py-1.5 text-sm ${
-              p.id === plan.id ? "bg-ink font-semibold text-white" : "bg-white text-ink hover:bg-[#f4f4f4]"
+            onClick={() => switchTo(p.id)}
+            className={`border-r border-ink px-3 pt-1.5 pb-2 text-sm ${
+              p.id === plan.id ? "font-bold text-ink" : "text-muted hover:bg-[#f4f4f4] hover:text-ink"
             }`}
           >
             {p.name}
@@ -26,13 +58,14 @@ export function PlanTabs() {
         ))}
         {ws.plans.length < MAX_PLANS && (
           <button
-            className="px-3 py-1.5 text-sm text-muted hover:bg-[#f4f4f4] hover:text-ink"
+            className="px-3 pt-1.5 pb-2 text-sm text-muted hover:bg-[#f4f4f4] hover:text-ink"
             onClick={() => dispatch({ type: "addPlan", copyFrom: plan.id })}
             title="สร้างแผนใหม่โดยคัดลอกแผนนี้"
           >
             + แผนใหม่
           </button>
         )}
+        <span ref={barRef} className="tab-indicator pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-ink" aria-hidden />
       </div>
 
       {renaming ? (

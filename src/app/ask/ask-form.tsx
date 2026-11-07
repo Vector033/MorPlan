@@ -12,7 +12,8 @@ const EXAMPLES = [
 
 type Turn = { question: string; answer?: Answer; error?: string };
 
-export function AskForm() {
+/** The question box and answers. `compact` is the slide-over drawer on the planner. */
+export function AskForm({ compact = false }: { compact?: boolean }) {
   const [q, setQ] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -47,12 +48,12 @@ export function AskForm() {
           ask(q);
         }}
       >
-        <label htmlFor="ask-q" className="sr-only">
+        <label htmlFor={compact ? "ask-q-drawer" : "ask-q"} className="sr-only">
           คำถาม
         </label>
         <textarea
-          id="ask-q"
-          className="min-h-24 w-full resize-y border-0 bg-white p-1 text-lg outline-none placeholder:text-muted"
+          id={compact ? "ask-q-drawer" : "ask-q"}
+          className={`w-full resize-y border-0 bg-white p-1 outline-none placeholder:text-muted ${compact ? "min-h-20 text-base" : "min-h-24 text-lg"}`}
           placeholder="เช่น ถอนวิชาได้ถึงวันไหน"
           value={q}
           maxLength={500}
@@ -81,8 +82,13 @@ export function AskForm() {
       <ol className="flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (
           <li key={turns.length - i} className="anim-rise border-t-4 border-ink pt-4">
-            <p className="text-xl font-bold">{t.question}</p>
-            {!t.answer && !t.error && <p className="mt-3 animate-pulse text-sm text-muted">กำลังค้นในเอกสาร…</p>}
+            <p className={`font-bold ${compact ? "text-lg" : "text-xl"}`}>{t.question}</p>
+            {!t.answer && !t.error && (
+              <p className="mt-3 text-sm text-muted">
+                กำลังค้นในเอกสาร
+                <span className="animate-cursor ml-1 inline-block h-[1.1em] w-[0.5em] translate-y-[0.2em] bg-ink" aria-hidden />
+              </p>
+            )}
             {t.error && (
               <p className="mt-3 text-sm text-danger" role="alert">
                 {t.error}
@@ -108,13 +114,33 @@ function AnswerView({ a }: { a: Answer }) {
       )}
 
       {a.citations.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-1.5" aria-label="แหล่งอ้างอิง">
           {a.citations.map((c, i) => (
-            <li key={`${c.docId}:${c.page}`} className="anim-rise border border-ink p-3" style={{ "--i": i + 1 } as React.CSSProperties}>
-              <a href={c.url} target="_blank" rel="noreferrer" className="font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent">
-                [{c.n}] {c.title} · หน้า {c.page}
-              </a>
-              <blockquote className="mt-2 text-xs text-muted">{c.snippet}</blockquote>
+            <li key={`${c.docId}:${c.page}`} className="anim-rise" style={{ "--i": i + 1 } as React.CSSProperties}>
+              {/* Citation chip: number, document, page. Opens to the quoted passage. */}
+              <details className="group border border-ink open:border-2">
+                <summary className="flex cursor-pointer list-none items-stretch text-xs hover:bg-[#f4f4f4] [&::-webkit-details-marker]:hidden">
+                  <span className="grid w-7 shrink-0 place-items-center bg-ink font-mono font-bold text-white">{c.n}</span>
+                  <span className="min-w-0 flex-1 truncate px-2 py-1.5 font-semibold" title={c.title}>
+                    {c.title}
+                  </span>
+                  <span className="shrink-0 border-l border-ink px-2 py-1.5 font-mono">หน้า {c.page}</span>
+                  <span className="grid w-7 shrink-0 place-items-center border-l border-ink group-open:rotate-45" aria-hidden>
+                    +
+                  </span>
+                </summary>
+                <div className="border-t border-ink p-3">
+                  <blockquote className="text-xs text-muted">{c.snippet}</blockquote>
+                  <a
+                    href={c.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-xs font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent"
+                  >
+                    เปิดหน้าเอกสารต้นฉบับ
+                  </a>
+                </div>
+              </details>
             </li>
           ))}
         </ul>
