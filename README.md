@@ -24,6 +24,7 @@ Screenshots are taken from the live site with the built-in demo data: `npx tsx s
 - **Clash checks.** Class meetings (lecture and lab are checked separately), midterms, finals, and the same course placed twice are all flagged. Exam slots come from the Registration Office's *public* exam timetable.
 - **Plans A–E.** Compare them side by side: credits, clashes, free days, earliest and latest class. Share a read-only link, or export `.ics` (weekly series that skips midterm weeks, plus exam events) or a PNG.
 - **Rule Q&A.** Answers questions about the undergraduate regulations, exam and discipline rules, fees, the 2569 academic calendar and the Registration Office's guides. Every answer shows the document title and page with a link to the official PDF. If the answer isn't in the documents it says **"ไม่พบ"**, and every answer ends with "ตรวจสอบกับประกาศทางการอีกครั้ง".
+- **Account (optional).** Sign in with email or Google to open the same plans on every device. `/account` lets you set a display name, see your sign-in methods, change or set a password (the current one is asked first, and other devices are signed out), sign out everywhere, and delete the account with all saved plans. Every password field has a show/hide button.
 
 ## Where the data comes from (and what MorPlan refuses to do)
 
@@ -66,6 +67,7 @@ Known limitation: the central regulations are scanned images, and Tesseract misr
 ## Security and privacy
 
 - **No reg/CMU credentials, ever.** Section data is pasted by the student and parsed in the browser.
+- **Google sign-in** uses Supabase OAuth with PKCE; `/auth/callback` only redirects to same-site paths. The button appears when `AUTH_GOOGLE_ENABLED=true`, after the Google provider is set up in Supabase (Google Cloud OAuth client, redirect URI `https://<project>.supabase.co/auth/v1/callback`).
 - **CSP with per-request nonces** (`script-src 'nonce-…' 'strict-dynamic'`, `frame-ancestors 'none'`, `object-src 'none'`), plus nosniff, `X-Frame-Options: DENY`, strict referrer and permissions policies, HSTS, no `X-Powered-By`, and `no-store` on API responses. See `src/proxy.ts` and `next.config.ts`.
 - **CSRF:** every state-changing API requires same-origin JSON (which forces a CORS preflight that is never granted). Sign-out checks Origin, and server actions are origin-checked by Next.js.
 - **Rate limits in Postgres** for ask, share, events, workspace sync and sign-in/sign-up. The keys are salted SHA-256 hashes, so no IP address is stored.

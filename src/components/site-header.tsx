@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { initialOf } from "@/lib/account";
 import { getOptionalUser } from "@/lib/auth";
 import { NavLinks } from "./nav-links";
 
@@ -20,12 +21,16 @@ export async function SiteHeader() {
           </div>
           <div className="ml-auto flex items-center gap-2 text-sm sm:ml-0">
             {user ? (
-              <form action="/auth/signout" method="post" className="flex items-center gap-2">
-                <span className="hidden max-w-40 truncate text-muted md:inline" title={user.email}>
-                  {user.email}
+              <Link
+                href="/account"
+                className="flex items-center gap-2 rounded-full py-1 pr-3 pl-1 hover:bg-canvas"
+                aria-label={`ตั้งค่าบัญชี (${user.email})`}
+              >
+                <span className="grid size-8 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent" aria-hidden>
+                  {initialOf(user.name ?? "", user.email)}
                 </span>
-                <button className="btn-ghost whitespace-nowrap">ออกจากระบบ</button>
-              </form>
+                <span className="hidden max-w-36 truncate font-medium md:inline">{user.name || "บัญชี"}</span>
+              </Link>
             ) : (
               <Link href="/login" className="btn whitespace-nowrap">
                 เข้าสู่ระบบ

@@ -365,3 +365,9 @@ dialog.drawer[open]::backdrop {
 .clash-hatch {
   background-image: repeating-linear-gradient(-45deg, rgb(210 31 23 / 0.45) 0 2px, transparent 2px 7px);
 }
+
+/* Edge/IE draw their own reveal button; ours is the one that works everywhere. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

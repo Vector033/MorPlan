@@ -14,6 +14,7 @@ export const LIMITS = {
   workspace: { bucket: "workspace", limit: 240, windowSec: 3600 },
   signin: { bucket: "signin", limit: 10, windowSec: 600 },
   signup: { bucket: "signup", limit: 5, windowSec: 3600 },
+  account: { bucket: "account", limit: 10, windowSec: 600 },
 } satisfies Record<string, Limit>;
 
 /**
