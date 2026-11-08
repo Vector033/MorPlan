@@ -42,7 +42,7 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <form
-        className="flex flex-col gap-3 border-2 border-ink p-3"
+        className="card flex flex-col gap-3 p-4"
         onSubmit={(e) => {
           e.preventDefault();
           ask(q);
@@ -68,7 +68,7 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
             {EXAMPLES.map((ex) => (
-              <button key={ex} type="button" className="border border-line px-2.5 py-1 text-xs text-ink hover:border-ink hover:bg-ink hover:text-white" onClick={() => ask(ex)}>
+              <button key={ex} type="button" className="rounded-full border border-line bg-white px-3 py-1 text-xs text-ink hover:border-accent/40 hover:bg-accent-soft" onClick={() => ask(ex)}>
                 {ex}
               </button>
             ))}
@@ -81,12 +81,12 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
 
       <ol className="flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (
-          <li key={turns.length - i} className="anim-rise border-t-4 border-ink pt-4">
+          <li key={turns.length - i} className="anim-rise border-t border-line pt-4">
             <p className={`font-bold ${compact ? "text-lg" : "text-xl"}`}>{t.question}</p>
             {!t.answer && !t.error && (
               <p className="mt-3 text-sm text-muted">
                 กำลังค้นในเอกสาร
-                <span className="animate-cursor ml-1 inline-block h-[1.1em] w-[0.5em] translate-y-[0.2em] bg-ink" aria-hidden />
+                <span className="animate-cursor ml-1 inline-block h-[1.1em] w-[0.5em] translate-y-[0.2em] rounded-sm bg-accent" aria-hidden />
               </p>
             )}
             {t.error && (
@@ -106,7 +106,7 @@ function AnswerView({ a }: { a: Answer }) {
   return (
     <div className="anim-rise mt-3 flex flex-col gap-3 text-sm">
       {a.status === "not_found" ? (
-        <p className="bg-[#f4f4f4] p-4 text-base">
+        <p className="rounded-xl bg-canvas p-4 text-base">
           <strong>ไม่พบ</strong> ในเอกสารที่ MorPlan มี ลองถามด้วยคำอื่น หรือสอบถามสำนักทะเบียนฯ / คณะโดยตรง
         </p>
       ) : (
@@ -118,24 +118,24 @@ function AnswerView({ a }: { a: Answer }) {
           {a.citations.map((c, i) => (
             <li key={`${c.docId}:${c.page}`} className="anim-rise" style={{ "--i": i + 1 } as React.CSSProperties}>
               {/* Citation chip: number, document, page. Opens to the quoted passage. */}
-              <details className="group border border-ink open:border-2">
-                <summary className="flex cursor-pointer list-none items-stretch text-xs hover:bg-[#f4f4f4] [&::-webkit-details-marker]:hidden">
-                  <span className="grid w-7 shrink-0 place-items-center bg-ink font-mono font-bold text-white">{c.n}</span>
+              <details className="group overflow-hidden rounded-xl border border-line bg-white open:border-accent/40">
+                <summary className="flex cursor-pointer list-none items-stretch text-xs hover:bg-canvas [&::-webkit-details-marker]:hidden">
+                  <span className="grid w-7 shrink-0 place-items-center bg-accent-soft font-mono font-bold text-accent">{c.n}</span>
                   <span className="min-w-0 flex-1 truncate px-2 py-1.5 font-semibold" title={c.title}>
                     {c.title}
                   </span>
-                  <span className="shrink-0 border-l border-ink px-2 py-1.5 font-mono">หน้า {c.page}</span>
-                  <span className="grid w-7 shrink-0 place-items-center border-l border-ink group-open:rotate-45" aria-hidden>
+                  <span className="shrink-0 border-l border-line px-2 py-1.5 font-mono">หน้า {c.page}</span>
+                  <span className="grid w-7 shrink-0 place-items-center border-l border-line group-open:rotate-45" aria-hidden>
                     +
                   </span>
                 </summary>
-                <div className="border-t border-ink p-3">
+                <div className="border-t border-line p-3">
                   <blockquote className="text-xs text-muted">{c.snippet}</blockquote>
                   <a
                     href={c.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-block text-xs font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent"
+                    className="mt-2 inline-block text-xs link font-semibold"
                   >
                     เปิดหน้าเอกสารต้นฉบับ
                   </a>
@@ -146,7 +146,7 @@ function AnswerView({ a }: { a: Answer }) {
         </ul>
       )}
 
-      <p className="border-t-2 border-accent bg-accent-soft px-3 py-2 text-xs text-ink">
+      <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs text-ink">
         <strong>{a.notice}</strong> ข้อความมาจากการแปลงเอกสารด้วย OCR อาจมีตัวเลขหรือคำผิด ดูหน้าเอกสารต้นฉบับจากลิงก์ด้านบน
       </p>
       <p className="text-[11px] text-muted">

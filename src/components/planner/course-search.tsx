@@ -43,13 +43,13 @@ export function CourseSearch() {
         autoComplete="off"
       />
       </div>
-      <ul className="max-h-[30vh] divide-y divide-line overflow-y-auto border-t border-ink lg:max-h-[38vh]" aria-live="polite">
+      <ul className="max-h-[30vh] divide-y divide-line overflow-y-auto border-t border-line lg:max-h-[38vh]" aria-live="polite">
         {results.length === 0 && <li className="p-3 text-sm text-muted">ไม่พบวิชาที่ตรงกับ “{q}”</li>}
         {results.slice(0, 60).map((c) => {
           const wanted = plan.courseNos.includes(c.courseNo);
           const expanded = open === c.courseNo;
           return (
-            <li key={c.courseNo} className="hover:bg-[#f4f4f4]">
+            <li key={c.courseNo} className="hover:bg-canvas">
               <div className="flex items-center gap-2 px-3 py-2">
                 <button
                   type="button"

@@ -14,7 +14,7 @@ export function AskDrawer() {
       </button>
       <dialog
         ref={ref}
-        className="drawer border-l-2 border-ink bg-white p-0 text-ink"
+        className="drawer rounded-l-2xl border-l border-line bg-white p-0 text-ink shadow-lg"
         aria-labelledby="ask-drawer-h"
         // Click on the backdrop (the dialog box itself, outside the panel) closes it.
         onClick={(e) => e.target === e.currentTarget && ref.current?.close()}
@@ -24,7 +24,7 @@ export function AskDrawer() {
             <h2 id="ask-drawer-h">ถามเรื่องระเบียบการศึกษา</h2>
             <button
               type="button"
-              className="px-2 py-0.5 text-white hover:bg-white hover:text-ink"
+              className="btn-ghost px-2.5"
               onClick={() => ref.current?.close()}
               aria-label="ปิด"
             >

@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 /*
- * Swiss / Vignelli system: black ink on white, one red accent (brand + clashes),
- * transit-line colours for courses, square corners, hairlines, no shadows.
+ * Soft campus planner: the timetable is the hero. Pastel course blocks on a calm
+ * lavender canvas, white rounded cards with a hairline and a low shadow, one
+ * magenta action colour, and red reserved for clashes.
  */
 @theme inline {
   --font-sans: var(--font-anuphan), "Helvetica Neue", Arial, sans-serif;
@@ -10,22 +11,26 @@
   --font-mono: var(--font-anuphan), "Helvetica Neue", Arial, sans-serif;
 
   --color-paper: #ffffff;
-  --color-ink: #111111;
-  --color-muted: #6f6f6f;
-  --color-line: #d9d9d9;
-  --color-rule: #111111;
-  --color-accent: #e2231a;
-  --color-accent-soft: #fdeceb;
+  --color-canvas: #f4f3f9;
+  --color-ink: #1c1a2b;
+  --color-muted: #66637a;
+  --color-line: #e6e4ee;
+  --color-rule: #1c1a2b;
+  /* Actions, selection, links. White on it is 7.9:1. */
+  --color-accent: #c0179f;
+  --color-accent-strong: #9e1083;
+  --color-accent-soft: #fbe9f6;
+  /* Clashes only. */
   --color-danger: #d21f17;
   --color-danger-soft: #fdeceb;
 
-  --radius-xs: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius: 0px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius: 10px;
 
   /*
    * Type scale by role. Thai stacks vowels and tone marks above and below the
@@ -45,11 +50,12 @@
   --text-sm--line-height: 1.6;
   --text-xs--line-height: 1.5;
 
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-2xl: none;
+  /* Cards sit one step above the canvas; popovers and the bottom nav two. */
+  --shadow-sm: 0 1px 2px rgb(28 26 43 / 0.05);
+  --shadow-md: 0 1px 2px rgb(28 26 43 / 0.04), 0 8px 24px -12px rgb(28 26 43 / 0.14);
+  --shadow-lg: 0 2px 6px rgb(28 26 43 / 0.05), 0 18px 44px -16px rgb(28 26 43 / 0.24);
+  --shadow-xl: 0 2px 6px rgb(28 26 43 / 0.05), 0 18px 44px -16px rgb(28 26 43 / 0.24);
+  --shadow-2xl: 0 2px 6px rgb(28 26 43 / 0.05), 0 18px 44px -16px rgb(28 26 43 / 0.24);
 }
 
 html {
@@ -57,7 +63,7 @@ html {
 }
 
 body {
-  background: var(--color-paper);
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.65;
@@ -85,8 +91,8 @@ a {
 }
 
 ::selection {
-  background: var(--color-ink);
-  color: #fff;
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
 }
 
 :focus-visible {
@@ -96,37 +102,43 @@ a {
 
 @layer components {
   .btn {
-    @apply inline-flex min-h-9 items-center justify-center gap-1.5 border border-ink bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-white disabled:pointer-events-none disabled:border-line disabled:text-muted;
+    @apply inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium text-ink shadow-sm hover:border-ink/25 hover:bg-canvas disabled:pointer-events-none disabled:text-muted disabled:shadow-none;
   }
   .btn-primary {
-    @apply inline-flex min-h-9 items-center justify-center gap-1.5 border border-ink bg-ink px-4 py-2 text-sm font-semibold text-white hover:border-accent hover:bg-accent disabled:pointer-events-none disabled:border-line disabled:bg-line disabled:text-muted;
+    @apply inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-accent-strong disabled:pointer-events-none disabled:bg-line disabled:text-muted disabled:shadow-none;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-1.5 px-2 py-1.5 text-sm text-muted underline-offset-4 hover:text-ink hover:underline;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-muted hover:bg-canvas hover:text-ink;
   }
   .input {
-    @apply w-full border border-ink bg-white px-3 py-2 text-base outline-none sm:text-sm placeholder:text-muted focus:border-accent focus:outline-2 focus:outline-offset-0 focus:outline-accent;
+    @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-base outline-none sm:text-sm placeholder:text-muted focus:border-accent focus:ring-4 focus:ring-accent/15;
   }
   .label {
     @apply mb-1.5 block text-xs font-semibold text-ink;
   }
   .card {
-    @apply border border-ink bg-white;
+    @apply rounded-2xl border border-line bg-white shadow-md;
   }
-  /* Section header: white type on a solid black bar (Swiss signage). */
+  /* Card heading row: title left, a quiet count or action right. */
   .bar {
-    @apply flex items-center justify-between gap-2 bg-ink px-3 py-2 text-sm font-semibold text-white;
+    @apply flex items-center justify-between gap-2 px-4 pt-4 pb-2 text-base font-semibold text-ink;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full bg-canvas px-2.5 py-0.5 font-mono text-xs font-medium text-muted;
   }
   .eyebrow {
     @apply mb-1 block text-xs font-semibold text-muted;
   }
   .kbd {
-    @apply border border-line bg-white px-1 font-mono text-[11px] text-ink;
+    @apply rounded-md border border-line bg-canvas px-1.5 font-mono text-[11px] text-ink;
+  }
+  .link {
+    @apply font-medium text-accent underline decoration-accent/30 decoration-2 underline-offset-4 hover:decoration-accent;
   }
 }
 
 /*
- * Motion. Swiss signage moves little and crisply: short ease-out entrances on
+ * Motion. Motion stays small and crisp: short ease-out entrances on
  * the thing that just changed, colour-only hovers, nothing on data or on
  * keyboard-driven repeats. Under reduced motion every transform is dropped and
  * only opacity/colour remain.
@@ -152,10 +164,6 @@ a {
 .btn:active,
 .btn-primary:active {
   transform: scale(0.97);
-}
-
-.bar {
-  transition: background-color 200ms ease;
 }
 
 /* A section just placed or swapped onto the calendar. */
@@ -256,7 +264,7 @@ dialog.anim-modal[open]::backdrop {
   }
 }
 
-/* Sliding black bar under the active plan tab. */
+/* Sliding magenta bar under the active plan tab. */
 .tab-indicator {
   transform-origin: left;
 }
@@ -303,7 +311,7 @@ dialog.drawer::backdrop {
     display var(--dur-drawer) allow-discrete;
 }
 dialog.drawer[open]::backdrop {
-  background-color: rgb(17 17 17 / 0.3);
+  background-color: rgb(28 26 43 / 0.28);
   backdrop-filter: blur(3px);
   @starting-style {
     background-color: transparent;
@@ -355,5 +363,5 @@ dialog.drawer[open]::backdrop {
 
 /* Hatched overlay that marks the overlapping part of two clashing classes. */
 .clash-hatch {
-  background-image: repeating-linear-gradient(-45deg, rgb(226 35 26 / 0.55) 0 2px, transparent 2px 7px);
+  background-image: repeating-linear-gradient(-45deg, rgb(210 31 23 / 0.45) 0 2px, transparent 2px 7px);
 }

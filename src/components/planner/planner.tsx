@@ -110,7 +110,7 @@ export function Planner() {
         </aside>
 
         <main className="flex min-w-0 flex-col gap-4">
-          <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b-4 border-ink pb-4">
+          <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2">
             <div>
               <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
               <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
@@ -134,15 +134,15 @@ export function Planner() {
             </div>
           </div>
 
-          <div className="grid grid-cols-5 border border-ink md:hidden" role="tablist" aria-label="เลือกวัน">
+          <div className="grid grid-cols-5 gap-1.5 md:hidden" role="tablist" aria-label="เลือกวัน">
             {days.map((d) => (
               <button
                 key={d}
                 role="tab"
                 aria-selected={mobileDay === d}
                 onClick={() => setMobileDay(d)}
-                className={`border-l border-ink py-2 text-sm font-semibold first:border-l-0 ${
-                  mobileDay === d ? "bg-ink text-white" : "bg-white text-ink"
+                className={`rounded-full py-2 text-sm font-semibold ${
+                  mobileDay === d ? "bg-accent text-white shadow-sm" : "border border-line bg-white text-ink"
                 }`}
               >
                 {DAY_TH_SHORT[d]}
@@ -154,11 +154,11 @@ export function Planner() {
             // Top-of-timetable alert: the first clash in words; the full list is in the panel below.
             <a
               href="#clash-h"
-              className="anim-rise flex items-center gap-3 bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-danger"
+              className="anim-rise flex items-center gap-3 rounded-2xl border border-danger/25 bg-danger-soft px-3 py-2.5 text-sm font-semibold text-danger hover:border-danger/50"
             >
-              <span className="shrink-0 bg-white px-1.5 font-mono text-xs font-bold text-accent">ชน {conflicts.length}</span>
+              <span className="shrink-0 rounded-full bg-danger px-2 py-0.5 font-mono text-xs font-bold text-white">ชน {conflicts.length}</span>
               <span className="min-w-0 flex-1 truncate">{conflictText(conflicts[0], byId)}</span>
-              {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-white/85">ดูทั้งหมด ↓</span>}
+              {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-danger/80">ดูทั้งหมด ↓</span>}
             </a>
           )}
 
@@ -201,7 +201,7 @@ export function Planner() {
 
       <DragOverlay dropAnimation={null}>
         {dragCourse ? (
-          <div className={`anim-lift border-2 border-ink px-3 py-2 text-sm font-semibold ${colorFor(dragCourse, plan.courseNos).block}`}>
+          <div className={`anim-lift rounded-xl px-3 py-2 text-sm font-semibold shadow-lg ring-2 ring-accent ${colorFor(dragCourse, plan.courseNos).block}`}>
             <span className="font-mono font-bold">{dragCourse}</span> {titleOf(dragCourse)}
           </div>
         ) : null}
@@ -216,7 +216,7 @@ function Stat({ value, label, alert = false }: { value: number; label: string; a
   return (
     <div className="flex flex-col-reverse">
       <dt className={`mt-1.5 text-xs font-semibold ${alert ? "text-danger" : "text-muted"}`}>{label}</dt>
-      <dd className={`font-mono text-title leading-none font-bold sm:text-display ${alert ? "text-accent" : ""}`}>{value}</dd>
+      <dd className={`font-mono text-title leading-none font-bold sm:text-display ${alert ? "text-danger" : ""}`}>{value}</dd>
     </div>
   );
 }
@@ -250,11 +250,11 @@ function Tray({
     <section
       ref={setNodeRef}
       aria-label="วิชาที่จะลง"
-      className={`card ${dragging ? "outline-2 outline-offset-2 outline-ink outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
+      className={`card ${dragging ? "outline-2 outline-offset-2 outline-accent outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
     >
       <h2 className="bar">
         วิชาที่จะลง
-        <span className="font-mono text-xs font-medium text-white/70">{courseNos.length} วิชา</span>
+        <span className="chip">{courseNos.length} วิชา</span>
       </h2>
       {courseNos.length === 0 ? (
         <p className="p-3 text-sm text-muted">ค้นหาแล้วกด “เพิ่ม” วิชาที่อยากลง แล้วลากมาวางบนตาราง</p>
@@ -299,7 +299,7 @@ function TrayItem({
   });
   const color = colorFor(courseNo, order);
   return (
-    <li className={`flex items-center gap-1 bg-white px-2 py-2 hover:bg-[#f4f4f4] ${isDragging ? "opacity-30" : ""}`}>
+    <li className={`flex items-center gap-1 bg-white px-2 py-2 hover:bg-canvas ${isDragging ? "opacity-30" : ""}`}>
       <button
         ref={setNodeRef}
         type="button"
@@ -331,7 +331,7 @@ function MobileDayList({ day, sections, onPick }: { day: Day; sections: Section[
   const tba = sections.filter((s) => s.meetings.every((m) => m.days.length === 0));
   if (sections.some((s) => s.meetings.some((m) => m.days.includes(day))) && tba.length === 0) return null;
   return (
-    <div className="border-t border-ink p-3 text-sm text-muted">
+    <div className="border-t border-line p-3 text-sm text-muted">
       {tba.length > 0 ? (
         <p>
           ไม่มีเวลาเรียนในตาราง (TBA):{" "}

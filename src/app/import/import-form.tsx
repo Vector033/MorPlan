@@ -74,7 +74,7 @@ export function ImportForm() {
             <strong>{new Set(result.sections.map((s) => s.courseNo)).size}</strong> วิชา
           </p>
           {result.warnings.length > 0 && (
-            <details className="border-t-2 border-accent bg-accent-soft p-3 text-sm text-ink" open={result.sections.length === 0}>
+            <details className="rounded-xl bg-accent-soft p-3 text-sm text-ink" open={result.sections.length === 0}>
               <summary className="cursor-pointer font-medium">อ่านไม่ได้ {result.warnings.length} บรรทัด</summary>
               <ul className="mt-2 list-disc pl-5 text-xs">
                 {result.warnings.slice(0, 30).map((w, i) => (
@@ -86,9 +86,9 @@ export function ImportForm() {
           )}
           {result.sections.length > 0 && (
             <>
-              <div className="max-h-80 overflow-auto border border-ink">
+              <div className="max-h-80 overflow-auto rounded-xl border border-line">
                 <table className="w-full text-left text-xs">
-                  <thead className="sticky top-0 bg-ink text-white">
+                  <thead className="sticky top-0 bg-canvas text-muted">
                     <tr>
                       <th className="p-2">วิชา</th>
                       <th className="p-2">ตอน</th>

@@ -47,11 +47,11 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
   return (
     <div ref={ref} className="bg-white" role="group" aria-label="ตารางเรียนรายสัปดาห์">
       <div className="grid" style={{ gridTemplateColumns: `${compact ? 28 : 44}px repeat(${shownDays.length}, minmax(0, 1fr))` }}>
-        <div className="border-b-2 border-ink" />
+        <div className="border-b border-line" />
         {shownDays.map((d) => (
           <div
             key={d}
-            className={`border-b-2 border-ink text-left font-bold ${compact ? "px-1 py-0.5 text-[10px]" : "px-2 py-2 text-sm"}`}
+            className={`border-b border-line text-left font-semibold text-muted ${compact ? "px-1 py-0.5 text-[10px]" : "px-2 py-2.5 text-sm"}`}
           >
             <span className="sm:hidden">{DAY_TH_SHORT[d]}</span>
             <span className="hidden sm:inline">{compact ? DAY_TH_SHORT[d] : DAY_TH[d]}</span>
@@ -79,7 +79,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                 <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: top(h * 60) }} />
               ))}
               {hours.map((h) => (
-                <div key={`h${h}`} className="absolute inset-x-0 border-t border-dotted border-line/80" style={{ top: top(h * 60 + 30) }} />
+                <div key={`h${h}`} className="absolute inset-x-0 border-t border-dashed border-line/60" style={{ top: top(h * 60 + 30) }} />
               ))}
 
               {dayItems.map((it, i) => {
@@ -117,7 +117,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                   c.kind === "time" ? (
                     <div
                       key={i}
-                      className="clash-hatch pointer-events-none absolute inset-x-0 z-[5] border-y-2 border-accent"
+                      className="clash-hatch pointer-events-none absolute inset-x-0 z-[5] border-y-2 border-danger"
                       style={{ top: top(c.start), height: top(c.end) - top(c.start) }}
                     />
                   ) : null,
@@ -153,14 +153,14 @@ function BlockView({
   const anim = motion === "shake" ? "animate-clash-shake" : motion === "snap" ? "animate-snap" : "";
   return (
     <div
-      className={`${anim} relative h-full overflow-hidden text-left ${color} ${
-        clash ? "outline-3 -outline-offset-3 outline-accent" : ""
+      className={`${anim} relative h-full overflow-hidden rounded-lg text-left ${color} ${
+        clash ? "outline-2 -outline-offset-2 outline-danger" : ""
       } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"}`}
     >
       <div className="flex items-start justify-between gap-1">
         <span className={`font-mono font-bold ${compact ? "" : "text-[13px]"}`}>{s.courseNo}</span>
         {clash && !compact && (
-          <span className="bg-accent px-1 text-[10px] font-bold text-white" aria-label="ชน">
+          <span className="rounded-full bg-danger px-1.5 text-[10px] font-bold text-white" aria-label="ชน">
             ชน
           </span>
         )}
@@ -224,9 +224,9 @@ function GhostSlot({ item, ghost, top }: { item: Item; ghost: Ghost; top: (m: nu
   return (
     <div
       ref={setNodeRef}
-      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center border-2 px-1 text-center text-[11px] font-semibold ${
-        ghost.clash ? "border-accent bg-accent-soft text-danger" : "border-ink bg-white text-ink"
-      } ${isOver ? (ghost.clash ? "bg-accent text-white" : "bg-ink text-white") : "border-dashed"}`}
+      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center rounded-lg border-2 px-1 text-center text-[11px] font-semibold ${
+        ghost.clash ? "border-danger bg-danger-soft text-danger" : "border-accent/60 bg-white/90 text-accent"
+      } ${isOver ? (ghost.clash ? "bg-danger text-white" : "border-accent bg-accent text-white") : "border-dashed"}`}
       style={{ top: top(item.meeting.start) + 1, height: Math.max(top(item.meeting.end) - top(item.meeting.start) - 2, 18) }}
     >
       <span>{sectionLabel(item.section)}</span>

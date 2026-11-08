@@ -9,14 +9,14 @@ export function LoginForm() {
 
   return (
     <form action={action} className="space-y-4">
-      <div className="grid grid-cols-2 border border-ink text-sm">
+      <div className="grid grid-cols-2 rounded-full bg-canvas p-1 text-sm">
         {(["signin", "signup"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
             aria-pressed={mode === m}
-            className={`py-2 ${mode === m ? "bg-ink font-semibold text-white" : "bg-white text-ink"}`}
+            className={`py-2 ${mode === m ? "rounded-full bg-white font-semibold text-ink shadow-sm" : "text-muted hover:text-ink"}`}
           >
             {m === "signin" ? "เข้าสู่ระบบ" : "สร้างบัญชี"}
           </button>

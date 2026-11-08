@@ -14,9 +14,9 @@ export function IssuesPanel() {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <section className="card" aria-labelledby="clash-h" aria-live="polite">
-        <h2 id="clash-h" className={`bar ${conflicts.length ? "bg-accent" : ""}`}>
+        <h2 id="clash-h" className="bar">
           สิ่งที่ชนกัน
-          <span className="font-mono text-xs text-white/80">{conflicts.length}</span>
+          <span className={conflicts.length ? "chip bg-danger-soft text-danger" : "chip"}>{conflicts.length}</span>
         </h2>
         <div className="p-4">
         {conflicts.length === 0 ? (
@@ -46,7 +46,7 @@ export function IssuesPanel() {
               const clash = clashIds(kind);
               return (
                 <div key={kind}>
-                  <h3 className="mb-1.5 border-b border-ink pb-1 text-xs font-bold">{kind === "midterm" ? "กลางภาค" : "ปลายภาค"}</h3>
+                  <h3 className="mb-1.5 border-b border-line pb-1 text-xs font-bold">{kind === "midterm" ? "กลางภาค" : "ปลายภาค"}</h3>
                   <ul className="flex flex-col gap-0.5">
                     {exams(kind).map((s) => (
                       <li key={s.id} className={clash.has(s.id) ? "font-medium text-danger" : ""}>

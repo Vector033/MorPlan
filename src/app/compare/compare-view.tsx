@@ -19,7 +19,7 @@ export function CompareView() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-6 sm:px-4">
-      <header className="flex flex-wrap items-end justify-between gap-2 border-b-4 border-ink pb-4">
+      <header className="flex flex-wrap items-end justify-between gap-2 pb-2">
         <div>
           <h1 className="text-title font-bold sm:text-display">เทียบแผน</h1>
           <p className="text-sm text-muted">ดูทุกแผนพร้อมกัน เลือกแผนที่ชอบแล้วกลับไปแก้ที่หน้าตาราง</p>
@@ -32,7 +32,7 @@ export function CompareView() {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="text-xs text-muted">
-            <tr className="border-b-2 border-ink">
+            <tr className="border-b border-line">
               <th className="p-2 font-medium" />
               {rows.map(({ plan }) => (
                 <th key={plan.id} className="p-2 font-semibold text-ink">
@@ -61,7 +61,7 @@ export function CompareView() {
           <section key={plan.id} className="card overflow-hidden">
             <div className="bar">
               <h2 className="text-sm font-semibold">{plan.name}</h2>
-              <Link href="/" className="text-xs text-white underline underline-offset-4" onClick={() => dispatch({ type: "setActive", id: plan.id })}>
+              <Link href="/" className="link text-xs" onClick={() => dispatch({ type: "setActive", id: plan.id })}>
                 แก้แผนนี้
               </Link>
             </div>

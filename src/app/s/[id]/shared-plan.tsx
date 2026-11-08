@@ -25,7 +25,7 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 py-6 sm:px-4">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b-4 border-ink pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-2">
         <div>
           <p className="eyebrow">ตารางที่แชร์ · อ่านอย่างเดียว</p>
           <h1 className="text-title font-bold sm:text-display">{name}</h1>
@@ -55,7 +55,7 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
 
       <div className="card overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-ink text-xs text-white">
+          <thead className="bg-canvas text-xs text-muted">
             <tr>
               <th className="p-3">วิชา</th>
               <th className="p-3">ตอน</th>

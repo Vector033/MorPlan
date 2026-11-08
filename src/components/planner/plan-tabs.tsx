@@ -42,15 +42,15 @@ export function PlanTabs() {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div ref={listRef} role="tablist" aria-label="แผนตารางเรียน" className="relative flex flex-wrap border border-ink">
+      <div ref={listRef} role="tablist" aria-label="แผนตารางเรียน" className="relative flex flex-wrap border-b border-line">
         {ws.plans.map((p) => (
           <button
             key={p.id}
             role="tab"
             aria-selected={p.id === plan.id}
             onClick={() => switchTo(p.id)}
-            className={`border-r border-ink px-3 pt-1.5 pb-2 text-sm ${
-              p.id === plan.id ? "font-bold text-ink" : "text-muted hover:bg-[#f4f4f4] hover:text-ink"
+            className={`rounded-t-lg px-3.5 pt-1.5 pb-2 text-sm ${
+              p.id === plan.id ? "font-semibold text-ink" : "text-muted hover:bg-white hover:text-ink"
             }`}
           >
             {p.name}
@@ -58,14 +58,14 @@ export function PlanTabs() {
         ))}
         {ws.plans.length < MAX_PLANS && (
           <button
-            className="px-3 pt-1.5 pb-2 text-sm text-muted hover:bg-[#f4f4f4] hover:text-ink"
+            className="rounded-t-lg px-3.5 pt-1.5 pb-2 text-sm font-medium text-accent hover:bg-white"
             onClick={() => dispatch({ type: "addPlan", copyFrom: plan.id })}
             title="สร้างแผนใหม่โดยคัดลอกแผนนี้"
           >
             + แผนใหม่
           </button>
         )}
-        <span ref={barRef} className="tab-indicator pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-ink" aria-hidden />
+        <span ref={barRef} className="tab-indicator pointer-events-none absolute inset-x-0 -bottom-px h-[3px] rounded-full bg-accent" aria-hidden />
       </div>
 
       {renaming ? (

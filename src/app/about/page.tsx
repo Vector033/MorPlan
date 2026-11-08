@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "เกี่ยวกับ" };
 export default function AboutPage() {
   return (
     <main className="mx-auto flex w-full max-w-[42rem] flex-col gap-8 px-4 py-8 text-base">
-      <header className="border-b-4 border-ink pb-4">
+      <header className="pb-2">
         <h1 className="text-title font-bold sm:text-display">เกี่ยวกับ MorPlan</h1>
         <p className="mt-2 text-base">
           MorPlan เป็นโปรเจกต์ของนักศึกษา <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong>{" "}
@@ -15,7 +15,7 @@ export default function AboutPage() {
       </header>
 
       <section>
-        <h2 className="mb-3 border-t-2 border-ink pt-3 text-heading font-bold">ข้อมูลวิชาและตอนเรียน</h2>
+        <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">ข้อมูลวิชาและตอนเรียน</h2>
         <p>
           หน้าค้นหากระบวนวิชาของ reg ต้องล็อกอินเพราะ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล MorPlan จึงไม่ดึงหรือเผยแพร่ข้อมูลตอนเรียน
           นักศึกษาคัดลอกผลค้นหาจาก reg ที่ตัวเองเปิดมาวางเอง ข้อมูลนั้นอยู่ในเบราว์เซอร์ของนักศึกษา
@@ -27,7 +27,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 border-t-2 border-ink pt-3 text-heading font-bold">วันสอบ</h2>
+        <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">วันสอบ</h2>
         <p>
           ดึงจากตารางสอบกลางภาคและปลายภาคที่สำนักทะเบียนฯ เผยแพร่สาธารณะ (timetable_exam.php) วันละไม่กี่ครั้ง และเก็บไว้ในไฟล์
           วิชาที่ภาควิชาหรือผู้สอนกำหนดวันสอบเองอาจไม่มีในตารางนี้
@@ -35,7 +35,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 border-t-2 border-ink pt-3 text-heading font-bold">เอกสารที่ใช้ตอบคำถามเรื่องระเบียบ</h2>
+        <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">เอกสารที่ใช้ตอบคำถามเรื่องระเบียบ</h2>
         <p className="mb-2">
           เอกสารสาธารณะจากเว็บสำนักทะเบียนฯ แปลงเป็นข้อความด้วย OCR (Tesseract) ซึ่งอาจอ่านตัวเลขหรือคำผิดได้
           คำตอบทุกข้อจึงมีลิงก์ไปหน้าเอกสารต้นฉบับ
@@ -43,7 +43,7 @@ export default function AboutPage() {
         <ul className="list-disc space-y-1 pl-5">
           {docs.map((d) => (
             <li key={d.id}>
-              <a className="font-medium text-ink underline decoration-accent decoration-2 underline-offset-4 hover:text-accent" href={d.url} target="_blank" rel="noreferrer">
+              <a className="link" href={d.url} target="_blank" rel="noreferrer">
                 {d.title}
               </a>
             </li>
@@ -52,7 +52,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 border-t-2 border-ink pt-3 text-heading font-bold">สถิติการใช้งาน</h2>
+        <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">สถิติการใช้งาน</h2>
         <p>
           MorPlan นับจำนวนครั้งที่มีการนำเข้า สร้างลิงก์แชร์ หรือถามคำถาม แบบไม่ระบุตัวตน (ไม่เก็บ IP หรือเนื้อหา)
           เพื่อดูว่ามีคนใช้จริงไหม คำถามที่ถามจะไม่ถูกเก็บ

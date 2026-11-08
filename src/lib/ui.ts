@@ -1,20 +1,20 @@
 import { DAY_TH, fmtTime } from "./core/time";
 import type { Conflict, ExamSlot, Meeting, Section } from "./core/types";
 
-// Transit-line colours (one per course, like subway lines on a Vignelli map).
+// Pastel course colours: a pale fill, a saturated left edge and a dark ink of the same hue.
 // Text colour is chosen per fill for >= 4.5:1 contrast. Red is reserved for clashes.
 // Literal class strings so Tailwind picks them up.
 export const COURSE_COLORS = [
-  { block: "bg-[#0039a6] text-white", dot: "bg-[#0039a6] text-white" },
-  { block: "bg-[#ff6319] text-ink", dot: "bg-[#ff6319] text-ink" },
-  { block: "bg-[#007a33] text-white", dot: "bg-[#007a33] text-white" },
-  { block: "bg-[#fccc0a] text-ink", dot: "bg-[#fccc0a] text-ink" },
-  { block: "bg-[#b933ad] text-white", dot: "bg-[#b933ad] text-white" },
-  { block: "bg-[#00a1de] text-ink", dot: "bg-[#00a1de] text-ink" },
-  { block: "bg-[#996633] text-white", dot: "bg-[#996633] text-white" },
-  { block: "bg-[#6cbe45] text-ink", dot: "bg-[#6cbe45] text-ink" },
-  { block: "bg-[#5c5c5c] text-white", dot: "bg-[#5c5c5c] text-white" },
-  { block: "bg-[#006983] text-white", dot: "bg-[#006983] text-white" },
+  { block: "bg-[#eaf0ff] text-[#1f3a99] border-l-4 border-[#3d6bf0]", dot: "bg-[#eaf0ff] text-[#1f3a99] ring-1 ring-inset ring-[#3d6bf0]" },
+  { block: "bg-[#fff1e6] text-[#8a3d00] border-l-4 border-[#f08a2c]", dot: "bg-[#fff1e6] text-[#8a3d00] ring-1 ring-inset ring-[#f08a2c]" },
+  { block: "bg-[#e6f6ec] text-[#14603a] border-l-4 border-[#2fa46a]", dot: "bg-[#e6f6ec] text-[#14603a] ring-1 ring-inset ring-[#2fa46a]" },
+  { block: "bg-[#fff7d6] text-[#6b5200] border-l-4 border-[#d9ad00]", dot: "bg-[#fff7d6] text-[#6b5200] ring-1 ring-inset ring-[#d9ad00]" },
+  { block: "bg-[#f1ecff] text-[#45289e] border-l-4 border-[#7b5cf0]", dot: "bg-[#f1ecff] text-[#45289e] ring-1 ring-inset ring-[#7b5cf0]" },
+  { block: "bg-[#e2f5fa] text-[#0b5a70] border-l-4 border-[#1aa3c7]", dot: "bg-[#e2f5fa] text-[#0b5a70] ring-1 ring-inset ring-[#1aa3c7]" },
+  { block: "bg-[#f6eee5] text-[#6a4116] border-l-4 border-[#b07a45]", dot: "bg-[#f6eee5] text-[#6a4116] ring-1 ring-inset ring-[#b07a45]" },
+  { block: "bg-[#eef8e0] text-[#3d6512] border-l-4 border-[#6fb22a]", dot: "bg-[#eef8e0] text-[#3d6512] ring-1 ring-inset ring-[#6fb22a]" },
+  { block: "bg-[#eef0f4] text-[#353b48] border-l-4 border-[#6b7486]", dot: "bg-[#eef0f4] text-[#353b48] ring-1 ring-inset ring-[#6b7486]" },
+  { block: "bg-[#e1f4f0] text-[#0d5a50] border-l-4 border-[#1f9c8a]", dot: "bg-[#e1f4f0] text-[#0d5a50] ring-1 ring-inset ring-[#1f9c8a]" },
 ];
 
 export function colorFor(courseNo: string, order: string[]) {

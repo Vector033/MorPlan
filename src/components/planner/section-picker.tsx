@@ -24,26 +24,26 @@ export function SectionPicker({ courseNo, onClose }: { courseNo: string; onClose
       ref={ref}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && ref.current?.close()}
-      className="anim-modal m-auto w-[min(560px,calc(100vw-1.5rem))] border-2 border-ink bg-white p-0 text-ink backdrop:bg-ink/50"
+      className="anim-modal m-auto w-[min(560px,calc(100vw-1.5rem))] rounded-2xl border border-line bg-white p-0 text-ink shadow-lg backdrop:bg-ink/40"
       aria-labelledby="picker-title"
     >
-      <div className="flex items-start justify-between gap-3 bg-ink p-4 text-white">
+      <div className="flex items-start justify-between gap-3 border-b border-line p-4">
         <div>
           <h2 id="picker-title" className="text-lg font-bold">
             เลือกตอนเรียน <span className="font-mono">{courseNo}</span>
           </h2>
-          <p className="text-sm text-white/70">{sections[0]?.title}</p>
+          <p className="text-sm text-muted">{sections[0]?.title}</p>
         </div>
-        <button className="btn-ghost text-white/80 hover:text-white" onClick={() => ref.current?.close()} aria-label="ปิด">
+        <button className="btn-ghost" onClick={() => ref.current?.close()} aria-label="ปิด">
           ✕
         </button>
       </div>
-      <ul className="max-h-[60vh] divide-y divide-ink overflow-y-auto">
+      <ul className="max-h-[60vh] divide-y divide-line overflow-y-auto">
         {sections.map((s) => {
           const clashes = findConflicts([...others, s]).filter((c) => c.a === s.id || c.b === s.id);
           const isCurrent = current?.id === s.id;
           return (
-            <li key={s.id} className={`p-4 ${isCurrent ? "bg-[#f4f4f4]" : ""}`}>
+            <li key={s.id} className={`p-4 ${isCurrent ? "bg-canvas" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 text-sm">
                   <p className="font-medium">

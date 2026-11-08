@@ -10,7 +10,7 @@ export default function LoginPage() {
       <p className="mt-1 mb-4 text-sm text-muted">
         ไม่ต้องเข้าสู่ระบบก็ใช้ได้ แผนจะเก็บในเบราว์เซอร์นี้ เข้าสู่ระบบเมื่ออยากเปิดแผนเดียวกันจากหลายเครื่อง
       </p>
-      <div className="mb-5 border-t-2 border-accent bg-accent-soft p-3 text-sm text-ink" role="note">
+      <div className="mb-5 rounded-xl bg-accent-soft p-3 text-sm text-ink" role="note">
         <strong>บัญชีนี้แยกจาก CMU Account และ reg</strong> ห้ามใช้รหัสผ่าน CMU หรือ reg ที่นี่ ตั้งรหัสผ่านใหม่สำหรับ MorPlan เท่านั้น
       </div>
       <LoginForm />
