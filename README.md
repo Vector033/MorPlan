@@ -8,9 +8,15 @@
 
 ![Planner](docs/screenshots/planner.png)
 
-| Dragging shows every section as a slot (clashes in red) | Rule Q&A with citations | Phone view |
-|---|---|---|
-| ![Drag](docs/screenshots/drag.png) | ![Ask](docs/screenshots/ask.png) | ![Mobile](docs/screenshots/mobile.png) |
+| Dragging shows every section as a slot (clashes in red) | Plans side by side |
+|---|---|
+| ![Drag](docs/screenshots/drag.png) | ![Compare](docs/screenshots/compare.png) |
+
+| Rule Q&A with page citations | Phone view |
+|---|---|
+| ![Ask](docs/screenshots/ask.png) | <img src="docs/screenshots/mobile.png" alt="Phone view" width="300"> |
+
+Screenshots are taken from the live site with the built-in demo data: `npx tsx scripts/screenshots.mts`.
 
 ## What it does
 

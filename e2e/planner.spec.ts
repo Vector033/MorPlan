@@ -17,6 +17,7 @@ async function want(page: Page, courseNo: string) {
 
 const trayItem = (page: Page, courseNo: string) =>
   page.locator('li [aria-roledescription="วิชาที่ลากได้"]', { hasText: courseNo });
+const ghostSlots = (page: Page) => page.locator("div.border-dashed", { hasText: "ตอน" });
 const calendar = (page: Page) => page.getByRole("group", { name: "ตารางเรียนรายสัปดาห์" }).first();
 
 test("drag a course from the tray onto a section slot", async ({ page }) => {
@@ -48,6 +49,8 @@ test("place sections with the keyboard and see a clash", async ({ page }) => {
   await page.keyboard.press("Space");
   // The pick-up message is replaced at once by "over the tray" (where the item starts).
   await expect(live(page)).toContainText("เอาออกจากตาราง");
+  // Arrow keys only move between slots once they are on screen.
+  await expect(ghostSlots(page).first()).toBeVisible();
   await page.keyboard.press("ArrowRight");
   await expect(live(page)).toContainText("ตอน 002 วันจันทร์");
   await page.keyboard.press("ArrowRight");
@@ -58,8 +61,12 @@ test("place sections with the keyboard and see a clash", async ({ page }) => {
   // 206111 section 002 is TuF 08:00 too, so it must be announced and shown as a clash.
   await trayItem(page, "206111").focus();
   await page.keyboard.press("Space");
+  await expect(ghostSlots(page).first()).toBeVisible();
   for (let i = 0; i < 6; i++) {
+    const before = await live(page).textContent();
     await page.keyboard.press("ArrowRight");
+    // Read the announcement only after it changes; on a slow host the old text lingers.
+    await expect.poll(() => live(page).textContent()).not.toBe(before);
     if ((await live(page).textContent())?.includes("ตอน 002 วันอังคาร")) break;
   }
   await expect(live(page)).toContainText("ชนกับวิชาอื่น");
