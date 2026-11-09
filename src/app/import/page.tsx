@@ -16,7 +16,7 @@ export default function ImportPage() {
         </p>
       </header>
 
-      <ol className="grid overflow-hidden rounded-2xl border border-line bg-white text-sm shadow-md sm:grid-cols-3">
+      <ol className="grid overflow-hidden rounded-2xl border border-line bg-white text-sm sm:grid-cols-3">
         <li className="p-4">
           <span className="block font-mono text-4xl font-bold">1</span>
           <span className="font-semibold">เปิด reg ในอีกแท็บ</span>

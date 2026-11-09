@@ -42,7 +42,12 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
   const top = (min: number) => ((min - startHour * 60) / 60) * hourPx;
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
   const timeClashes = conflicts.filter((c) => c.kind === "time");
-  const clashed = new Set(timeClashes.flatMap((c) => [c.a, c.b]));
+  // Every clash outlines its blocks; time clashes win the badge since they are visible on this grid.
+  const clashed = new Map<string, string>();
+  for (const c of conflicts) {
+    const label = c.kind === "time" ? "ชน" : c.kind === "duplicate" ? "ซ้ำ" : "สอบชน";
+    for (const id of [c.a, c.b]) if (clashed.get(id) !== "ชน") clashed.set(id, label);
+  }
 
   return (
     <div ref={ref} className="bg-white" role="group" aria-label="ตารางเรียนรายสัปดาห์">
@@ -94,7 +99,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                   <BlockView
                     item={it}
                     color={colorFor(it.section.courseNo, order).block}
-                    clash={clashed.has(it.section.id)}
+                    clash={clashed.get(it.section.id)}
                     motion={shakeIds?.has(it.section.id) ? "shake" : snapId === it.section.id ? "snap" : null}
                     compact={compact}
                   />
@@ -145,7 +150,8 @@ function BlockView({
 }: {
   item: Item;
   color: string;
-  clash: boolean;
+  /** Badge text when this block is in a clash ("ชน", "สอบชน", "ซ้ำ"). */
+  clash?: string;
   motion: "snap" | "shake" | null;
   compact: boolean;
 }) {
@@ -153,16 +159,14 @@ function BlockView({
   const anim = motion === "shake" ? "animate-clash-shake" : motion === "snap" ? "animate-snap" : "";
   return (
     <div
-      className={`${anim} relative h-full overflow-hidden rounded-lg text-left ${color} ${
+      className={`${anim} relative h-full overflow-hidden text-left ${color} rounded-[3px] ${
         clash ? "outline-2 -outline-offset-2 outline-danger" : ""
       } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"}`}
     >
       <div className="flex items-start justify-between gap-1">
         <span className={`font-mono font-bold ${compact ? "" : "text-[13px]"}`}>{s.courseNo}</span>
         {clash && !compact && (
-          <span className="rounded-full bg-danger px-1.5 text-[10px] font-bold text-white" aria-label="ชน">
-            ชน
-          </span>
+          <span className="shrink-0 rounded-full bg-danger px-1.5 text-[10px] font-bold text-white">{clash}</span>
         )}
       </div>
       {!compact && (
@@ -172,7 +176,7 @@ function BlockView({
             {sectionLabel(s)}
             {m.room ? ` · ${m.room}` : ""}
           </div>
-          <div className="font-mono opacity-85">
+          <div className="truncate font-mono opacity-85">
             {fmtTime(m.start)}–{fmtTime(m.end)}
           </div>
         </>
@@ -224,7 +228,7 @@ function GhostSlot({ item, ghost, top }: { item: Item; ghost: Ghost; top: (m: nu
   return (
     <div
       ref={setNodeRef}
-      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center rounded-lg border-2 px-1 text-center text-[11px] font-semibold ${
+      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center rounded-[3px] border-2 px-1 text-center text-[11px] font-semibold ${
         ghost.clash ? "border-danger bg-danger-soft text-danger" : "border-accent/60 bg-white/90 text-accent"
       } ${isOver ? (ghost.clash ? "bg-danger text-white" : "border-accent bg-accent text-white") : "border-dashed"}`}
       style={{ top: top(item.meeting.start) + 1, height: Math.max(top(item.meeting.end) - top(item.meeting.start) - 2, 18) }}

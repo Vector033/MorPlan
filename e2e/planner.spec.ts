@@ -73,7 +73,7 @@ test("place sections with the keyboard and see a clash", async ({ page }) => {
   await page.keyboard.press("Space");
 
   await expect(page.getByLabel("สรุปแผนนี้")).toContainText(/จุดที่ชน\s*[1-9]/);
-  const clash = /เวลาเรียนชน: 204101 กับ 206111 วันอังคาร 08:00–09:30/;
+  const clash = /เวลาเรียนชน: 204101 ตอน \d{3} กับ 206111 ตอน 002 วันอังคาร 08:00–09:30/;
   // Alert bar above the timetable, and the full list in the clash panel.
   await expect(page.getByRole("link", { name: clash })).toBeVisible();
   await expect(page.getByRole("region", { name: "สิ่งที่ชนกัน" }).getByText(clash)).toBeVisible();

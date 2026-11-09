@@ -93,7 +93,8 @@ export function Planner() {
       accessibility={{ screenReaderInstructions, announcements: announcements((id) => courseFromId(id)) }}
     >
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1">
+        {/* On phones the timetable leads once it has something on it; search and tray follow. */}
+        <aside className={`flex flex-col gap-4 ${placed.length ? "order-last lg:order-none" : ""} lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1`}>
           {ws.pool.length === 0 ? (
             <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections(EXAMS) })} />
           ) : (
@@ -115,15 +116,14 @@ export function Planner() {
               <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
               <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
             </div>
-            <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
-              <Stat value={placed.length} label="วิชา" />
-              <Stat value={shownCredits} label="หน่วยกิต" />
-              <Stat
-                value={conflicts.length}
-                label={conflicts.length ? "จุดที่ชน" : placed.length ? "ไม่มีวิชาชน" : "ชน"}
-                alert={conflicts.length > 0}
-              />
-            </dl>
+            {/* Three giant zeros say nothing on an empty plan; the summary appears with the first course. */}
+            {placed.length > 0 && (
+              <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
+                <Stat value={placed.length} label="วิชา" />
+                <Stat value={shownCredits} label="หน่วยกิต" />
+                <Stat value={conflicts.length} label={conflicts.length ? "จุดที่ชน" : "ไม่มีวิชาชน"} alert={conflicts.length > 0} />
+              </dl>
+            )}
           </header>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -157,7 +157,7 @@ export function Planner() {
               className="anim-rise flex items-center gap-3 rounded-2xl border border-danger/25 bg-danger-soft px-3 py-2.5 text-sm font-semibold text-danger hover:border-danger/50"
             >
               <span className="shrink-0 rounded-full bg-danger px-2 py-0.5 font-mono text-xs font-bold text-white">ชน {conflicts.length}</span>
-              <span className="min-w-0 flex-1 truncate">{conflictText(conflicts[0], byId)}</span>
+              <span className="line-clamp-2 min-w-0 flex-1 sm:truncate">{conflictText(conflicts[0], byId)}</span>
               {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-danger/80">ดูทั้งหมด ↓</span>}
             </a>
           )}
@@ -201,7 +201,7 @@ export function Planner() {
 
       <DragOverlay dropAnimation={null}>
         {dragCourse ? (
-          <div className={`anim-lift rounded-xl px-3 py-2 text-sm font-semibold shadow-lg ring-2 ring-accent ${colorFor(dragCourse, plan.courseNos).block}`}>
+          <div className={`anim-lift rounded-[3px] px-3 py-2 text-sm font-semibold shadow-lg ring-1 ring-accent ${colorFor(dragCourse, plan.courseNos).block}`}>
             <span className="font-mono font-bold">{dragCourse}</span> {titleOf(dragCourse)}
           </div>
         ) : null}

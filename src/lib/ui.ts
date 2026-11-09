@@ -44,7 +44,11 @@ export function examLabel(slot?: ExamSlot): string {
 }
 
 export function conflictText(c: Conflict, byId: Map<string, Section>): string {
-  const name = (id: string) => byId.get(id)?.courseNo ?? id.split("-")[0];
+  // Name the exact section, not just the course: the fix is usually picking another section.
+  const name = (id: string) => {
+    const s = byId.get(id);
+    return s ? `${s.courseNo} ${sectionLabel(s)}` : id.split("-")[0];
+  };
   switch (c.kind) {
     case "time":
       return `เวลาเรียนชน: ${name(c.a)} กับ ${name(c.b)} วัน${DAY_TH[c.day]} ${fmtTime(c.start)}–${fmtTime(c.end)}`;
