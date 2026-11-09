@@ -54,3 +54,6 @@ next-env.d.ts
 .vercel
 .env*
 !.env.example
+
+# Google OAuth client secret downloads: keep out of git (the values live in Supabase).
+client_secret*.json
