@@ -96,7 +96,7 @@ export function Planner() {
         {/* On phones the timetable leads once it has something on it; search and tray follow. */}
         <aside className={`flex flex-col gap-4 ${placed.length ? "order-last lg:order-none" : ""} lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1`}>
           {ws.pool.length === 0 ? (
-            <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections(EXAMS) })} />
+            <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections(EXAMS), university: null })} />
           ) : (
             <CourseSearch />
           )}
@@ -129,7 +129,8 @@ export function Planner() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <PlanTabs />
             <div className="flex flex-wrap items-center gap-2">
-              <AskDrawer />
+              {/* The regulations corpus is CMU's only. */}
+              {!ws.university && <AskDrawer />}
               <ExportBar calendarRef={calendarRef} />
             </div>
           </div>

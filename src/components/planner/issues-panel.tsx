@@ -38,7 +38,10 @@ export function IssuesPanel() {
           ตารางสอบ
         </h2>
         <div className="p-4">
-        {placed.length === 0 ? (
+        {ws.university ? (
+          // Exam dates come from CMU's public exam table only.
+          <p className="text-sm text-muted">ยังไม่มีวันสอบของ{ws.university} ตรวจสอบจากเว็บของมหาวิทยาลัย</p>
+        ) : placed.length === 0 ? (
           <p className="text-sm text-muted">วันสอบจะแสดงเมื่อวางวิชาลงตาราง</p>
         ) : (
           <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
@@ -59,10 +62,12 @@ export function IssuesPanel() {
             })}
           </div>
         )}
-        <p className="mt-3 text-xs text-muted">
-          วันสอบมาจากตารางสอบสาธารณะของสำนักทะเบียนฯ วิชาที่ภาควิชากำหนดเองอาจไม่มีในตารางนี้
-          ตรวจสอบกับประกาศทางการอีกครั้ง
-        </p>
+        {!ws.university && (
+          <p className="mt-3 text-xs text-muted">
+            วันสอบมาจากตารางสอบสาธารณะของสำนักทะเบียนฯ มช. วิชาที่ภาควิชากำหนดเองอาจไม่มีในตารางนี้
+            ตรวจสอบกับประกาศทางการอีกครั้ง
+          </p>
+        )}
         </div>
       </section>
     </div>

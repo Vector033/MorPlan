@@ -8,7 +8,7 @@ import { sectionId, type Meeting } from "@/lib/core/types";
 import { EXAMS } from "@/lib/exams-data";
 
 /** Fallback when the paste cannot be read: one section at a time. */
-export function ManualForm() {
+export function ManualForm({ cmu = true, university = null }: { cmu?: boolean; university?: string | null }) {
   const { dispatch } = useWorkspace();
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<string | null>(null);
@@ -16,11 +16,19 @@ export function ManualForm() {
   function submit(fd: FormData) {
     setError(null);
     setAdded(null);
-    const courseNo = String(fd.get("courseNo")).trim();
-    const lec = String(fd.get("lec") || "001").trim().padStart(3, "0");
-    const lab = String(fd.get("lab") || "000").trim().padStart(3, "0");
-    if (!/^\d{6}$/.test(courseNo)) return setError("รหัสวิชาต้องเป็นตัวเลข 6 หลัก");
-    if (!/^\d{3}$/.test(lec) || !/^\d{3}$/.test(lab)) return setError("ตอนต้องเป็นตัวเลข 3 หลัก");
+    // Other universities: letters and digits, spaces and dashes dropped ("ITCS 101" → "ITCS101").
+    const norm = (v: FormDataEntryValue | null, fallback: string) =>
+      cmu ? String(v || fallback).trim().padStart(3, "0") : String(v || fallback).toUpperCase().replace(/[^0-9A-Z]/g, "") || fallback;
+    const courseNo = cmu ? String(fd.get("courseNo")).trim() : norm(fd.get("courseNo"), "");
+    const lec = norm(fd.get("lec"), cmu ? "001" : "1");
+    const lab = norm(fd.get("lab"), "000");
+    if (cmu) {
+      if (!/^\d{6}$/.test(courseNo)) return setError("รหัสวิชาต้องเป็นตัวเลข 6 หลัก");
+      if (!/^\d{3}$/.test(lec) || !/^\d{3}$/.test(lab)) return setError("ตอนต้องเป็นตัวเลข 3 หลัก");
+    } else {
+      if (!/^[0-9A-Z]{2,12}$/.test(courseNo)) return setError("รหัสวิชาใช้ตัวอักษรอังกฤษและตัวเลข 2–12 ตัว");
+      if (!/^[0-9A-Z]{1,6}$/.test(lec) || !/^[0-9A-Z]{1,6}$/.test(lab)) return setError("ตอนใช้ตัวอักษรอังกฤษและตัวเลขไม่เกิน 6 ตัว");
+    }
 
     const meetings: Meeting[] = [];
     for (const n of [1, 2]) {
@@ -53,7 +61,7 @@ export function ManualForm() {
         .map((s) => s.trim())
         .filter(Boolean),
     };
-    dispatch({ type: "import", sections: attachExams([section], EXAMS) });
+    dispatch({ type: "import", sections: cmu ? attachExams([section], EXAMS) : [section], university });
     setAdded(`เพิ่ม ${courseNo} ตอน ${lec}/${lab} แล้ว`);
   }
 
@@ -61,7 +69,7 @@ export function ManualForm() {
     <details className="card">
       <summary className="bar cursor-pointer">เพิ่มวิชาเอง</summary>
       <form action={submit} className="grid gap-3 p-4 text-sm sm:grid-cols-6">
-        <Field label="รหัสวิชา" name="courseNo" placeholder="204111" className="sm:col-span-2" required inputMode="numeric" />
+        <Field label="รหัสวิชา" name="courseNo" placeholder={cmu ? "204111" : "ITCS101"} className="sm:col-span-2" required inputMode={cmu ? "numeric" : "text"} />
         <Field label="ชื่อวิชา" name="title" placeholder="FUND OF COMP SCIENCE" className="sm:col-span-4" />
         <Field label="ตอนบรรยาย" name="lec" placeholder="001" />
         <Field label="ตอนแล็บ" name="lab" placeholder="000" />

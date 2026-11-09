@@ -9,13 +9,16 @@ export const STORAGE_KEY = "morplan:workspace:v1";
 const minutes = z.number().int().min(0).max(24 * 60);
 const slot = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start: minutes, end: minutes });
 const text = (max: number) => z.string().max(max);
+// มช. codes are 6 digits; other universities use 7–8 digits or letters ("01204111", "ITCS101").
+const courseNo = z.string().regex(/^[0-9A-Z]{2,12}$/);
+const sectionNo = z.string().regex(/^[0-9A-Z]{1,6}$/);
 export const sectionSchema = z.object({
-  id: z.string().regex(/^\d{6}-\d{3}-\d{3}$/),
-  courseNo: z.string().regex(/^\d{6}$/),
+  id: z.string().regex(/^[0-9A-Z]{2,12}-[0-9A-Z]{1,6}-[0-9A-Z]{1,6}$/),
+  courseNo,
   title: text(200),
   credits: z.number().min(0).max(30).optional(),
-  lec: z.string().regex(/^\d{3}$/),
-  lab: z.string().regex(/^\d{3}$/),
+  lec: sectionNo,
+  lab: sectionNo,
   meetings: z
     .array(
       z.object({
@@ -38,14 +41,15 @@ const planId = z.string().max(4);
 export const workspaceSchema = z.object({
   version: z.literal(1),
   term: z.string().regex(/^[123]\/\d{4}$/),
+  university: text(100).optional(),
   pool: z.array(sectionSchema).max(3000),
   plans: z
     .array(
       z.object({
         id: planId,
         name: text(30),
-        courseNos: z.array(z.string().regex(/^\d{6}$/)).max(80),
-        sectionIds: z.array(z.string().max(20)).max(80),
+        courseNos: z.array(courseNo).max(80),
+        sectionIds: z.array(z.string().max(30)).max(80),
       }),
     )
     .min(1)

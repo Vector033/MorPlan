@@ -15,6 +15,9 @@ export const LIMITS = {
   signin: { bucket: "signin", limit: 10, windowSec: 600 },
   signup: { bucket: "signup", limit: 5, windowSec: 3600 },
   account: { bucket: "account", limit: 10, windowSec: 600 },
+  // Each call spends model quota: a student imports a handful of times per term.
+  extract: { bucket: "extract", limit: 15, windowSec: 3600 },
+  university: { bucket: "university", limit: 10, windowSec: 3600 },
 } satisfies Record<string, Limit>;
 
 /**

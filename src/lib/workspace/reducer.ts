@@ -4,7 +4,8 @@ export const MAX_PLANS = 5;
 export const PLAN_NAMES = ["A", "B", "C", "D", "E"];
 
 export type Action =
-  | { type: "import"; sections: Section[] }
+  /** `university`: a name sets it, null resets to มช., absent leaves it as is. */
+  | { type: "import"; sections: Section[]; university?: string | null }
   | { type: "removeFromPool"; courseNo: string }
   | { type: "wantCourse"; courseNo: string }
   | { type: "unwantCourse"; courseNo: string }
@@ -43,7 +44,10 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
     case "import": {
       const byId = new Map(ws.pool.map((s) => [s.id, s]));
       for (const s of action.sections) byId.set(s.id, s);
-      return { ...ws, pool: [...byId.values()].sort((a, b) => a.id.localeCompare(b.id)) };
+      const next = { ...ws, pool: [...byId.values()].sort((a, b) => a.id.localeCompare(b.id)) };
+      if (action.university === null) delete next.university;
+      else if (action.university) next.university = action.university;
+      return next;
     }
     case "removeFromPool": {
       const pool = ws.pool.filter((s) => s.courseNo !== action.courseNo);

@@ -152,6 +152,17 @@ function sameMeeting(a: Meeting, b: Meeting) {
   return a.start === b.start && a.end === b.end && a.days.join() === b.days.join();
 }
 
+/** A pasted or saved page as plain text for the LLM path: table rows become tab-separated lines, other HTML loses its tags. */
+export function pageText(input: string): string {
+  if (looksLikeHtml(input)) return htmlRows(input).map((r) => r.join("\t")).filter(Boolean).join("\n");
+  if (!/<[a-z][^>]*>/i.test(input)) return input;
+  return decode(input.replace(/<(script|style)[\s\S]*?<\/\1>/gi, "").replace(/<br\s*\/?>|<\/(p|div|li|h\d)>/gi, "\n").replace(/<[^>]+>/g, " "))
+    .split("\n")
+    .map(clean)
+    .filter(Boolean)
+    .join("\n");
+}
+
 function looksLikeHtml(s: string) {
   return /<\s*(table|tr|td)\b/i.test(s);
 }

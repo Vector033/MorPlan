@@ -78,3 +78,23 @@ describe("storage", () => {
     expect(STORAGE_KEY).toMatch(/v1$/);
   });
 });
+
+describe("other universities", () => {
+  const ku = { id: "01204111-1-000", courseNo: "01204111", title: "Computer Programming", lec: "1", lab: "000", meetings: [], instructors: [] };
+
+  it("import sets, keeps and resets the university", () => {
+    let ws = run({ type: "import", sections: [ku], university: "มหาวิทยาลัยเกษตรศาสตร์" });
+    expect(ws.university).toBe("มหาวิทยาลัยเกษตรศาสตร์");
+    ws = workspaceReducer(ws, { type: "import", sections: [] });
+    expect(ws.university).toBe("มหาวิทยาลัยเกษตรศาสตร์");
+    ws = workspaceReducer(ws, { type: "import", sections: [], university: null });
+    expect(ws.university).toBeUndefined();
+  });
+
+  it("storage round-trips non-CMU codes and sections", () => {
+    let saved = "";
+    const ws = workspaceReducer(run({ type: "import", sections: [ku], university: "KU" }), { type: "place", sectionId: ku.id });
+    saveWorkspace(ws, { setItem: (_k, v) => (saved = v) });
+    expect(loadWorkspace({ getItem: () => saved })).toEqual(ws);
+  });
+});
