@@ -5,6 +5,7 @@ import { forwardRef, type CSSProperties, type ReactNode } from "react";
 import { DAY_TH, DAY_TH_SHORT, fmtTime } from "@/lib/core/time";
 import { DAYS, type Conflict, type Day, type Meeting, type Section } from "@/lib/core/types";
 import { colorFor, sectionLabel } from "@/lib/ui";
+import { CourseBlockCard } from "./course-card";
 
 export type Ghost = { section: Section; clash: boolean; current: boolean };
 
@@ -50,7 +51,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
   }
 
   return (
-    <div ref={ref} className="bg-white" role="group" aria-label="ตารางเรียนรายสัปดาห์">
+    <div ref={ref} className="calendar-paper bg-white" role="group" aria-label="ตารางเรียนรายสัปดาห์">
       <div className="grid" style={{ gridTemplateColumns: `${compact ? 28 : 44}px repeat(${shownDays.length}, minmax(0, 1fr))` }}>
         <div className="border-b border-line" />
         {shownDays.map((d) => (
@@ -67,7 +68,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
           {hours.map((h) => (
             <div
               key={h}
-              className={`absolute right-1.5 -translate-y-1/2 font-mono font-medium text-muted ${compact ? "text-[8px]" : "text-[11px]"}`}
+              className={`absolute right-1.5 -translate-y-1/2 font-mono font-medium text-muted tabular-nums ${compact ? "text-[8px]" : "text-[11px]"}`}
               style={{ top: top(h * 60) }}
             >
               {h > startHour && `${String(h).padStart(2, "0")}${compact ? "" : ":00"}`}
@@ -79,7 +80,7 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
           const dayItems = items.filter((it) => it.day === day);
           const lanes = assignLanes(dayItems);
           return (
-            <div key={day} className="relative border-l border-line" style={{ height }} data-day={day}>
+            <div key={day} className="timetable-slot-grid relative border-l border-line" style={{ height }} data-day={day}>
               {hours.map((h) => (
                 <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: top(h * 60) }} />
               ))}
@@ -96,9 +97,10 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
                   width: `calc(${100 / lane.of}% - 2px)`,
                 };
                 const block = (
-                  <BlockView
-                    item={it}
-                    color={colorFor(it.section.courseNo, order).block}
+                  <CourseBlockCard
+                    section={it.section}
+                    meeting={it.meeting}
+                    palette={colorFor(it.section.courseNo, order)}
                     clash={clashed.get(it.section.id)}
                     motion={shakeIds?.has(it.section.id) ? "shake" : snapId === it.section.id ? "snap" : null}
                     compact={compact}
@@ -141,50 +143,6 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
   );
 });
 
-function BlockView({
-  item,
-  color,
-  clash,
-  motion,
-  compact,
-}: {
-  item: Item;
-  color: string;
-  /** Badge text when this block is in a clash ("ชน", "สอบชน", "ซ้ำ"). */
-  clash?: string;
-  motion: "snap" | "shake" | null;
-  compact: boolean;
-}) {
-  const { section: s, meeting: m } = item;
-  const anim = motion === "shake" ? "animate-clash-shake" : motion === "snap" ? "animate-snap" : "";
-  return (
-    <div
-      className={`${anim} relative h-full overflow-hidden text-left ${color} rounded-[3px] ${
-        clash ? "outline-2 -outline-offset-2 outline-danger" : ""
-      } ${compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"}`}
-    >
-      <div className="flex items-start justify-between gap-1">
-        <span className={`font-mono font-bold ${compact ? "" : "text-[13px]"}`}>{s.courseNo}</span>
-        {clash && !compact && (
-          <span className="shrink-0 rounded-full bg-danger px-1.5 text-[10px] font-bold text-white">{clash}</span>
-        )}
-      </div>
-      {!compact && (
-        <>
-          <div className="truncate font-medium">{s.title}</div>
-          <div className="truncate opacity-85">
-            {sectionLabel(s)}
-            {m.room ? ` · ${m.room}` : ""}
-          </div>
-          <div className="truncate font-mono opacity-85">
-            {fmtTime(m.start)}–{fmtTime(m.end)}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 function DraggableBlock({
   id,
   item,
@@ -225,12 +183,19 @@ function GhostSlot({ item, ghost, top }: { item: Item; ghost: Ghost; top: (m: nu
     id: `slot:${item.section.id}:${item.index}:${item.day}`,
     data: { sectionId: item.section.id, label, clash: ghost.clash },
   });
+  const tone = isOver
+    ? ghost.clash
+      ? "border-danger bg-danger text-white shadow-sm"
+      : "border-accent bg-accent text-white shadow-sm"
+    : ghost.clash
+      ? "border-dashed border-danger bg-danger-soft text-danger"
+      : "border-dashed border-accent/60 bg-white/95 text-accent";
   return (
     <div
       ref={setNodeRef}
-      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center rounded-[3px] border-2 px-1 text-center text-[11px] font-semibold ${
-        ghost.clash ? "border-danger bg-danger-soft text-danger" : "border-accent/60 bg-white/90 text-accent"
-      } ${isOver ? (ghost.clash ? "bg-danger text-white" : "border-accent bg-accent text-white") : "border-dashed"}`}
+      className={`anim-fade absolute inset-x-0.5 z-10 flex flex-col justify-center rounded-[4px] border-2 px-1 text-center text-[11px] font-semibold tabular-nums transition-transform duration-100 ${tone} ${
+        isOver ? "scale-[1.01]" : ""
+      }`}
       style={{ top: top(item.meeting.start) + 1, height: Math.max(top(item.meeting.end) - top(item.meeting.start) - 2, 18) }}
     >
       <span>{sectionLabel(item.section)}</span>

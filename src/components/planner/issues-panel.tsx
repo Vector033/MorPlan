@@ -16,7 +16,9 @@ export function IssuesPanel() {
       <section className="card" aria-labelledby="clash-h" aria-live="polite">
         <h2 id="clash-h" className="bar">
           สิ่งที่ชนกัน
-          <span className={conflicts.length ? "chip bg-danger-soft text-danger" : "chip"}>{conflicts.length}</span>
+          <span className={conflicts.length ? "chip bg-danger-soft font-mono text-danger tabular-nums" : "chip font-mono tabular-nums"}>
+            {conflicts.length}
+          </span>
         </h2>
         <div className="p-4">
         {conflicts.length === 0 ? (
@@ -52,8 +54,8 @@ export function IssuesPanel() {
                   <h3 className="mb-1.5 border-b border-line pb-1 text-xs font-bold">{kind === "midterm" ? "กลางภาค" : "ปลายภาค"}</h3>
                   <ul className="flex flex-col gap-0.5">
                     {exams(kind).map((s) => (
-                      <li key={s.id} className={clash.has(s.id) ? "font-medium text-danger" : ""}>
-                        <span className="font-mono text-xs">{s.courseNo}</span> {examLabel(s[kind])}
+                      <li key={s.id} className={`tabular-nums ${clash.has(s.id) ? "font-medium text-danger" : ""}`}>
+                        <span className="font-mono text-xs tabular-nums">{s.courseNo}</span> {examLabel(s[kind])}
                       </li>
                     ))}
                   </ul>

@@ -7,10 +7,10 @@ export async function SiteHeader() {
   const user = await getOptionalUser();
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur">
+      <header className="fluted-glass sticky top-0 z-30 border-b border-line backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
           <Link href="/" className="flex items-center gap-2" aria-label="MorPlan หน้าแรก">
-            <span className="grid size-8 place-items-center rounded-xl bg-accent text-sm font-bold text-white" aria-hidden>
+            <span className="grid size-8 place-items-center rounded-sm bg-accent text-sm font-bold text-white" aria-hidden>
               M
             </span>
             <span className="text-lg font-bold tracking-tight">MorPlan</span>

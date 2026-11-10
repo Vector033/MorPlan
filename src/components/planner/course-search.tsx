@@ -57,8 +57,8 @@ export function CourseSearch() {
                   aria-expanded={expanded}
                   onClick={() => setOpen(expanded ? null : c.courseNo)}
                 >
-                  <span className="font-mono text-sm font-bold">{c.courseNo}</span>{" "}
-                  <span className="text-xs text-muted">
+                  <span className="font-mono text-sm font-bold tabular-nums">{c.courseNo}</span>{" "}
+                  <span className="text-xs text-muted tabular-nums">
                     {c.credits ? `${c.credits} นก. · ` : ""}
                     {c.sections.length} ตอน
                   </span>

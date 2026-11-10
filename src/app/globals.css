@@ -58,15 +58,68 @@
   --shadow-2xl: 0 2px 6px rgb(28 26 43 / 0.05), 0 18px 44px -16px rgb(28 26 43 / 0.24);
 }
 
+:root {
+  /*
+   * #12 Paper texture (inline base64 SVG so html-to-image never misparses inner url(#paper)):
+   * <svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'>
+   *   <filter id='paper' x='0' y='0' width='100%' height='100%'>
+   *     <feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/>
+   *     <feColorMatrix type='saturate' values='0'/>
+   *   </filter>
+   *   <rect width='180' height='180' filter='url(#paper)' opacity='0.025'/>
+   * </svg>
+   */
+  --paper-grain: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxODAnIGhlaWdodD0nMTgwJyB2aWV3Qm94PScwIDAgMTgwIDE4MCc+PGZpbHRlciBpZD0ncGFwZXInIHg9JzAnIHk9JzAnIHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnPjxmZVR1cmJ1bGVuY2UgdHlwZT0nZnJhY3RhbE5vaXNlJyBiYXNlRnJlcXVlbmN5PScwLjgnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48ZmVDb2xvck1hdHJpeCB0eXBlPSdzYXR1cmF0ZScgdmFsdWVzPScwJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzE4MCcgaGVpZ2h0PScxODAnIGZpbHRlcj0ndXJsKCNwYXBlciknIG9wYWNpdHk9JzAuMDI1Jy8+PC9zdmc+");
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--color-canvas);
+  background-color: var(--color-canvas);
+  /* #12 Paper texture: inline SVG vellum grain (0.025 opacity, CORS-safe). */
+  background-image: var(--paper-grain);
+  background-repeat: repeat;
+  background-size: 180px 180px;
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.65;
+}
+
+/* #12 Paper texture on pure white timetable paper (safe for html-to-image export). */
+.calendar-paper {
+  background-color: var(--color-paper);
+  background-image: var(--paper-grain);
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+/* #18 Square-dot grid + #7 Blueprint grid inside unoccupied timetable cells. */
+.timetable-slot-grid {
+  --slot-grid-line: color-mix(in srgb, var(--color-line) 40%, transparent);
+  background-image:
+    conic-gradient(from 0deg at 1.5px 1.5px, transparent 270deg, var(--slot-grid-line) 0),
+    linear-gradient(to right, var(--slot-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--slot-grid-line) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 9.25px 9.25px, 0 0, 0 0;
+}
+
+/* #2 Fluted glass: subtle vertical optical ribs with frosted backdrop blur. */
+.fluted-glass {
+  background-color: rgb(255 255 255 / 0.86);
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.36) 0px,
+    rgb(255 255 255 / 0.36) 2px,
+    transparent 2px,
+    transparent 9px,
+    rgb(28 26 43 / 0.025) 9px,
+    rgb(28 26 43 / 0.025) 11px
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Course codes, times, counts: one width per digit so columns and counters never shift. */
@@ -214,7 +267,7 @@ dialog.anim-modal[open]::backdrop {
 }
 
 /* A course just dropped on the calendar overshoots a hair and settles into its slot. */
-@keyframes magnetic-snap {
+@keyframes magneticSnap {
   0% {
     transform: scale(1.05);
   }
@@ -226,11 +279,11 @@ dialog.anim-modal[open]::backdrop {
   }
 }
 .animate-snap {
-  animation: magnetic-snap 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: magneticSnap 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Runs once on the blocks of a clash the user just created, never on load or plan switch. */
-@keyframes clash-shake {
+@keyframes clashShake {
   0%,
   100% {
     transform: translateX(0);
@@ -245,7 +298,7 @@ dialog.anim-modal[open]::backdrop {
   }
 }
 .animate-clash-shake {
-  animation: clash-shake 400ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  animation: clashShake 400ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 /* Waiting for an answer. */
@@ -305,20 +358,36 @@ dialog.drawer[open] {
   }
 }
 dialog.drawer::backdrop {
+  opacity: 0;
   background-color: transparent;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.1) 0px,
+    rgb(255 255 255 / 0.1) 2px,
+    transparent 2px,
+    transparent 10px,
+    rgb(28 26 43 / 0.04) 10px,
+    rgb(28 26 43 / 0.04) 12px
+  );
   backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
   transition:
+    opacity var(--dur-drawer) var(--ease-drawer),
     background-color var(--dur-drawer) var(--ease-drawer),
     backdrop-filter var(--dur-drawer) var(--ease-drawer),
     overlay var(--dur-drawer) allow-discrete,
     display var(--dur-drawer) allow-discrete;
 }
 dialog.drawer[open]::backdrop {
-  background-color: rgb(28 26 43 / 0.28);
-  backdrop-filter: blur(3px);
+  opacity: 1;
+  background-color: rgb(28 26 43 / 0.22);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   @starting-style {
+    opacity: 0;
     background-color: transparent;
     backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
   }
 }
 

@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { findConflicts } from "@/lib/core/conflicts";
+import { conflictedIds, findConflicts } from "@/lib/core/conflicts";
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
@@ -25,6 +25,7 @@ import { colorFor, conflictText } from "@/lib/ui";
 import { sectionsOfCourse } from "@/lib/workspace/reducer";
 import { AskDrawer } from "./ask-drawer";
 import { Calendar, type Ghost } from "./calendar";
+import { CourseDragOverlayCard } from "./course-card";
 import { CourseSearch } from "./course-search";
 import { announcements, collision, resetKeyboardTarget, screenReaderInstructions, slotKeyboardCoordinates } from "./dnd";
 import { ExportBar } from "./export-bar";
@@ -61,6 +62,7 @@ export function Planner() {
   }, [dragCourse, ws, placed, placedByCourse]);
 
   const motion = usePlacementMotion(plan.id, placed, conflicts);
+  const clashSet = useMemo(() => conflictedIds(conflicts), [conflicts]);
   const credits = placed.reduce((sum, s) => sum + (s.credits ?? 0), 0);
   const shownCredits = useCountUp(credits);
 
@@ -103,6 +105,7 @@ export function Planner() {
           <Tray
             courseNos={plan.courseNos}
             placedByCourse={placedByCourse}
+            clashIds={clashSet}
             titleOf={titleOf}
             onPick={setPicking}
             onRemove={(c) => dispatch({ type: "unwantCourse", courseNo: c })}
@@ -152,13 +155,15 @@ export function Planner() {
           </div>
 
           {conflicts.length > 0 && (
-            // Top-of-timetable alert: the first clash in words; the full list is in the panel below.
+            // Top-of-timetable alert pill: exact conflicting sections; full list sits below.
             <a
               href="#clash-h"
-              className="anim-rise flex items-center gap-3 rounded-2xl border border-danger/25 bg-danger-soft px-3 py-2.5 text-sm font-semibold text-danger hover:border-danger/50"
+              className="anim-rise flex items-center gap-3 rounded-2xl border border-danger/35 bg-danger-soft p-2 text-sm font-semibold text-danger hover:border-danger/60 sm:rounded-full sm:p-1.5 sm:pr-4"
             >
-              <span className="shrink-0 rounded-full bg-danger px-2 py-0.5 font-mono text-xs font-bold text-white">ชน {conflicts.length}</span>
-              <span className="line-clamp-2 min-w-0 flex-1 sm:truncate">{conflictText(conflicts[0], byId)}</span>
+              <span className="shrink-0 rounded-full bg-danger px-2.5 py-0.5 font-mono text-xs font-bold text-white tabular-nums">
+                ชน {conflicts.length}
+              </span>
+              <span className="line-clamp-2 min-w-0 flex-1 tabular-nums sm:truncate">{conflictText(conflicts[0], byId)}</span>
               {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-danger/80">ดูทั้งหมด ↓</span>}
             </a>
           )}
@@ -202,9 +207,12 @@ export function Planner() {
 
       <DragOverlay dropAnimation={null}>
         {dragCourse ? (
-          <div className={`anim-lift rounded-[3px] px-3 py-2 text-sm font-semibold shadow-lg ring-1 ring-accent ${colorFor(dragCourse, plan.courseNos).block}`}>
-            <span className="font-mono font-bold">{dragCourse}</span> {titleOf(dragCourse)}
-          </div>
+          <CourseDragOverlayCard
+            courseNo={dragCourse}
+            title={titleOf(dragCourse)}
+            palette={colorFor(dragCourse, plan.courseNos)}
+            placedSection={placedByCourse.get(dragCourse)}
+          />
         ) : null}
       </DragOverlay>
 
@@ -217,7 +225,7 @@ function Stat({ value, label, alert = false }: { value: number; label: string; a
   return (
     <div className="flex flex-col-reverse">
       <dt className={`mt-1.5 text-xs font-semibold ${alert ? "text-danger" : "text-muted"}`}>{label}</dt>
-      <dd className={`font-mono text-title leading-none font-bold sm:text-display ${alert ? "text-danger" : ""}`}>{value}</dd>
+      <dd className={`font-mono text-title leading-none font-bold tabular-nums sm:text-display ${alert ? "text-danger" : ""}`}>{value}</dd>
     </div>
   );
 }
@@ -234,6 +242,7 @@ function dragFromCalendar(courseNo: string, placed: Map<string, Section>) {
 function Tray({
   courseNos,
   placedByCourse,
+  clashIds,
   titleOf,
   onPick,
   onRemove,
@@ -241,6 +250,7 @@ function Tray({
 }: {
   courseNos: string[];
   placedByCourse: Map<string, Section>;
+  clashIds: ReadonlySet<string>;
   titleOf: (c: string) => string;
   onPick: (c: string) => void;
   onRemove: (c: string) => void;
@@ -251,27 +261,31 @@ function Tray({
     <section
       ref={setNodeRef}
       aria-label="วิชาที่จะลง"
-      className={`card ${dragging ? "outline-2 outline-offset-2 outline-accent outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
+      className={`card overflow-hidden ${dragging ? "outline-2 outline-offset-2 outline-accent outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
     >
       <h2 className="bar">
         วิชาที่จะลง
-        <span className="chip">{courseNos.length} วิชา</span>
+        <span className="chip tabular-nums">{courseNos.length} วิชา</span>
       </h2>
       {courseNos.length === 0 ? (
         <p className="p-3 text-sm text-muted">ค้นหาแล้วกด “เพิ่ม” วิชาที่อยากลง แล้วลากมาวางบนตาราง</p>
       ) : (
         <ul className="divide-y divide-line">
-          {courseNos.map((c) => (
-            <TrayItem
-              key={c}
-              courseNo={c}
-              order={courseNos}
-              title={titleOf(c)}
-              placed={placedByCourse.get(c)}
-              onPick={() => onPick(c)}
-              onRemove={() => onRemove(c)}
-            />
-          ))}
+          {courseNos.map((c) => {
+            const placed = placedByCourse.get(c);
+            return (
+              <TrayItem
+                key={c}
+                courseNo={c}
+                order={courseNos}
+                title={titleOf(c)}
+                placed={placed}
+                clashed={placed ? clashIds.has(placed.id) : false}
+                onPick={() => onPick(c)}
+                onRemove={() => onRemove(c)}
+              />
+            );
+          })}
         </ul>
       )}
     </section>
@@ -283,6 +297,7 @@ function TrayItem({
   order,
   title,
   placed,
+  clashed,
   onPick,
   onRemove,
 }: {
@@ -290,6 +305,7 @@ function TrayItem({
   order: string[];
   title: string;
   placed?: Section;
+  clashed: boolean;
   onPick: () => void;
   onRemove: () => void;
 }) {
@@ -305,20 +321,30 @@ function TrayItem({
         ref={setNodeRef}
         type="button"
         className="flex min-w-0 flex-1 cursor-grab touch-none items-center gap-3 py-0.5 text-left active:cursor-grabbing"
-          aria-label={`${courseNo} ${title} ${placed ? `วางแล้ว ตอน ${placed.lec}` : "ยังไม่ได้วาง"}`}
+        aria-label={`${courseNo} ${title} ${placed ? `วางแล้ว ตอน ${placed.lec}` : "ยังไม่ได้วาง"}`}
         {...listeners}
         {...attributes}
       >
         {/* Subway-line bullet: the course colour with its line number (order in this plan). */}
-        <span className={`grid size-9 shrink-0 place-items-center rounded-full font-mono text-xs font-bold ${color.dot}`} aria-hidden>
+        <span className={`grid size-9 shrink-0 place-items-center rounded-full font-mono text-xs font-bold tabular-nums ${color.dot}`} aria-hidden>
           {order.indexOf(courseNo) + 1}
         </span>
         <span className="min-w-0">
-          <span className="block font-mono text-sm font-bold">{courseNo}</span>
+          <span className="block font-mono text-sm font-bold tabular-nums">{courseNo}</span>
           <span className="block truncate text-xs text-muted" title={title}>{title}</span>
         </span>
       </button>
-      <button type="button" onClick={onPick} className={placed ? "btn-ghost px-2 text-xs text-ink" : "btn min-h-8 px-2 text-xs"}>
+      <button
+        type="button"
+        onClick={onPick}
+        className={
+          placed
+            ? clashed
+              ? "btn-ghost rounded-full border border-danger/40 bg-danger-soft px-2 py-1 text-xs font-semibold text-danger tabular-nums"
+              : "btn-ghost px-2 text-xs text-ink tabular-nums"
+            : "btn min-h-8 px-2 text-xs"
+        }
+      >
         {placed ? `ตอน ${placed.lec === "000" ? placed.lab : placed.lec}` : "เลือกตอน"}
       </button>
       <button type="button" onClick={onRemove} className="btn-ghost px-1.5 text-xs" aria-label={`เอา ${courseNo} ออก`}>

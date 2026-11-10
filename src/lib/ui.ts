@@ -5,16 +5,56 @@ import type { Conflict, ExamSlot, Meeting, Section } from "./core/types";
 // Text colour is chosen per fill for >= 4.5:1 contrast. Red is reserved for clashes.
 // Literal class strings so Tailwind picks them up.
 export const COURSE_COLORS = [
-  { block: "bg-[#eaf0ff] text-[#1f3a99] border-l-4 border-[#3d6bf0]", dot: "bg-[#eaf0ff] text-[#1f3a99] ring-1 ring-inset ring-[#3d6bf0]" },
-  { block: "bg-[#fff1e6] text-[#8a3d00] border-l-4 border-[#f08a2c]", dot: "bg-[#fff1e6] text-[#8a3d00] ring-1 ring-inset ring-[#f08a2c]" },
-  { block: "bg-[#e6f6ec] text-[#14603a] border-l-4 border-[#2fa46a]", dot: "bg-[#e6f6ec] text-[#14603a] ring-1 ring-inset ring-[#2fa46a]" },
-  { block: "bg-[#fff7d6] text-[#6b5200] border-l-4 border-[#d9ad00]", dot: "bg-[#fff7d6] text-[#6b5200] ring-1 ring-inset ring-[#d9ad00]" },
-  { block: "bg-[#f1ecff] text-[#45289e] border-l-4 border-[#7b5cf0]", dot: "bg-[#f1ecff] text-[#45289e] ring-1 ring-inset ring-[#7b5cf0]" },
-  { block: "bg-[#e2f5fa] text-[#0b5a70] border-l-4 border-[#1aa3c7]", dot: "bg-[#e2f5fa] text-[#0b5a70] ring-1 ring-inset ring-[#1aa3c7]" },
-  { block: "bg-[#f6eee5] text-[#6a4116] border-l-4 border-[#b07a45]", dot: "bg-[#f6eee5] text-[#6a4116] ring-1 ring-inset ring-[#b07a45]" },
-  { block: "bg-[#eef8e0] text-[#3d6512] border-l-4 border-[#6fb22a]", dot: "bg-[#eef8e0] text-[#3d6512] ring-1 ring-inset ring-[#6fb22a]" },
-  { block: "bg-[#eef0f4] text-[#353b48] border-l-4 border-[#6b7486]", dot: "bg-[#eef0f4] text-[#353b48] ring-1 ring-inset ring-[#6b7486]" },
-  { block: "bg-[#e1f4f0] text-[#0d5a50] border-l-4 border-[#1f9c8a]", dot: "bg-[#e1f4f0] text-[#0d5a50] ring-1 ring-inset ring-[#1f9c8a]" },
+  {
+    fill: "bg-[#eaf0ff] text-[#1f3a99]",
+    block: "bg-[#eaf0ff] text-[#1f3a99] border-l-4 border-l-[#3d6bf0]",
+    dot: "bg-[#eaf0ff] text-[#1f3a99] ring-1 ring-inset ring-[#3d6bf0]",
+  },
+  {
+    fill: "bg-[#fff1e6] text-[#8a3d00]",
+    block: "bg-[#fff1e6] text-[#8a3d00] border-l-4 border-l-[#f08a2c]",
+    dot: "bg-[#fff1e6] text-[#8a3d00] ring-1 ring-inset ring-[#f08a2c]",
+  },
+  {
+    fill: "bg-[#e6f6ec] text-[#14603a]",
+    block: "bg-[#e6f6ec] text-[#14603a] border-l-4 border-l-[#2fa46a]",
+    dot: "bg-[#e6f6ec] text-[#14603a] ring-1 ring-inset ring-[#2fa46a]",
+  },
+  {
+    fill: "bg-[#fff7d6] text-[#6b5200]",
+    block: "bg-[#fff7d6] text-[#6b5200] border-l-4 border-l-[#d9ad00]",
+    dot: "bg-[#fff7d6] text-[#6b5200] ring-1 ring-inset ring-[#d9ad00]",
+  },
+  {
+    fill: "bg-[#f1ecff] text-[#45289e]",
+    block: "bg-[#f1ecff] text-[#45289e] border-l-4 border-l-[#7b5cf0]",
+    dot: "bg-[#f1ecff] text-[#45289e] ring-1 ring-inset ring-[#7b5cf0]",
+  },
+  {
+    fill: "bg-[#e2f5fa] text-[#0b5a70]",
+    block: "bg-[#e2f5fa] text-[#0b5a70] border-l-4 border-l-[#1aa3c7]",
+    dot: "bg-[#e2f5fa] text-[#0b5a70] ring-1 ring-inset ring-[#1aa3c7]",
+  },
+  {
+    fill: "bg-[#f6eee5] text-[#6a4116]",
+    block: "bg-[#f6eee5] text-[#6a4116] border-l-4 border-l-[#b07a45]",
+    dot: "bg-[#f6eee5] text-[#6a4116] ring-1 ring-inset ring-[#b07a45]",
+  },
+  {
+    fill: "bg-[#eef8e0] text-[#3d6512]",
+    block: "bg-[#eef8e0] text-[#3d6512] border-l-4 border-l-[#6fb22a]",
+    dot: "bg-[#eef8e0] text-[#3d6512] ring-1 ring-inset ring-[#6fb22a]",
+  },
+  {
+    fill: "bg-[#eef0f4] text-[#353b48]",
+    block: "bg-[#eef0f4] text-[#353b48] border-l-4 border-l-[#6b7486]",
+    dot: "bg-[#eef0f4] text-[#353b48] ring-1 ring-inset ring-[#6b7486]",
+  },
+  {
+    fill: "bg-[#e1f4f0] text-[#0d5a50]",
+    block: "bg-[#e1f4f0] text-[#0d5a50] border-l-4 border-l-[#1f9c8a]",
+    dot: "bg-[#e1f4f0] text-[#0d5a50] ring-1 ring-inset ring-[#1f9c8a]",
+  },
 ];
 
 export function colorFor(courseNo: string, order: string[]) {

@@ -20,7 +20,7 @@ export function AskDrawer() {
         onClick={(e) => e.target === e.currentTarget && ref.current?.close()}
       >
         <div className="flex h-full flex-col">
-          <header className="bar">
+          <header className="bar fluted-glass sticky top-0 z-10 border-b border-line pb-3 backdrop-blur-md">
             <h2 id="ask-drawer-h">ถามเรื่องระเบียบการศึกษา</h2>
             <button
               type="button"
