@@ -29,9 +29,14 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
         <div>
           <p className="eyebrow">ตารางที่แชร์ · อ่านอย่างเดียว</p>
           <h1 className="text-title font-bold sm:text-display">{name}</h1>
-          <p className="text-sm text-muted">
-            ภาคการศึกษา {term} · {sections.length} วิชา · {sections.reduce((n, s) => n + (s.credits ?? 0), 0)} หน่วยกิต · สร้างเมื่อ{" "}
-            {thaiDate(createdAt.slice(0, 10))}
+          <p className="flex flex-wrap gap-x-1.5 text-sm text-muted tabular-nums">
+            <span className="whitespace-nowrap">ภาคการศึกษา {term}</span>
+            <span aria-hidden>·</span>
+            <span className="whitespace-nowrap">{sections.length} วิชา</span>
+            <span aria-hidden>·</span>
+            <span className="whitespace-nowrap">{sections.reduce((n, s) => n + (s.credits ?? 0), 0)} หน่วยกิต</span>
+            <span aria-hidden>·</span>
+            <span className="whitespace-nowrap">สร้างเมื่อ {thaiDate(createdAt.slice(0, 10))}</span>
           </p>
         </div>
         <button className="btn-primary" onClick={copy} disabled={!ready || full} title={full ? "มีแผนครบ 5 แผนแล้ว" : undefined}>
@@ -68,13 +73,13 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
             {sections.map((s) => (
               <tr key={s.id}>
                 <td className="p-3">
-                  <span className="font-mono text-xs font-semibold">{s.courseNo}</span>
+                  <span className="font-mono text-xs font-semibold tabular-nums">{s.courseNo}</span>
                   <span className="block text-xs text-muted">{s.title}</span>
                 </td>
-                <td className="p-3">{sectionLabel(s)}</td>
-                <td className="p-3 text-xs">{s.meetings.map(meetingLabel).join(" / ") || "TBA"}</td>
-                <td className="p-3 text-xs">{examLabel(s.midterm)}</td>
-                <td className="p-3 text-xs">{examLabel(s.final)}</td>
+                <td className="p-3 whitespace-nowrap tabular-nums">{sectionLabel(s)}</td>
+                <td className="p-3 text-xs tabular-nums">{s.meetings.map(meetingLabel).join(" / ") || "TBA"}</td>
+                <td className="p-3 text-xs whitespace-nowrap tabular-nums">{examLabel(s.midterm)}</td>
+                <td className="p-3 text-xs whitespace-nowrap tabular-nums">{examLabel(s.final)}</td>
               </tr>
             ))}
           </tbody>

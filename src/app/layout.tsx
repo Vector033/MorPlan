@@ -31,10 +31,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               Mor<span className="text-accent">Plan</span>
             </p>
             <p>
-              <strong className="font-semibold text-ink">ไม่ใช่ระบบทางการของ มช.</strong> โปรเจกต์ของนักศึกษา
-              ข้อมูลอาจผิดพลาด ตรวจสอบกับประกาศทางการอีกครั้งเสมอ
+              <strong className="font-semibold text-ink">
+                ไม่ใช่ระบบทางการ<span className="whitespace-nowrap">ของ มช.</span>
+              </strong>{" "}
+              โปรเจกต์ของนักศึกษา ข้อมูลอาจผิดพลาด{" "}
+              <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้งเสมอ</span>
             </p>
-            <a href="/about" className="link">
+            <a href="/about" className="link whitespace-nowrap">
               แหล่งข้อมูลและความเป็นส่วนตัว
             </a>
           </div>

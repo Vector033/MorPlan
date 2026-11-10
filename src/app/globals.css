@@ -134,11 +134,6 @@ h3 {
   text-wrap: balance;
 }
 
-p,
-li {
-  text-wrap: pretty;
-}
-
 a {
   text-underline-position: from-font;
 }

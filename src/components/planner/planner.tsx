@@ -197,8 +197,8 @@ export function Planner() {
             </div>
           </div>
           <p className="hidden text-xs text-muted md:block">
-            ลากวิชาจากรายการทางซ้ายมาวางบนช่องตอนเรียน หรือกด <span className="kbd">Space</span> บนวิชาแล้วใช้ลูกศรเลือกตอน
-            ลากกลับไปที่รายการเพื่อเอาออก
+            ลากวิชาจากรายการทางซ้ายมาวางบนช่องตอนเรียน หรือกด <span className="kbd">Space</span> บนวิชาแล้วใช้ลูกศรเลือกตอน ·{" "}
+            <span className="whitespace-nowrap">ลากกลับไปที่รายการเพื่อเอาออก</span>
           </p>
 
           <IssuesPanel />
@@ -268,7 +268,10 @@ function Tray({
         <span className="chip tabular-nums">{courseNos.length} วิชา</span>
       </h2>
       {courseNos.length === 0 ? (
-        <p className="p-3 text-sm text-muted">ค้นหาแล้วกด “เพิ่ม” วิชาที่อยากลง แล้วลากมาวางบนตาราง</p>
+        <p className="p-4 text-sm text-muted">
+          ค้นหา กด “เพิ่ม” วิชาที่ต้องการ{" "}
+          <span className="whitespace-nowrap">แล้วลากลงตาราง</span>
+        </p>
       ) : (
         <ul className="divide-y divide-line">
           {courseNos.map((c) => {
@@ -379,10 +382,13 @@ function EmptyPool({ onDemo }: { onDemo: () => void }) {
   return (
     <section className="card">
       <h2 className="bar">เริ่มจากรายชื่อวิชาของคุณ</h2>
-      <p className="px-4 pt-4 text-sm text-muted">
-        เปิดผลค้นหากระบวนวิชาใน reg ของ มช. (ล็อกอินที่เว็บ reg เอง) แล้วคัดลอกมาวางใน MorPlan
-        MorPlan ไม่เคยขอรหัสผ่าน reg ของคุณ
-      </p>
+      <div className="space-y-2 px-4 pt-3 text-sm text-muted">
+        <p>
+          เปิดผลค้นหากระบวนวิชาใน <span className="whitespace-nowrap">reg ของ มช.</span>{" "}
+          (ล็อกอินที่<span className="whitespace-nowrap">เว็บ reg เอง</span>) แล้วคัดลอกมาวางในนี้
+        </p>
+        <p className="font-medium text-ink">MorPlan ไม่เคยขอรหัสผ่าน reg ของคุณ</p>
+      </div>
       <div className="flex flex-wrap gap-2 p-4">
         <Link href="/import" className="btn-primary">
           นำเข้าจาก reg

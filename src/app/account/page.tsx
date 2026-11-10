@@ -174,7 +174,7 @@ function Method({ on, label, offText }: { on: boolean; label: string; offText: s
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2">
       <span className="font-medium">{label}</span>
-      <span className={`chip ${on ? "bg-[#e6f6ec] text-[#14603a]" : ""}`}>{on ? "ใช้งานอยู่" : offText}</span>
+      <span className={`chip shrink-0 whitespace-nowrap ${on ? "bg-[#e6f6ec] text-[#14603a]" : ""}`}>{on ? "ใช้งานอยู่" : offText}</span>
     </li>
   );
 }

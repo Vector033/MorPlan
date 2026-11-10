@@ -25,11 +25,22 @@ export function IssuesPanel() {
           <p className="text-sm text-muted">{placed.length ? "ไม่มีเวลาเรียนหรือวันสอบชนกัน" : "ยังไม่มีวิชาในตาราง"}</p>
         ) : (
           <ul className="flex flex-col gap-1.5 text-sm">
-            {conflicts.map((c, i) => (
-              <li key={i} className="border-l-0 border-t border-line pt-1.5 font-medium text-danger first:border-t-0 first:pt-0">
-                {conflictText(c, byId)}
-              </li>
-            ))}
+            {conflicts.map((c, i) => {
+              const text = conflictText(c, byId);
+              const splitAt = c.kind === "time" ? text.lastIndexOf(" วัน") : c.kind === "duplicate" ? -1 : text.lastIndexOf(" ", text.lastIndexOf(" ") - 1);
+              return (
+                <li key={i} className="border-l-0 border-t border-line pt-1.5 font-medium text-danger first:border-t-0 first:pt-0">
+                  {splitAt > 0 ? (
+                    <>
+                      {text.slice(0, splitAt)}{" "}
+                      <span className="whitespace-nowrap">{text.slice(splitAt + 1)}</span>
+                    </>
+                  ) : (
+                    text
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
         </div>
@@ -46,16 +57,17 @@ export function IssuesPanel() {
         ) : placed.length === 0 ? (
           <p className="text-sm text-muted">วันสอบจะแสดงเมื่อวางวิชาลงตาราง</p>
         ) : (
-          <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
+          <div className="grid gap-4 text-sm sm:grid-cols-2 md:grid-cols-1">
             {(["midterm", "final"] as const).map((kind) => {
               const clash = clashIds(kind);
               return (
                 <div key={kind}>
                   <h3 className="mb-1.5 border-b border-line pb-1 text-xs font-bold">{kind === "midterm" ? "กลางภาค" : "ปลายภาค"}</h3>
-                  <ul className="flex flex-col gap-0.5">
+                  <ul className="flex flex-col gap-1">
                     {exams(kind).map((s) => (
-                      <li key={s.id} className={`tabular-nums ${clash.has(s.id) ? "font-medium text-danger" : ""}`}>
-                        <span className="font-mono text-xs tabular-nums">{s.courseNo}</span> {examLabel(s[kind])}
+                      <li key={s.id} className={`flex flex-wrap items-baseline justify-between gap-x-2 tabular-nums ${clash.has(s.id) ? "font-medium text-danger" : ""}`}>
+                        <span className="font-mono text-xs font-semibold tabular-nums">{s.courseNo}</span>
+                        <span className="whitespace-nowrap">{examLabel(s[kind])}</span>
                       </li>
                     ))}
                   </ul>
@@ -66,8 +78,9 @@ export function IssuesPanel() {
         )}
         {!ws.university && (
           <p className="mt-3 text-xs text-muted">
-            วันสอบมาจากตารางสอบสาธารณะของสำนักทะเบียนฯ มช. วิชาที่ภาควิชากำหนดเองอาจไม่มีในตารางนี้
-            ตรวจสอบกับประกาศทางการอีกครั้ง
+            วันสอบมาจากตารางสอบสาธารณะของ<span className="whitespace-nowrap">สำนักทะเบียนฯ มช.</span>{" "}
+            วิชาที่ภาควิชากำหนดเองอาจไม่มีในตารางนี้{" "}
+            <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้ง</span>
           </p>
         )}
         </div>

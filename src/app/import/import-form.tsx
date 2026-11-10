@@ -150,10 +150,9 @@ function ImportFormReady() {
           />
           {!cmu && (
             <p className="text-xs text-muted">
-              ข้อความที่วางจะถูกส่งให้ Google Gemini อ่านแล้วแยกเป็นตอนเรียน
-              (ลบอีเมล เลขบัตรประชาชน และเบอร์โทรออกก่อนส่ง) MorPlan
-              ไม่เก็บข้อความนี้ไว้ แต่อย่าวางหน้าที่มีข้อมูลส่วนตัว เช่น
-              ผลการเรียน
+              ข้อความที่วางจะถูกส่งให้ Google Gemini อ่านแล้วแยกเป็นตอนเรียน (ลบอีเมล เลขบัตรประชาชน และเบอร์โทรออกก่อนส่ง){" "}
+              <span className="whitespace-nowrap">MorPlan ไม่เก็บข้อความนี้ไว้</span> แต่อย่าวางหน้าที่มี
+              <span className="whitespace-nowrap">ข้อมูลส่วนตัว</span> เช่น ผลการเรียน{" "}
               ทุกวิชาที่อ่านได้จะถูกเช็กว่ารหัสและเวลามีอยู่จริงในข้อความ
             </p>
           )}
@@ -308,16 +307,16 @@ function CmuSteps() {
           title: "เปิด reg ในอีกแท็บ",
           body: (
             <p>
-              ไปที่{" "}
+              เปิด{" "}
               <a
-                className="link"
+                className="link whitespace-nowrap"
                 href="https://www1.reg.cmu.ac.th/registrationoffice/searchcourse.php"
                 target="_blank"
                 rel="noreferrer"
               >
                 หน้าค้นหากระบวนวิชา
               </a>{" "}
-              แล้วล็อกอินที่เว็บ reg เอง
+              แล้วล็อกอินที่<span className="whitespace-nowrap">เว็บ reg เอง</span>
             </p>
           ),
         },
@@ -325,8 +324,9 @@ function CmuSteps() {
           title: "ค้นวิชาที่อยากลง",
           body: (
             <p>
-              ค้นทีละวิชาหรือทั้งกลุ่ม เช่น รหัส 204 ตารางผลลัพธ์ต้องมี section
-              วัน และเวลา
+              ค้นทีละวิชาหรือทั้งกลุ่ม เช่น <span className="whitespace-nowrap">รหัส 204</span> ให้
+              <span className="whitespace-nowrap">ตารางผลลัพธ์</span>มี section,{" "}
+              <span className="whitespace-nowrap">วัน และเวลา</span>
             </p>
           ),
         },
@@ -334,11 +334,19 @@ function CmuSteps() {
           title: "คัดลอกมาวางที่นี่",
           body: (
             <p>
-              กด <span className="kbd">Ctrl</span>+
-              <span className="kbd">A</span> แล้ว{" "}
-              <span className="kbd">Ctrl</span>+<span className="kbd">C</span>{" "}
-              หรือบันทึกหน้าเว็บ (<span className="kbd">Ctrl</span>+
-              <span className="kbd">S</span>) แล้วอัปโหลดไฟล์
+              กด{" "}
+              <span className="whitespace-nowrap">
+                <span className="kbd">Ctrl</span>+<span className="kbd">A</span>
+              </span>{" "}
+              แล้ว{" "}
+              <span className="whitespace-nowrap">
+                <span className="kbd">Ctrl</span>+<span className="kbd">C</span>
+              </span>{" "}
+              หรือบันทึก<span className="whitespace-nowrap">หน้าเว็บ</span> (
+              <span className="whitespace-nowrap">
+                <span className="kbd">Ctrl</span>+<span className="kbd">S</span>
+              </span>
+              ) แล้วอัปโหลดไฟล์
             </p>
           ),
         },
@@ -480,21 +488,26 @@ function OtherUniversity({
             title: "เปิดเว็บลงทะเบียน",
             body: (
               <p>
-                ล็อกอินที่เว็บของมหาวิทยาลัยเองในอีกแท็บ MorPlan ไม่ขอรหัสผ่านใด
-                ๆ
+                ล็อกอินที่เว็บของมหาวิทยาลัยเองในอีกแท็บ{" "}
+                <span className="whitespace-nowrap">MorPlan ไม่ขอรหัสผ่านใดๆ</span>
               </p>
             ),
           },
           {
             title: "ค้นวิชาที่อยากลง",
-            body: <p>ให้หน้าผลค้นหามีรหัสวิชา ตอนเรียน วัน และเวลา</p>,
+            body: (
+              <p>
+                ให้หน้าผลค้นหามีรหัสวิชา ตอนเรียน{" "}
+                <span className="whitespace-nowrap">วัน และเวลา</span>
+              </p>
+            ),
           },
           {
             title: "คัดลอกมาวางที่นี่",
             body: (
               <p>
-                คัดลอกทั้งหน้าหรือบันทึกหน้าเว็บแล้วอัปโหลด AI
-                จะแยกเป็นตอนเรียนให้
+                คัดลอกทั้งหน้าหรือบันทึกหน้าเว็บแล้วอัปโหลด{" "}
+                <span className="whitespace-nowrap">AI จะแยกเป็นตอนเรียนให้</span>
               </p>
             ),
           },

@@ -9,16 +9,22 @@ export default function ImportPage() {
       <header className="pb-2">
         <h1 className="text-title font-bold sm:text-display">นำเข้าวิชาจาก reg</h1>
         <p className="mt-3 max-w-2xl text-sm text-muted">
-          หน้าค้นหารายวิชาของมหาวิทยาลัยส่วนใหญ่ต้องล็อกอินก่อน MorPlan จึงไม่ดึงข้อมูลเอง คุณคัดลอกหน้าผลค้นหามาวาง และ
-          <strong className="text-ink"> MorPlan ไม่เคยขอ username หรือ password ของ reg</strong>
+          หน้าค้นหารายวิชาของมหาวิทยาลัยส่วนใหญ่ต้องล็อกอินก่อน MorPlan จึงไม่ดึงข้อมูลเอง{" "}
+          ให้คุณคัดลอก<span className="whitespace-nowrap">หน้าผลค้นหามาวาง</span>{" "}
+          <strong className="text-ink">
+            โดย MorPlan ไม่เคยขอ <span className="whitespace-nowrap">username หรือ password</span>{" "}
+            <span className="whitespace-nowrap">ของ reg</span>
+          </strong>
         </p>
       </header>
 
       <ImportForm />
 
-      <p className="text-xs text-muted">
-        ข้อมูลที่นำเข้าเก็บไว้ในเครื่องนี้ (หรือในบัญชีของคุณถ้าเข้าสู่ระบบ) MorPlan ไม่นำข้อมูลตอนเรียนของคุณไปเผยแพร่ต่อ สำหรับ มช.
-        วันสอบเติมให้อัตโนมัติจากตารางสอบสาธารณะของสำนักทะเบียนฯ มหาวิทยาลัยอื่นยังไม่มีวันสอบอัตโนมัติ
+      <p className="max-w-3xl text-xs text-muted">
+        ข้อมูลที่นำเข้าเก็บไว้ในเครื่องนี้ (หรือในบัญชีของคุณถ้าเข้าสู่ระบบ) โดย MorPlan ไม่นำข้อมูลตอนเรียนของคุณไปเผยแพร่ต่อ{" "}
+        สำหรับ มช. เติมวันสอบให้อัตโนมัติจากตารางสอบสาธารณะ<span className="whitespace-nowrap">ของสำนักทะเบียนฯ</span>{" "}
+        <span className="whitespace-nowrap">(มหาวิทยาลัยอื่น</span>{" "}
+        <span className="whitespace-nowrap">ยังไม่มีวันสอบอัตโนมัติ)</span>
       </p>
     </main>
   );

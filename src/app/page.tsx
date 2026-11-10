@@ -1,3 +1,4 @@
+import { HeroShader } from "@/components/planner/hero-shader";
 import { Planner } from "@/components/planner/planner";
 
 const SQRT1_2 = Math.SQRT1_2;
@@ -25,16 +26,17 @@ const LOWER_CONTOURS = [0, 22, 44, 66].map((off) => {
 export default function Home() {
   return (
     <div className="relative flex flex-1 flex-col">
-      {/* #13 Contour lines: Massimo Vignelli transit-route geometry behind the planner hero. */}
+      {/* GPU Simplex contour shader + #13 Vignelli transit curves behind the hero (outside calendarRef). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(85vh,760px)] overflow-hidden"
         style={{
-          maskImage: "radial-gradient(ellipse 86% 72% at 62% 30%, #000 32%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 86% 72% at 62% 30%, #000 32%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 88% 76% at 62% 32%, #000 30%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 88% 76% at 62% 32%, #000 30%, transparent 100%)",
         }}
       >
-        <svg className="h-full w-full text-ink opacity-[0.05]" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMin slice">
+        <HeroShader className="absolute inset-0 opacity-75" />
+        <svg className="relative h-full w-full text-ink opacity-[0.05]" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMin slice">
           {[...UPPER_CONTOURS, ...LOWER_CONTOURS].map((d, i) => (
             <path key={i} d={d} stroke="currentColor" strokeWidth={1} vectorEffect="non-scaling-stroke" />
           ))}

@@ -1,50 +1,81 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import docs from "../../../data/docs.json";
 
 export const metadata: Metadata = { title: "เกี่ยวกับ" };
 
+const KEEP_TOGETHER = [
+  "สำนักทะเบียนและประมวลผล",
+  "ภาคการศึกษาที่ 2/2569",
+  "ระดับปริญญาตรี",
+  "(โดยได้รับอักษรลำดับขั้น W)",
+  "(การวัดผลยังไม่สิ้นสุด)",
+  "พ.ศ. 2566",
+  "พ.ศ. 2564",
+  "พ.ศ. 2569",
+];
+
+function formatDocTitle(title: string): ReactNode {
+  // Wrap Thai/year phrases in nowrap spans so lines never break mid-phrase (e.g. "ภาคการ / ศึกษาที่").
+  const pattern = new RegExp(`(${KEEP_TOGETHER.map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "g");
+  return title.split(pattern).map((part, i) =>
+    KEEP_TOGETHER.includes(part) ? (
+      <span key={i} className="whitespace-nowrap">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
 export default function AboutPage() {
   return (
-    <main className="mx-auto flex w-full max-w-[42rem] flex-col gap-8 px-4 py-8 text-base">
+    <main className="mx-auto flex w-full max-w-[44rem] flex-col gap-8 px-4 py-8 text-base">
       <header className="pb-2">
         <h1 className="text-title font-bold sm:text-display">เกี่ยวกับ MorPlan</h1>
         <p className="mt-2 text-base">
-          MorPlan เป็นโปรเจกต์ของนักศึกษา <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong>{" "}
-          และไม่เกี่ยวข้องกับสำนักทะเบียนและประมวลผล ข้อมูลทั้งหมดอาจผิดพลาดหรือล้าสมัย ตรวจสอบกับประกาศทางการอีกครั้งเสมอ
+          MorPlan เป็นโปรเจกต์ของนักศึกษา{" "}
+          <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong> และไม่เกี่ยวข้องกับ
+          <span className="whitespace-nowrap">สำนักทะเบียนและประมวลผล</span> ข้อมูลทั้งหมดอาจผิดพลาดหรือล้าสมัย{" "}
+          <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้งเสมอ</span>
         </p>
       </header>
 
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">ข้อมูลวิชาและตอนเรียน</h2>
         <p>
-          หน้าค้นหากระบวนวิชาของ reg ต้องล็อกอินเพราะ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล MorPlan จึงไม่ดึงหรือเผยแพร่ข้อมูลตอนเรียน
-          นักศึกษาคัดลอกผลค้นหาจาก reg ที่ตัวเองเปิดมาวางเอง ข้อมูลนั้นอยู่ในเบราว์เซอร์ของนักศึกษา
-          (หรือในบัญชี MorPlan ของนักศึกษาเองถ้าเข้าสู่ระบบ) และไม่ถูกรวมเป็นฐานข้อมูลกลาง
+          หน้าค้นหากระบวนวิชาของ reg ต้องล็อกอินเพราะ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล MorPlan จึงไม่ดึงหรือเผยแพร่ข้อมูลตอนเรียน{" "}
+          นักศึกษาคัดลอกผลค้นหาจาก reg ที่ตัวเองเปิดมาวางเอง ข้อมูลนั้นอยู่ในเบราว์เซอร์ของนักศึกษา (หรือในบัญชี MorPlan ของนักศึกษาเองถ้าเข้าสู่ระบบ){" "}
+          <span className="inline-block">และไม่ถูกรวมเป็นฐานข้อมูลกลาง</span>
         </p>
         <p className="mt-2">
-          MorPlan <strong>ไม่เคยขอ username หรือ password ของ reg หรือ CMU Account</strong> ถ้าเห็นหน้าไหนขอ อย่ากรอก
+          MorPlan <strong>ไม่เคยขอ username หรือ password ของ reg หรือ CMU Account</strong>{" "}
+          <span className="whitespace-nowrap">ถ้าเห็นหน้าไหนขอ อย่ากรอก</span>
         </p>
       </section>
 
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">วันสอบ</h2>
         <p>
-          ดึงจากตารางสอบกลางภาคและปลายภาคที่สำนักทะเบียนฯ เผยแพร่สาธารณะ (timetable_exam.php) วันละไม่กี่ครั้ง และเก็บไว้ในไฟล์
-          วิชาที่ภาควิชาหรือผู้สอนกำหนดวันสอบเองอาจไม่มีในตารางนี้
+          ดึงจากตารางสอบกลางภาคและปลายภาคที่<span className="whitespace-nowrap">สำนักทะเบียนฯ</span> เผยแพร่สาธารณะ{" "}
+          <span className="whitespace-nowrap">(timetable_exam.php)</span>{" "}
+          <span className="whitespace-nowrap">วันละไม่กี่ครั้ง</span> และเก็บไว้ในไฟล์{" "}
+          วิชาที่ภาควิชาหรือผู้สอนกำหนดวันสอบเอง<span className="inline-block">อาจไม่มีในตารางนี้</span>
         </p>
       </section>
 
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">เอกสารที่ใช้ตอบคำถามเรื่องระเบียบ</h2>
         <p className="mb-2">
-          เอกสารสาธารณะจากเว็บสำนักทะเบียนฯ แปลงเป็นข้อความด้วย OCR (Tesseract) ซึ่งอาจอ่านตัวเลขหรือคำผิดได้
-          คำตอบทุกข้อจึงมีลิงก์ไปหน้าเอกสารต้นฉบับ
+          เอกสารสาธารณะจากเว็บ<span className="whitespace-nowrap">สำนักทะเบียนฯ</span> แปลงเป็นข้อความด้วย OCR (Tesseract){" "}
+          ซึ่งอาจอ่านตัวเลขหรือคำผิดได้ คำตอบทุกข้อจึงมี<span className="whitespace-nowrap">ลิงก์ไปหน้าเอกสารต้นฉบับ</span>
         </p>
-        <ul className="list-disc space-y-1 pl-5">
+        <ul className="list-disc space-y-1.5 pl-5">
           {docs.map((d) => (
             <li key={d.id}>
               <a className="link" href={d.url} target="_blank" rel="noreferrer">
-                {d.title}
+                {formatDocTitle(d.title)}
               </a>
             </li>
           ))}
@@ -54,8 +85,9 @@ export default function AboutPage() {
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">สถิติการใช้งาน</h2>
         <p>
-          MorPlan นับจำนวนครั้งที่มีการนำเข้า สร้างลิงก์แชร์ หรือถามคำถาม แบบไม่ระบุตัวตน (ไม่เก็บ IP หรือเนื้อหา)
-          เพื่อดูว่ามีคนใช้จริงไหม คำถามที่ถามจะไม่ถูกเก็บ
+          MorPlan นับจำนวนครั้งที่มีการนำเข้า สร้างลิงก์แชร์ หรือถามคำถาม แบบไม่ระบุตัวตน{" "}
+          <span className="whitespace-nowrap">(ไม่เก็บ IP หรือเนื้อหา)</span>{" "}
+          เพื่อดูว่ามีคนใช้จริงไหม <span className="whitespace-nowrap">คำถามที่ถามจะไม่ถูกเก็บ</span>
         </p>
       </section>
     </main>
