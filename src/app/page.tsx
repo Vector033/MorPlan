@@ -3,7 +3,7 @@ import { Planner } from "@/components/planner/planner";
 
 const SQRT1_2 = Math.SQRT1_2;
 
-/** Parallel Vignelli transit-route curves: 90° and 45° concentric circular arcs. */
+/** Parallel Vignelli transit-route curves: 90° and 45° concentric circular arcs across margins & hero. */
 const UPPER_CONTOURS = [0, 22, 44, 66, 88].map((off) => {
   const r1 = 100 + off;
   const r2 = 220 - off;
@@ -23,23 +23,40 @@ const LOWER_CONTOURS = [0, 22, 44, 66].map((off) => {
   return `M ${xStart} ${yStart} L ${x1} ${y1} A ${r} ${r} 0 0 1 980 ${780 - r} H 1480`;
 });
 
+const LEFT_MARGIN_CONTOURS = [0, 20, 40].map((off) => {
+  const r = 130 + off;
+  return `M -20 ${130 + off} H 110 A ${r} ${r} 0 0 1 ${110 + r} 260 V 920`;
+});
+
 export default function Home() {
   return (
     <div className="relative flex flex-1 flex-col">
       {/* GPU Simplex contour shader + #13 Vignelli transit curves behind the hero (outside calendarRef). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[min(85vh,760px)] overflow-hidden"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(88vh,820px)] overflow-hidden"
         style={{
-          maskImage: "radial-gradient(ellipse 88% 76% at 62% 32%, #000 30%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 88% 76% at 62% 32%, #000 30%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 98% 90% at 54% 40%, #000 54%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 98% 90% at 54% 40%, #000 54%, transparent 100%)",
         }}
       >
-        <HeroShader className="absolute inset-0 opacity-75" />
-        <svg className="relative h-full w-full text-ink opacity-[0.05]" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMin slice">
-          {[...UPPER_CONTOURS, ...LOWER_CONTOURS].map((d, i) => (
-            <path key={i} d={d} stroke="currentColor" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-          ))}
+        <HeroShader className="absolute inset-0 opacity-90" />
+        <svg className="relative h-full w-full" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMin slice">
+          <g className="text-ink opacity-[0.15]">
+            {[...UPPER_CONTOURS, ...LOWER_CONTOURS, ...LEFT_MARGIN_CONTOURS].map((d, i) => (
+              <path key={i} d={d} stroke="currentColor" strokeWidth={1.25} vectorEffect="non-scaling-stroke" />
+            ))}
+          </g>
+          {/* Single Vignelli magenta transit trunk line accenting the upper contour bundle */}
+          <path
+            d={UPPER_CONTOURS[2]}
+            className="text-accent opacity-[0.18]"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            vectorEffect="non-scaling-stroke"
+          />
+          <circle cx="1040" cy="264" r="3.5" className="fill-canvas stroke-accent opacity-[0.3]" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+          <circle cx="980" cy="582" r="3.5" className="fill-canvas stroke-ink opacity-[0.22]" strokeWidth={1.25} vectorEffect="non-scaling-stroke" />
         </svg>
       </div>
       <div className="relative z-10 flex flex-1 flex-col">

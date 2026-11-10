@@ -17,7 +17,7 @@ export type HeroShaderProps = {
   style?: CSSProperties;
 };
 
-const DEFAULT_COLORS: readonly [string, string, string, string] = ["#f4f3f9", "#e6e4ee", "#fbe9f6", "#ffffff"];
+const DEFAULT_COLORS: readonly [string, string, string, string] = ["#e6e4ee", "#f4f3f9", "#fbe9f6", "#ffffff"];
 
 const VERTEX_SHADER = `
 attribute vec2 a_pos;
@@ -26,7 +26,7 @@ void main() {
 }
 `;
 
-// 2D Simplex Noise (Ashima Arts, public domain / MIT) with architectural stepped contour bands.
+// 2D Simplex Noise (Ashima Arts, public domain / MIT) with architectural stepped contour bands & crisp isolines.
 const FRAGMENT_SHADER = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -83,7 +83,7 @@ vec3 samplePalette(float t) {
 void main() {
   float minDim = max(min(u_resolution.x, u_resolution.y), 1.0);
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / minDim;
-  vec2 p = uv * (1.6 / max(u_scale, 0.1));
+  vec2 p = uv * (1.85 / max(u_scale, 0.1));
 
   float drift = u_time * 0.18;
   float n1 = snoise(p + vec2(drift * 0.65, -drift * 0.4));
@@ -93,10 +93,15 @@ void main() {
   float totalSteps = max(u_steps * 3.0, 1.0);
   float scaled = n * totalSteps;
   float band = floor(scaled);
+  float f = fract(scaled);
   float edge = clamp(u_softness, 0.02, 0.98) * 0.5;
-  float smoothBand = band + smoothstep(0.5 - edge, 0.5 + edge, fract(scaled));
+  float smoothBand = band + smoothstep(0.5 - edge, 0.5 + edge, f);
 
   vec3 col = samplePalette(smoothBand / totalSteps);
+  // Subtle crisp isoline ridge along each contour step for clear architectural definition.
+  float ridge = smoothstep(0.05, 0.0, abs(f - 0.5));
+  vec3 ridgeTint = mix(u_colors[0], vec3(0.83, 0.80, 0.90), 0.55);
+  col = mix(col, ridgeTint, ridge * 0.42);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -131,7 +136,7 @@ export function HeroShader({
   speed = 0.2,
   scale = 0.75,
   stepsPerColor = 3,
-  softness = 0.25,
+  softness = 0.14,
   className = "",
   style,
 }: HeroShaderProps) {
