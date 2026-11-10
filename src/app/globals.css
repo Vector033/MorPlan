@@ -95,16 +95,12 @@ body {
   background-size: 180px 180px;
 }
 
-/* #18 Square-dot grid + #7 Blueprint grid inside unoccupied timetable cells. */
+/* #18 Subtle square-dot matrix inside unoccupied timetable cells without competing with hour lines. */
 .timetable-slot-grid {
-  --slot-grid-line: color-mix(in srgb, var(--color-line) 65%, transparent);
-  --slot-grid-dot: color-mix(in srgb, var(--color-ink) 12%, transparent);
-  background-image:
-    conic-gradient(from 0deg at 2px 2px, transparent 270deg, var(--slot-grid-dot) 0),
-    linear-gradient(to right, var(--slot-grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--slot-grid-line) 1px, transparent 1px);
+  --slot-grid-dot: color-mix(in srgb, var(--color-ink) 6.5%, transparent);
+  background-image: conic-gradient(from 0deg at 1.5px 1.5px, transparent 270deg, var(--slot-grid-dot) 0);
   background-size: 20px 20px;
-  background-position: 9px 9px, 0 0, 0 0;
+  background-position: 9.25px 9.25px;
 }
 
 /* #2 Fluted glass: subtle vertical optical ribs with frosted backdrop blur. */

@@ -80,13 +80,14 @@ export const Calendar = forwardRef<HTMLDivElement, Props>(function Calendar(
           const dayItems = items.filter((it) => it.day === day);
           const lanes = assignLanes(dayItems);
           return (
-            <div key={day} className="timetable-slot-grid relative border-l border-line" style={{ height }} data-day={day}>
+            <div key={day} className={`${compact ? "" : "timetable-slot-grid "}relative border-l border-line`} style={{ height }} data-day={day}>
               {hours.map((h) => (
                 <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: top(h * 60) }} />
               ))}
-              {hours.map((h) => (
-                <div key={`h${h}`} className="absolute inset-x-0 border-t border-dashed border-line/60" style={{ top: top(h * 60 + 30) }} />
-              ))}
+              {!compact &&
+                hours.map((h) => (
+                  <div key={`h${h}`} className="absolute inset-x-0 border-t border-dashed border-line/60" style={{ top: top(h * 60 + 30) }} />
+                ))}
 
               {dayItems.map((it, i) => {
                 const lane = lanes[i];
