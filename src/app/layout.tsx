@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <WorkspaceProvider signedIn={!!user}>
           <div className="flex flex-1 flex-col">{children}</div>
         </WorkspaceProvider>
-        <footer className="mt-10 border-t border-line bg-white px-4 py-6 text-xs text-muted">
+        <footer className="relative z-10 mt-10 border-t border-line bg-white px-4 py-6 text-xs text-muted">
           <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-baseline sm:gap-8">
             <p className="font-bold text-ink">
               Mor<span className="text-accent">Plan</span>
