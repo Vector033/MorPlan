@@ -34,11 +34,11 @@ export default function AboutPage() {
     <main className="mx-auto flex w-full max-w-[44rem] flex-col gap-8 px-4 py-8 text-base">
       <header className="pb-2">
         <h1 className="text-title font-bold sm:text-display">เกี่ยวกับ MorPlan</h1>
-        <p className="mt-2 text-base">
-          MorPlan เป็นโปรเจกต์ของนักศึกษา{" "}
-          <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong> และไม่เกี่ยวข้องกับ
+        <p className="mt-2 max-w-[65ch] text-base">
+          ช่วยจัดตารางลงทะเบียนแบบเห็นเวลาเรียนและวันสอบชนทันที พร้อมเทียบหลายแผนก่อนกดยืนยัน{" "}
+          (โปรเจกต์ของนักศึกษา <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong> และไม่เกี่ยวข้องกับ
           <span className="whitespace-nowrap">สำนักทะเบียนและประมวลผล</span> ข้อมูลทั้งหมดอาจผิดพลาดหรือล้าสมัย{" "}
-          <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้งเสมอ</span>
+          <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้งเสมอ</span>)
         </p>
       </header>
 

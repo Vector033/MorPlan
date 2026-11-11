@@ -58,7 +58,7 @@ export function ExportBar({ calendarRef }: { calendarRef: RefObject<HTMLDivEleme
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <button className="btn" disabled={disabled || busy === "share"} onClick={share}>
+      <button className="btn-primary min-h-9 px-4 py-1.5" disabled={disabled || busy === "share"} onClick={share}>
         {busy === "share" ? "กำลังสร้าง…" : "แชร์ลิงก์"}
       </button>
       <button className="btn" disabled={disabled} onClick={downloadIcs} title="นำเข้า Google Calendar / Apple Calendar">

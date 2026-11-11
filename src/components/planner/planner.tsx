@@ -15,12 +15,14 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { VolumeOffIcon, VolumeOnIcon, WarningIcon } from "@/components/icons";
 import { conflictedIds, findConflicts } from "@/lib/core/conflicts";
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
 import { EXAMS } from "@/lib/exams-data";
+import { playClashSound, playSnapSound, useMicroSound } from "@/lib/sound";
 import { colorFor, conflictText } from "@/lib/ui";
 import { sectionsOfCourse } from "@/lib/workspace/reducer";
 import { AskDrawer } from "./ask-drawer";
@@ -62,9 +64,16 @@ export function Planner() {
   }, [dragCourse, ws, placed, placedByCourse]);
 
   const motion = usePlacementMotion(plan.id, placed, conflicts);
+  const [soundOn, toggleSound] = useMicroSound();
   const clashSet = useMemo(() => conflictedIds(conflicts), [conflicts]);
   const credits = placed.reduce((sum, s) => sum + (s.credits ?? 0), 0);
   const shownCredits = useCountUp(credits);
+
+  useEffect(() => {
+    if (!soundOn) return;
+    if (motion.shakeIds.size > 0) playClashSound();
+    else if (motion.snapId) playSnapSound();
+  }, [motion, soundOn]);
 
   function onDragStart(e: DragStartEvent) {
     resetKeyboardTarget();
@@ -114,7 +123,7 @@ export function Planner() {
         </aside>
 
         <main className="flex min-w-0 flex-col gap-4">
-          <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2">
+          <header className="order-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2 md:order-none">
             <div>
               <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
               <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
@@ -129,16 +138,30 @@ export function Planner() {
             )}
           </header>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <PlanTabs />
-            <div className="flex flex-wrap items-center gap-2">
-              {/* The regulations corpus is CMU's only. */}
-              {!ws.university && <AskDrawer />}
-              <ExportBar calendarRef={calendarRef} />
+          <div className="contents md:flex md:flex-col md:gap-3">
+            <div className="order-2 min-w-0 md:order-none">
+              <PlanTabs />
+            </div>
+            <div className="order-6 flex flex-wrap items-center justify-between gap-2 max-md:sticky max-md:bottom-20 max-md:z-20 max-md:mx-auto max-md:w-fit max-md:rounded-full max-md:border max-md:border-line max-md:bg-white/95 max-md:px-2 max-md:py-1.5 max-md:shadow-lg max-md:backdrop-blur md:order-none">
+              <button
+                type="button"
+                onClick={toggleSound}
+                aria-pressed={soundOn}
+                title={soundOn ? "ปิดเสียงสัมผัสเวลาวางวิชา" : "เปิดเสียงสัมผัสเวลาวางวิชา"}
+                className={`btn-ghost hidden px-2.5 py-1.5 text-xs md:inline-flex ${soundOn ? "font-medium text-accent" : "text-muted"}`}
+              >
+                {soundOn ? <VolumeOnIcon className="size-3.5" /> : <VolumeOffIcon className="size-3.5" />}
+                <span>{soundOn ? "เสียงสัมผัส: เปิด" : "เสียงสัมผัส: ปิด"}</span>
+              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* The regulations corpus is CMU's only. */}
+                {!ws.university && <AskDrawer />}
+                <ExportBar calendarRef={calendarRef} />
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5 md:hidden" role="tablist" aria-label="เลือกวัน">
+          <div className="order-3 grid grid-cols-5 gap-1.5 md:hidden" role="tablist" aria-label="เลือกวัน">
             {days.map((d) => (
               <button
                 key={d}
@@ -158,9 +181,10 @@ export function Planner() {
             // Top-of-timetable alert pill: exact conflicting sections; full list sits below.
             <a
               href="#clash-h"
-              className="anim-rise flex items-center gap-3 rounded-2xl border border-danger/35 bg-danger-soft p-2 text-sm font-semibold text-danger hover:border-danger/60 sm:rounded-full sm:p-1.5 sm:pr-4"
+              className="anim-rise order-4 flex items-center gap-3 rounded-2xl border border-danger/35 bg-danger-soft p-2 text-sm font-semibold text-danger hover:border-danger/60 sm:rounded-full sm:p-1.5 sm:pr-4 md:order-none"
             >
-              <span className="shrink-0 rounded-full bg-danger px-2.5 py-0.5 font-mono text-xs font-bold text-white tabular-nums">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-danger px-2.5 py-0.5 font-mono text-xs font-bold text-white tabular-nums">
+                <WarningIcon className="size-3" />
                 ชน {conflicts.length}
               </span>
               <span className="line-clamp-2 min-w-0 flex-1 tabular-nums sm:truncate">{conflictText(conflicts[0], byId)}</span>
@@ -168,7 +192,7 @@ export function Planner() {
             </a>
           )}
 
-          <div className="card overflow-hidden" style={{ viewTransitionName: "plan-calendar" }}>
+          <div className="card order-5 overflow-hidden md:order-none" style={{ viewTransitionName: "plan-calendar" }}>
             <div className="hidden md:block">
               <Calendar
                 ref={calendarRef}
@@ -201,7 +225,9 @@ export function Planner() {
             <span className="whitespace-nowrap">ลากกลับไปที่รายการเพื่อเอาออก</span>
           </p>
 
-          <IssuesPanel />
+          <div className="order-7 md:order-none">
+            <IssuesPanel />
+          </div>
         </main>
       </div>
 
@@ -343,11 +369,12 @@ function TrayItem({
         className={
           placed
             ? clashed
-              ? "btn-ghost rounded-full border border-danger/40 bg-danger-soft px-2 py-1 text-xs font-semibold text-danger tabular-nums"
+              ? "btn-ghost inline-flex items-center gap-1 rounded-full border border-danger/40 bg-danger-soft px-2 py-1 text-xs font-semibold text-danger tabular-nums"
               : "btn-ghost px-2 text-xs text-ink tabular-nums"
             : "btn min-h-8 px-2 text-xs"
         }
       >
+        {clashed && placed && <WarningIcon className="size-3 shrink-0" />}
         {placed ? `ตอน ${placed.lec === "000" ? placed.lab : placed.lec}` : "เลือกตอน"}
       </button>
       <button type="button" onClick={onRemove} className="btn-ghost px-1.5 text-xs" aria-label={`เอา ${courseNo} ออก`}>
@@ -381,13 +408,26 @@ function MobileDayList({ day, sections, onPick }: { day: Day; sections: Section[
 function EmptyPool({ onDemo }: { onDemo: () => void }) {
   return (
     <section className="card">
-      <h2 className="bar">เริ่มจากรายชื่อวิชาของคุณ</h2>
-      <div className="space-y-2 px-4 pt-3 text-sm text-muted">
-        <p>
-          เปิดผลค้นหากระบวนวิชาใน <span className="whitespace-nowrap">reg ของ มช.</span>{" "}
-          (ล็อกอินที่<span className="whitespace-nowrap">เว็บ reg เอง</span>) แล้วคัดลอกมาวางในนี้
+      <h2 className="bar">จัดตารางแบบไม่พลาดวิชาชนหรือสอบซ้อน</h2>
+      <div className="space-y-3 px-4 pt-2 text-sm text-muted">
+        <ol className="flex flex-col gap-1.5 text-xs text-ink">
+          <li className="flex items-center gap-2">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-canvas font-mono text-[11px] font-bold">1</span>
+            <span>นำเข้าผลค้นหารายวิชาจาก reg</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-canvas font-mono text-[11px] font-bold">2</span>
+            <span>ลากวางลงตาราง เห็นเวลาและวันสอบชนทันที</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-canvas font-mono text-[11px] font-bold">3</span>
+            <span>เทียบแผน A / B / C แล้วส่งออกรูปหรือแชร์ลิงก์</span>
+          </li>
+        </ol>
+        <p className="text-xs text-muted">
+          คัดลอกผลค้นหาจาก <span className="whitespace-nowrap">reg ของ มช.</span> มาวางเองได้เลย{" "}
+          <strong className="font-medium text-ink">MorPlan ไม่เคยขอรหัสผ่าน reg</strong>
         </p>
-        <p className="font-medium text-ink">MorPlan ไม่เคยขอรหัสผ่าน reg ของคุณ</p>
       </div>
       <div className="flex flex-wrap gap-2 p-4">
         <Link href="/import" className="btn-primary">

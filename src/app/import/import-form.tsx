@@ -7,11 +7,22 @@ import { attachExams } from "@/lib/core/exams";
 import type { ExtractResult } from "@/lib/core/extract";
 import { pageText, parseRegImport } from "@/lib/core/import-reg";
 import { isCmu, type UniversityInfo } from "@/lib/core/university";
+import { demoSections } from "@/lib/demo";
 import { EXAMS } from "@/lib/exams-data";
 import { meetingLabel, sectionLabel } from "@/lib/ui";
+import { workspaceReducer } from "@/lib/workspace/reducer";
 import { ManualForm } from "./manual-form";
 
 const MAX_AI_CHARS = 40_000;
+
+const SAMPLE_REG_PASTE = [
+  "204101  INTRO COMP PROG  001  000  3  TuF  0800-0930  RB5210",
+  "002  000  3  MTh  0930-1100  RB5205",
+  "204102  PROG LAB  000  001  1  We  0900-1200  CSB201",
+  "206111  CALCULUS 1  001  000  3  MTh  0800-0930  SCB1200",
+  "003  000  3  MWF  1000-1100  SCB1300",
+  "208101  STATISTICS  001  000  3  TuF  1100-1230  SCB2100",
+].join("\n");
 
 /** Waits for the saved workspace so the university picker starts on the student's own university. */
 export function ImportForm() {
@@ -93,6 +104,41 @@ function ImportFormReady() {
     router.push("/");
   }
 
+  function applyPreset(compareDemo: boolean) {
+    const demo = demoSections(EXAMS);
+    let next = workspaceReducer(ws, { type: "import", sections: demo, university: null });
+    const pickIds = (pairs: readonly (readonly [string, string])[]) =>
+      pairs
+        .map(([courseNo, sec]) => demo.find((s) => s.courseNo === courseNo && (s.lec === sec || (s.lec === "000" && s.lab === sec)))?.id)
+        .filter((id): id is string => !!id);
+
+    const planAIds = pickIds([
+      ["204101", "001"],
+      ["206111", "003"],
+      ["208101", "001"],
+    ]);
+    for (const id of planAIds) next = workspaceReducer(next, { type: "place", sectionId: id });
+
+    if (compareDemo) {
+      if (!next.plans.some((p) => p.id === "B")) {
+        next = workspaceReducer(next, { type: "addPlan", copyFrom: next.activePlanId });
+      } else {
+        next = workspaceReducer(next, { type: "setActive", id: "B" });
+      }
+      // Deliberate TuF 08:00 clash (204101 001 vs 206111 002) for instant /compare testing.
+      const planBIds = pickIds([
+        ["204101", "001"],
+        ["206111", "002"],
+        ["208101", "001"],
+      ]);
+      for (const id of planBIds) next = workspaceReducer(next, { type: "place", sectionId: id });
+      next = workspaceReducer(next, { type: "setActive", id: "A" });
+    }
+
+    dispatch({ type: "replace", workspace: next });
+    router.push(compareDemo ? "/compare" : "/");
+  }
+
   return (
     <>
       <fieldset className="flex flex-wrap items-center gap-2">
@@ -127,10 +173,38 @@ function ImportFormReady() {
 
       {other ? <OtherUniversity name={name} onName={setName} /> : <CmuSteps />}
 
+      {cmu && (
+        <section className="card" aria-labelledby="preset-h">
+          <h2 id="preset-h" className="bar">
+            ลองชุดตัวอย่าง มช. ใน 1 คลิก
+          </h2>
+          <div className="flex flex-wrap items-center gap-2 px-4 pt-1 pb-4">
+            <button type="button" className="btn" onClick={() => applyPreset(false)}>
+              ชุดตัวอย่างพื้นฐาน (3 วิชา ไม่ชน)
+            </button>
+            <button type="button" className="btn" onClick={() => applyPreset(true)}>
+              ลองเทียบแผน A / B (มีจุดชน)
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="card" aria-labelledby="paste-h">
-        <h2 id="paste-h" className="bar">
-          วางข้อมูล
-        </h2>
+        <div className="bar">
+          <h2 id="paste-h">วางข้อมูล</h2>
+          {cmu && (
+            <button
+              type="button"
+              className="btn-ghost text-xs"
+              onClick={() => {
+                setText(SAMPLE_REG_PASTE);
+                void parse(SAMPLE_REG_PASTE);
+              }}
+            >
+              ใส่ตัวอย่างข้อความ reg
+            </button>
+          )}
+        </div>
         <div className="flex flex-col gap-3 p-4">
           <textarea
             className="input min-h-40 font-mono text-xs"

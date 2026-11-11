@@ -1,5 +1,6 @@
 "use client";
 
+import { WarningIcon } from "@/components/icons";
 import { fmtTime } from "@/lib/core/time";
 import type { Meeting, Section } from "@/lib/core/types";
 import { colorFor, sectionLabel } from "@/lib/ui";
@@ -32,10 +33,24 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
         compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"
       }`}
     >
-      <div className="flex items-start justify-between gap-1">
-        <span className={`font-mono font-bold tabular-nums ${compact ? "" : "text-[13px]"}`}>{s.courseNo}</span>
+      <div
+        className={
+          compact
+            ? "flex items-center gap-0.5 overflow-hidden"
+            : "flex flex-wrap items-center justify-between gap-x-1 gap-y-0.5"
+        }
+      >
+        {clash && compact && <WarningIcon className="size-2 shrink-0 text-danger" aria-label={clash} />}
+        <span
+          className={`font-mono font-bold tabular-nums ${
+            compact ? (clash ? "text-[7px]" : "") : clash ? "text-xs" : "text-[13px]"
+          }`}
+        >
+          {s.courseNo}
+        </span>
         {clash && !compact && (
-          <span className="shrink-0 rounded-[2px] bg-danger px-1.5 py-0.5 text-[10px] leading-none font-bold text-white">
+          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-[2px] bg-danger px-1 py-0.5 text-[9.5px] leading-none font-bold whitespace-nowrap text-white">
+            <WarningIcon className="size-2.5 shrink-0" />
             {clash}
           </span>
         )}
@@ -43,11 +58,11 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
       {!compact && (
         <>
           <div className="truncate font-medium">{s.title}</div>
-          <div className="truncate tabular-nums opacity-85">
+          <div className="truncate tabular-nums opacity-90">
             {sectionLabel(s)}
             {m.room ? ` · ${m.room}` : ""}
           </div>
-          <div className="truncate font-mono tabular-nums opacity-85">
+          <div className="truncate font-mono tabular-nums opacity-90">
             {fmtTime(m.start)}–{fmtTime(m.end)}
           </div>
         </>

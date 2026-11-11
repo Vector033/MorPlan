@@ -22,9 +22,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="th" className={`${anuphan.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col pb-24 sm:pb-0">
-        <SiteBackdrop />
         <SiteHeader />
         <WorkspaceProvider signedIn={!!user}>
+          <SiteBackdrop />
           <div className="relative z-10 flex flex-1 flex-col">{children}</div>
         </WorkspaceProvider>
         <footer className="relative z-10 mt-10 border-t border-line bg-white px-4 py-6 text-xs text-muted">

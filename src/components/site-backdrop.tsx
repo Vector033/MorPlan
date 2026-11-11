@@ -2,10 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { HeroShader } from "./planner/hero-shader";
+import { useWorkspace } from "./planner/workspace-context";
 
 const SQRT1_2 = Math.SQRT1_2;
 
-/** Parallel Vignelli transit-route curves: 90° and 45° concentric circular arcs extending past every viewport edge. */
+/** Parallel Vignelli transit-route curves: 90° and 45° concentric circular arcs framing the empty landing hero. */
 const UPPER_CONTOURS = [0, 22, 44, 66, 88].map((off) => {
   const r1 = 100 + off;
   const r2 = 220 - off;
@@ -31,18 +32,20 @@ const LEFT_MARGIN_CONTOURS = [0, 20, 40].map((off) => {
 });
 
 /**
- * Full-viewport ambient GPU shader + #13 Vignelli transit curves mounted once in the root layout
- * so route transitions stay seamless and timetable export DOM (`calendarRef`) stays clean.
+ * Landing-Hero / Empty-State GPU Shader + #13 Vignelli transit curves.
+ * Strictly active ONLY on `/` before courses are imported (`ws.pool.length === 0`),
+ * keeping `/compare` and active timetable workspaces calm on `--color-canvas` + `--paper-grain`.
  */
 export function SiteBackdrop() {
   const pathname = usePathname();
-  // Quiet down line contrast on long-form editorial prose so paragraphs remain effortless to read.
-  const quiet = pathname === "/about";
+  const { ws, ready } = useWorkspace();
+
+  if (pathname !== "/" || !ready || ws.pool.length > 0) return null;
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      className="anim-fade pointer-events-none fixed inset-0 z-0 overflow-hidden"
       style={{
         maskImage: "radial-gradient(ellipse 135% 135% at 52% 45%, #000 72%, rgb(0 0 0 / 0.55) 100%)",
         WebkitMaskImage: "radial-gradient(ellipse 135% 135% at 52% 45%, #000 72%, rgb(0 0 0 / 0.55) 100%)",
@@ -50,7 +53,7 @@ export function SiteBackdrop() {
     >
       <HeroShader className="absolute inset-0 opacity-90" />
       <svg className="relative h-full w-full" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMid slice">
-        <g className={`text-ink transition-opacity duration-300 ${quiet ? "opacity-[0.06]" : "opacity-[0.15]"}`}>
+        <g className="text-ink opacity-[0.14]">
           {[...UPPER_CONTOURS, ...LOWER_CONTOURS, ...LEFT_MARGIN_CONTOURS].map((d, i) => (
             <path key={i} d={d} stroke="currentColor" strokeWidth={1.25} vectorEffect="non-scaling-stroke" />
           ))}
@@ -58,27 +61,13 @@ export function SiteBackdrop() {
         {/* Single Vignelli magenta transit trunk line accenting the upper contour bundle */}
         <path
           d={UPPER_CONTOURS[2]}
-          className={`text-accent transition-opacity duration-300 ${quiet ? "opacity-[0.09]" : "opacity-[0.18]"}`}
+          className="text-accent opacity-[0.17]"
           stroke="currentColor"
           strokeWidth={1.5}
           vectorEffect="non-scaling-stroke"
         />
-        <circle
-          cx="1040"
-          cy="264"
-          r="3.5"
-          className={`fill-canvas stroke-accent transition-opacity duration-300 ${quiet ? "opacity-[0.16]" : "opacity-[0.3]"}`}
-          strokeWidth={1.5}
-          vectorEffect="non-scaling-stroke"
-        />
-        <circle
-          cx="980"
-          cy="582"
-          r="3.5"
-          className={`fill-canvas stroke-ink transition-opacity duration-300 ${quiet ? "opacity-[0.12]" : "opacity-[0.22]"}`}
-          strokeWidth={1.25}
-          vectorEffect="non-scaling-stroke"
-        />
+        <circle cx="1040" cy="264" r="3.5" className="fill-canvas stroke-accent opacity-[0.28]" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+        <circle cx="980" cy="582" r="3.5" className="fill-canvas stroke-ink opacity-[0.22]" strokeWidth={1.25} vectorEffect="non-scaling-stroke" />
       </svg>
     </div>
   );

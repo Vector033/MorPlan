@@ -2,7 +2,9 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { MAX_PLANS } from "@/lib/workspace/reducer";
+import { CheckIcon, WarningIcon } from "@/components/icons";
+import { findConflicts } from "@/lib/core/conflicts";
+import { MAX_PLANS, planSections } from "@/lib/workspace/reducer";
 import { useWorkspace } from "./workspace-context";
 
 export function PlanTabs() {
@@ -11,7 +13,7 @@ export function PlanTabs() {
   const listRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
 
-  // Slide the black bar under the active tab: transform only (translate + scaleX of a full-width bar).
+  // Slide the magenta bar under the active tab: transform only (translate + scaleX of a full-width bar).
   useLayoutEffect(() => {
     const list = listRef.current;
     const bar = barRef.current;
@@ -43,22 +45,44 @@ export function PlanTabs() {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div ref={listRef} role="tablist" aria-label="แผนตารางเรียน" className="relative flex flex-wrap border-b border-line">
-        {ws.plans.map((p) => (
-          <button
-            key={p.id}
-            role="tab"
-            aria-selected={p.id === plan.id}
-            onClick={() => switchTo(p.id)}
-            className={`rounded-t-lg px-3.5 pt-1.5 pb-2 text-sm ${
-              p.id === plan.id ? "font-semibold text-ink" : "text-muted hover:bg-white hover:text-ink"
-            }`}
-          >
-            {p.name}
-          </button>
-        ))}
+        {ws.plans.map((p) => {
+          const sections = planSections(ws, p);
+          const clashCount = sections.length ? findConflicts(sections).length : 0;
+          return (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={p.id === plan.id}
+              onClick={() => switchTo(p.id)}
+              className={`inline-flex items-center gap-1.5 rounded-t-lg px-3 pt-1.5 pb-2 text-sm ${
+                p.id === plan.id ? "font-semibold text-ink" : "text-muted hover:bg-white hover:text-ink"
+              }`}
+            >
+              <span>{p.name}</span>
+              {sections.length > 0 &&
+                (clashCount > 0 ? (
+                  <span
+                    className="inline-flex items-center gap-0.5 rounded-full bg-danger-soft px-1.5 py-0.5 font-mono text-[10px] font-bold text-danger tabular-nums"
+                    title={`มีจุดชน ${clashCount} จุด`}
+                  >
+                    <WarningIcon className="size-2.5" />
+                    ชน {clashCount}
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-0.5 rounded-full bg-[#e6f6ec] px-1.5 py-0.5 text-[10px] font-semibold text-[#14603a]"
+                    title="ไม่มีวิชาหรือวันสอบชน"
+                  >
+                    <CheckIcon className="size-2.5" />
+                    ไม่ชน
+                  </span>
+                ))}
+            </button>
+          );
+        })}
         {ws.plans.length < MAX_PLANS && (
           <button
-            className="rounded-t-lg px-3.5 pt-1.5 pb-2 text-sm font-medium text-accent hover:bg-white"
+            className="rounded-t-lg px-3 pt-1.5 pb-2 text-sm font-medium text-accent hover:bg-white"
             onClick={() => dispatch({ type: "addPlan", copyFrom: plan.id })}
             title="สร้างแผนใหม่โดยคัดลอกแผนนี้"
           >
