@@ -81,7 +81,7 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
 
       <ol className="flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (
-          <li key={turns.length - i} className="anim-rise border-t border-line pt-4">
+          <li key={turns.length - i} className={compact ? "anim-rise border-t border-line pt-4" : "anim-rise card p-4 sm:p-5"}>
             <p className={`font-bold ${compact ? "text-lg" : "text-xl"}`}>{t.question}</p>
             {!t.answer && !t.error && (
               <p className="mt-3 text-sm text-muted">

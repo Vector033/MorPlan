@@ -29,13 +29,13 @@ export function CompareView() {
         </Link>
       </header>
 
-      <div className="overflow-x-auto">
+      <div className="card overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-sm">
-          <thead className="text-xs text-muted">
+          <thead className="bg-canvas/55 text-xs text-muted">
             <tr className="border-b border-line">
-              <th className="p-2 font-medium" />
+              <th className="px-4 py-3 font-medium" />
               {rows.map(({ plan }) => (
-                <th key={plan.id} className="p-2 font-semibold text-ink">
+                <th key={plan.id} className="px-4 py-3 font-semibold text-ink">
                   {plan.name}
                 </th>
               ))}
@@ -76,11 +76,11 @@ export function CompareView() {
 function Row({ label, cells }: { label: string; cells: React.ReactNode[] }) {
   return (
     <tr>
-      <th scope="row" className="p-2 text-xs font-medium text-muted">
+      <th scope="row" className="px-4 py-2.5 text-xs font-medium text-muted">
         {label}
       </th>
       {cells.map((c, i) => (
-        <td key={i} className="p-2">
+        <td key={i} className="px-4 py-2.5 tabular-nums">
           {c}
         </td>
       ))}
