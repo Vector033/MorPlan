@@ -2,7 +2,6 @@
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { forwardRef, type CSSProperties, type ReactNode } from "react";
-import { WarningIcon } from "@/components/icons";
 import { DAY_TH, DAY_TH_SHORT, fmtTime } from "@/lib/core/time";
 import { DAYS, type Conflict, type Day, type Meeting, type Section } from "@/lib/core/types";
 import { colorFor, sectionLabel } from "@/lib/ui";
@@ -201,13 +200,8 @@ function GhostSlot({ item, ghost, top }: { item: Item; ghost: Ghost; top: (m: nu
       style={{ top: top(item.meeting.start) + 1, height: Math.max(top(item.meeting.end) - top(item.meeting.start) - 2, 18) }}
     >
       <span>{sectionLabel(item.section)}</span>
-      {ghost.current && <span className="text-[10px] opacity-90">(ตอนปัจจุบัน)</span>}
-      {ghost.clash && (
-        <span className="inline-flex items-center justify-center gap-0.5 text-[10px]">
-          <WarningIcon className="size-2.5 shrink-0" />
-          ชนกับวิชาอื่น
-        </span>
-      )}
+      {ghost.current && <span className="text-[10px] opacity-80">(ตอนปัจจุบัน)</span>}
+      {ghost.clash && <span className="text-[10px]">ชนกับวิชาอื่น</span>}
     </div>
   );
 }

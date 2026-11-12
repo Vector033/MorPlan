@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
-import { ArrowRightIcon, CheckIcon, WarningIcon } from "@/components/icons";
+import { useState } from "react";
 import type { Answer } from "@/lib/rag/types";
 
 const EXAMPLES = [
@@ -82,25 +81,17 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
 
       <ol className="flex flex-col gap-4" aria-live="polite">
         {turns.map((t, i) => (
-          <li key={turns.length - i} className={compact ? "anim-rise border-t border-line pt-4" : "anim-rise card p-4 sm:p-5"}>
-            <p className={`max-w-[65ch] font-bold leading-[1.35] ${compact ? "text-lg" : "text-xl"}`}>{t.question}</p>
+          <li key={turns.length - i} className="anim-rise border-t border-line pt-4">
+            <p className={`font-bold ${compact ? "text-lg" : "text-xl"}`}>{t.question}</p>
             {!t.answer && !t.error && (
-              <div className="mt-3 max-w-[65ch] space-y-2.5" aria-busy="true">
-                <p className="text-sm text-muted">
-                  กำลังค้นในเอกสาร
-                  <span className="animate-cursor ml-1 inline-block h-[1.1em] w-[0.5em] translate-y-[0.2em] rounded-sm bg-accent" aria-hidden />
-                </p>
-                <div className="space-y-2" aria-hidden="true">
-                  <div className="h-3.5 w-11/12 animate-pulse rounded-full bg-canvas" />
-                  <div className="h-3.5 w-4/5 animate-pulse rounded-full bg-canvas" />
-                  <div className="h-3.5 w-3/5 animate-pulse rounded-full bg-canvas" />
-                </div>
-              </div>
+              <p className="mt-3 text-sm text-muted">
+                กำลังค้นในเอกสาร
+                <span className="animate-cursor ml-1 inline-block h-[1.1em] w-[0.5em] translate-y-[0.2em] rounded-sm bg-accent" aria-hidden />
+              </p>
             )}
             {t.error && (
-              <p className="mt-3 inline-flex max-w-[65ch] items-center gap-1.5 text-sm font-medium text-danger" role="alert">
-                <WarningIcon className="size-4 shrink-0" />
-                <span>{t.error}</span>
+              <p className="mt-3 text-sm text-danger" role="alert">
+                {t.error}
               </p>
             )}
             {t.answer && <AnswerView a={t.answer} />}
@@ -113,31 +104,19 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
 
 function AnswerView({ a }: { a: Answer }) {
   return (
-    <div className="anim-rise mt-3 flex max-w-[65ch] flex-col gap-3 text-sm">
+    <div className="anim-rise mt-3 flex flex-col gap-3 text-sm">
       {a.status === "not_found" ? (
-        <div className="rounded-xl border border-line bg-canvas p-4 text-base leading-[1.65]">
-          <p>
-            <strong>ไม่พบ</strong> ในเอกสารที่ MorPlan มี
-          </p>
-          <ul className="mt-2 space-y-1.5 text-sm text-muted">
-            <li className="flex items-start gap-2">
-              <ArrowRightIcon className="mt-1 size-3.5 shrink-0 text-accent" />
-              <span>ลองถามด้วยคำอื่น หรือระบุภาคการศึกษาที่ต้องการ</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ArrowRightIcon className="mt-1 size-3.5 shrink-0 text-accent" />
-              <span>สอบถามสำนักทะเบียนฯ / คณะโดยตรงเพื่อคำตอบที่เป็นทางการ</span>
-            </li>
-          </ul>
-        </div>
+        <p className="rounded-xl bg-canvas p-4 text-base">
+          <strong>ไม่พบ</strong> ในเอกสารที่ MorPlan มี ลองถามด้วยคำอื่น หรือสอบถามสำนักทะเบียนฯ / คณะโดยตรง
+        </p>
       ) : (
-        <ChunkedAnswer text={a.text} />
+        <p className="whitespace-pre-line text-base leading-relaxed">{a.text}</p>
       )}
 
       {a.citations.length > 0 && (
         <ul className="flex flex-col gap-1.5" aria-label="แหล่งอ้างอิง">
           {a.citations.map((c, i) => (
-            <li key={`${c.docId}:${c.page}`} className="anim-rise" style={{ "--i": i + 1 } as CSSProperties}>
+            <li key={`${c.docId}:${c.page}`} className="anim-rise" style={{ "--i": i + 1 } as React.CSSProperties}>
               {/* Citation chip: number, document, page. Opens to the quoted passage. */}
               <details className="group overflow-hidden rounded-xl border border-line bg-white open:border-accent/40">
                 <summary className="flex cursor-pointer list-none items-stretch text-xs hover:bg-canvas [&::-webkit-details-marker]:hidden">
@@ -151,12 +130,12 @@ function AnswerView({ a }: { a: Answer }) {
                   </span>
                 </summary>
                 <div className="border-t border-line p-3">
-                  <blockquote className="text-xs leading-[1.65] text-muted">{c.snippet}</blockquote>
+                  <blockquote className="text-xs text-muted">{c.snippet}</blockquote>
                   <a
                     href={c.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="link mt-2 inline-block text-xs font-semibold"
+                    className="mt-2 inline-block text-xs link font-semibold"
                   >
                     เปิดหน้าเอกสารต้นฉบับ
                   </a>
@@ -167,57 +146,13 @@ function AnswerView({ a }: { a: Answer }) {
         </ul>
       )}
 
-      <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs leading-[1.6] text-ink">
+      <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs text-ink">
         <strong>{a.notice}</strong> ข้อความมาจากการแปลงเอกสารด้วย OCR อาจมีตัวเลขหรือคำผิด ดูหน้าเอกสารต้นฉบับจากลิงก์ด้านบน
       </p>
-      <p className="text-[11px] text-muted tabular-nums">
+      <p className="text-[11px] text-muted">
         {a.mode === "llm" ? "สรุปโดย AI จากข้อความที่อ้างอิง" : "แสดงข้อความจากเอกสารโดยตรง"} · {a.latencyMs} ms
         {a.costUsd > 0 ? ` · ~$${a.costUsd.toFixed(5)}` : ""}
       </p>
     </div>
   );
-}
-
-/** Splits AI answer text into scannable 50-75ch paragraphs and icon bullet lists. */
-function ChunkedAnswer({ text }: { text: string }) {
-  const blocks = parseAnswerBlocks(text);
-  return (
-    <div className="space-y-2.5 text-base leading-[1.65]">
-      {blocks.map((block, i) =>
-        block.kind === "list" ? (
-          <ul key={i} className="space-y-1.5">
-            {block.items.map((item, j) => (
-              <li key={j} className="flex items-start gap-2">
-                <CheckIcon className="mt-1.5 size-4 shrink-0 text-accent" />
-                <span className="min-w-0">{item}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p key={i}>{block.text}</p>
-        ),
-      )}
-    </div>
-  );
-}
-
-type AnswerBlock = { kind: "p"; text: string } | { kind: "list"; items: string[] };
-
-const BULLET_LINE = /^(?:[-•*]|\d+[.)])\s+(.+)$/;
-
-function parseAnswerBlocks(text: string): AnswerBlock[] {
-  const out: AnswerBlock[] = [];
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    const match = BULLET_LINE.exec(line);
-    if (match) {
-      const prev = out.at(-1);
-      if (prev?.kind === "list") prev.items.push(match[1]);
-      else out.push({ kind: "list", items: [match[1]] });
-    } else {
-      out.push({ kind: "p", text: line });
-    }
-  }
-  return out.length ? out : [{ kind: "p", text }];
 }

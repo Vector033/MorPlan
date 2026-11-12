@@ -29,21 +29,16 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
 
   return (
     <div
-      className={`${anim} relative h-full overflow-hidden rounded-[4px] text-left ${frame} ${
+      className={`${anim} @container relative h-full overflow-hidden rounded-[4px] text-left ${frame} ${
         compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"
       }`}
     >
-      <div
-        className={
-          compact
-            ? "flex items-center gap-0.5 overflow-hidden"
-            : "flex flex-wrap items-center justify-between gap-x-1 gap-y-0.5"
-        }
-      >
-        {clash && compact && <WarningIcon className="size-2 shrink-0 text-danger" aria-label={clash} />}
+      {/* Clashing blocks share a lane and get narrow: one header row, so the time line never drops out of view. */}
+      <div className={compact ? "flex items-center gap-0.5" : "flex items-center justify-between gap-1"}>
+        {clash && compact && <WarningIcon className="absolute top-px right-px size-2 text-danger" aria-label={clash} />}
         <span
           className={`font-mono font-bold tabular-nums ${
-            compact ? (clash ? "text-[7px]" : "") : clash ? "text-xs" : "text-[13px]"
+            compact ? (clash ? "pr-2 text-[7px] leading-none break-all" : "") : `min-w-0 truncate ${clash ? "text-xs" : "text-[13px]"}`
           }`}
         >
           {s.courseNo}
@@ -51,7 +46,8 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
         {clash && !compact && (
           <span className="inline-flex shrink-0 items-center gap-0.5 rounded-[2px] bg-danger px-1 py-0.5 text-[9.5px] leading-none font-bold whitespace-nowrap text-white">
             <WarningIcon className="size-2.5 shrink-0" />
-            {clash}
+            {/* Icon-only badge in a narrow block; the label stays for screen readers. */}
+            <span className="sr-only @min-[6.5rem]:not-sr-only">{clash}</span>
           </span>
         )}
       </div>
