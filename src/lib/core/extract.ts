@@ -56,9 +56,9 @@ export function redact(text: string): string {
 }
 
 const THAI_DIGITS = /[๐-๙]/g;
-const arabic = (s: string) => s.replace(THAI_DIGITS, (d) => String(d.charCodeAt(0) - 0x0e50));
+export const arabic = (s: string) => s.replace(THAI_DIGITS, (d) => String(d.charCodeAt(0) - 0x0e50));
 /** Letters and digits only, upper case: "CS 101" and "cs-101" both become "CS101". */
-const key = (s: string) => arabic(s).toUpperCase().replace(/[^0-9A-Z]/g, "");
+export const key = (s: string) => arabic(s).toUpperCase().replace(/[^0-9A-Z]/g, "");
 
 function minutes(hhmm: string): number | null {
   const m = /^(\d{1,2})[:.](\d{2})$/.exec(arabic(hhmm).trim());
