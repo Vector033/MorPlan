@@ -87,11 +87,13 @@ const schema = { plan: Plan, electives: Electives, minors: Minors }[kind] as z.Z
 const parts = kind === "plan" ? [text] : chunks(text);
 console.log(`chunks: ${parts.length} (CHUNK_CHARS ${CHUNK_CHARS})`);
 const results: any[] = [];
+let maxSecs = 0;
 for (const [i, part] of parts.entries()) {
   const t0 = Date.now();
   for (let attempt = 0; ; attempt++) {
     try {
       const r = await llm.json({ system: SYSTEM[kind], prompt: `<document>\n${part}\n</document>`, schema });
+      maxSecs = Math.max(maxSecs, (Date.now() - t0) / 1000);
       console.log(`call ${i + 1}/${parts.length}: ${((Date.now() - t0) / 1000).toFixed(1)}s in=${r.inputTokens} out=${r.outputTokens}`);
       results.push(r.data);
       break;
@@ -105,6 +107,7 @@ for (const [i, part] of parts.entries()) {
 }
 
 const codes = new Set<string>();
+const checks: [string, boolean][] = [];
 if (kind === "plan") {
   const d = results[0] as z.infer<typeof Plan>;
   console.log(`plans: ${d.plans.map((p) => `${p.name} (${p.terms.length} terms, min ${p.minCredits})`).join(" | ")}`);
@@ -113,23 +116,58 @@ if (kind === "plan") {
     console.log(`  ${p.name} Y${t.year}S${t.semester}: ${cs.join(" ")} = ${t.items.reduce((a, i) => a + i.credits, 0)}`);
     t.items.forEach((i) => i.courseNo && codes.add(i.courseNo));
   }
+  const has = (n: string) => d.plans.some((p) => p.name.includes(n));
+  checks.push(["three plans (ปกติ, สหกิจศึกษา, ก้าวหน้า)", d.plans.length === 3 && has("ปกติ") && has("สหกิจศึกษา") && has("ก้าวหน้า")]);
+  const coop = d.plans.find((p) => p.name.includes("สหกิจศึกษา"));
+  const term = (y: number, s: number) => coop?.terms.filter((t) => t.year === y && t.semester === s).flatMap((t) => t.items) ?? [];
+  const sorted = (a: string[]) => a.slice().sort().join();
+  const y3 = term(3, 2);
+  const slot = (k: string) => y3.filter((i) => i.slot === k).reduce((a, i) => a + i.credits, 0);
+  checks.push(["co-op Y3S2 courses = 204306 204315 204490", sorted(y3.flatMap((i) => (i.courseNo ? [i.courseNo] : []))) === "204306,204315,204490"]);
+  checks.push(["co-op Y3S2 slots major-elective 3, minor 6, free 3", slot("major-elective") === 3 && slot("minor") === 6 && slot("free") === 3]);
+  checks.push(["co-op Y3S2 total 19 credits", y3.reduce((a, i) => a + i.credits, 0) === 19]);
+  checks.push(["co-op Y4S1 courses = 204390 204496", sorted(term(4, 1).flatMap((i) => (i.courseNo ? [i.courseNo] : []))) === "204390,204496"]);
 } else if (kind === "electives") {
   const cs = results.flatMap((r) => r.courses) as { courseNo: string }[];
   cs.forEach((c) => codes.add(c.courseNo));
-  console.log(`courses: ${cs.length}; 204311 ${codes.has("204311")}; 204423 ${codes.has("204423")}`);
+  console.log(`courses: ${cs.length}`);
+  checks.push([">= 27 courses", cs.length >= 27]);
+  checks.push(["204311 and 204423 present", codes.has("204311") && codes.has("204423")]);
 } else {
   const ms = results.flatMap((r) => r.minors) as z.infer<typeof Minors>["minors"];
   console.log(`minors: ${ms.length}`);
-  for (const m of ms) {
-    console.log(`  ${m.name} [${m.groups.length} groups]`);
-    for (const g of m.groups) for (const c of g.courses) for (const n of c.numbers) codes.add(c.prefix + n);
-  }
+  for (const m of ms) for (const g of m.groups) for (const c of g.courses) for (const n of c.numbers) codes.add(c.prefix + "|" + n);
+  const codesOf = (m?: { groups: { courses: { prefix: string; numbers: string[] }[] }[] }) => m?.groups.flatMap((g) => g.courses.flatMap((c) => c.numbers.map((n) => c.prefix + n))) ?? [];
   const ja = ms.find((m) => /ญี่ปุ่น|Japan/i.test(m.name));
-  console.log("japanese:", JSON.stringify(ja?.groups));
   const en = ms.find((m) => /อังกฤษ|English/i.test(m.name));
+  console.log("japanese:", JSON.stringify(ja?.groups));
   console.log("english:", JSON.stringify(en?.groups));
+  checks.push([">= 40 minors", ms.length >= 40]);
+  checks.push(["Japanese minor has a group with 018131 018132 018133 018134", !!ja?.groups.some((g) => ["018131", "018132", "018133", "018134"].every((c) => codesOf({ groups: [g] }).includes(c)))]);
+  checks.push(["English minor has codes starting 001", codesOf(en).some((c) => c.startsWith("001"))]);
 }
-const flat = text.replace(/\s+/g, "");
-const missing = [...codes].filter((c) => !flat.includes(c) && !(kind === "minors" && flat.includes(c.slice(3))));
+
+// Project rule: a code is present if the full code appears anywhere (digits only), or its number is a standalone
+// token within the same paragraph (to the next blank line, at most 600 chars) after an occurrence of the prefix.
+const arabic = text.replace(/[๐-๙]/g, (d) => String(d.charCodeAt(0) - 0x0e50));
+const flat = arabic.replace(/\s+/g, "");
+const inParagraph = (prefix: string, num: string) => {
+  const re = new RegExp(`(?<!\d)${num}(?!\d)`);
+  for (let at = arabic.indexOf(prefix); at >= 0; at = arabic.indexOf(prefix, at + 1)) {
+    const rest = arabic.slice(at + prefix.length, at + prefix.length + 600).split(/\n\s*\n/)[0];
+    if (re.test(rest)) return true;
+  }
+  return false;
+};
+const missing = [...codes].filter((c) => {
+  if (!c.includes("|")) return !flat.includes(c);
+  const [prefix, num] = c.split("|");
+  return !flat.includes(prefix + num) && !inParagraph(prefix, num);
+}).map((c) => c.replace("|", ""));
 console.log(`codes: ${codes.size}; missing from source: ${missing.length} ${missing.join(" ")}`);
+checks.push(["no extracted code missing from source", missing.length === 0]);
+checks.push([`every call under 40 s (max ${maxSecs.toFixed(1)}s)`, maxSecs < 40]);
+
+for (const [name, ok] of checks) console.log(`${ok ? "PASS" : "FAIL"}  ${name}`);
 writeFileSync(`${process.env.TEMP ?? "."}/probe-${kind}.json`, JSON.stringify(results, null, 1));
+if (checks.some(([, ok]) => !ok)) process.exit(1);
