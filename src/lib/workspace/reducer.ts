@@ -1,3 +1,12 @@
+import {
+  slotId,
+  type Curriculum,
+  type CurriculumState,
+  type ElectiveCourse,
+  type Minor,
+  type SlotKind,
+  type Source,
+} from "@/lib/core/curriculum";
 import type { Plan, Section, Workspace } from "@/lib/core/types";
 
 export const MAX_PLANS = 5;
@@ -15,7 +24,21 @@ export type Action =
   | { type: "renamePlan"; id: string; name: string }
   | { type: "deletePlan"; id: string }
   | { type: "setActive"; id: string }
-  | { type: "replace"; workspace: Workspace };
+  | { type: "replace"; workspace: Workspace }
+  | { type: "setCurriculum"; curriculum: CurriculumState }
+  | { type: "clearCurriculum" }
+  | { type: "setStudyPlan"; planId: string }
+  | { type: "setViewTerm"; year: number; semester: number }
+  | { type: "togglePassed"; courseNo: string; credits: number }
+  | { type: "toggleSlot"; slotId: string }
+  | { type: "nameSlotCourse"; slotId: string; courseNo: string; credits: number }
+  | { type: "removeNamed"; courseNo: string }
+  | { type: "tickTerm"; year: number; semester: number }
+  | { type: "setMinor"; minor: Minor | null; source?: Source }
+  | { type: "addElectives"; kind: SlotKind; courses: ElectiveCourse[] }
+  /** A new copy of the same curriculum: keeps progress and minor; keeps planId if it still exists, else the first plan. */
+  | { type: "refreshCurriculum"; data: Curriculum; source: Source }
+  | { type: "wantCourses"; courseNos: string[] };
 
 export function emptyWorkspace(term = "2/2569"): Workspace {
   return { version: 1, term, pool: [], plans: [newPlan("A")], activePlanId: "A" };
@@ -105,6 +128,88 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
       return ws.plans.some((p) => p.id === action.id) ? { ...ws, activePlanId: action.id } : ws;
     case "replace":
       return action.workspace;
+    case "setCurriculum":
+      return { ...ws, curriculum: action.curriculum };
+    case "clearCurriculum": {
+      const next = { ...ws };
+      delete next.curriculum;
+      return next;
+    }
+    case "wantCourses":
+      return updateActive(ws, (p) => {
+        const courseNos = [...p.courseNos];
+        for (const c of action.courseNos) if (courseNos.length < 80 && !courseNos.includes(c)) courseNos.push(c);
+        return { ...p, courseNos };
+      });
+    default:
+      return ws.curriculum ? curriculumReducer(ws, ws.curriculum, action) : ws;
+  }
+}
+
+function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action): Workspace {
+  const set = (patch: Partial<CurriculumState>): Workspace => ({ ...ws, curriculum: { ...cur, ...patch } });
+  const plan = cur.data.plans.find((p) => p.id === cur.planId) ?? cur.data.plans[0];
+  const requiredNos = new Set(plan?.terms.flatMap((t) => t.items.flatMap((i) => (i.type === "course" ? [i.courseNo] : []))));
+  const without = (courseNo: string) => cur.passed.filter((p) => p.courseNo !== courseNo);
+  switch (action.type) {
+    case "setStudyPlan":
+      if (!cur.data.plans.some((p) => p.id === action.planId)) return ws;
+      return set({ planId: action.planId, doneSlots: [], passed: cur.passed.map((p) => ({ courseNo: p.courseNo, credits: p.credits })) });
+    case "setViewTerm":
+      return set({ viewTerm: { year: action.year, semester: action.semester } });
+    case "togglePassed":
+      return set({
+        passed: cur.passed.some((p) => p.courseNo === action.courseNo)
+          ? without(action.courseNo)
+          : [...cur.passed, { courseNo: action.courseNo, credits: action.credits }],
+      });
+    case "toggleSlot":
+      return set({
+        doneSlots: cur.doneSlots.includes(action.slotId)
+          ? cur.doneSlots.filter((s) => s !== action.slotId)
+          : [...cur.doneSlots, action.slotId],
+      });
+    case "nameSlotCourse": {
+      const entry = requiredNos.has(action.courseNo)
+        ? { courseNo: action.courseNo, credits: action.credits }
+        : { courseNo: action.courseNo, credits: action.credits, slotId: action.slotId };
+      return set({ passed: [...without(action.courseNo), entry] });
+    }
+    case "removeNamed":
+      return set({ passed: without(action.courseNo) });
+    case "tickTerm": {
+      const term = plan?.terms.find((t) => t.year === action.year && t.semester === action.semester);
+      if (!plan || !term) return ws;
+      const passed = [...cur.passed];
+      const doneSlots = [...cur.doneSlots];
+      term.items.forEach((item, i) => {
+        if (item.type === "course") {
+          if (!passed.some((p) => p.courseNo === item.courseNo)) passed.push({ courseNo: item.courseNo, credits: item.credits });
+        } else if (!doneSlots.includes(slotId(plan, term, i))) doneSlots.push(slotId(plan, term, i));
+      });
+      return set({ passed, doneSlots });
+    }
+    case "setMinor": {
+      const next = { ...cur };
+      delete next.minor;
+      delete next.minorSource;
+      if (action.minor) next.minor = action.minor;
+      if (action.minor && action.source) next.minorSource = action.source;
+      return { ...ws, curriculum: next };
+    }
+    case "addElectives": {
+      const byNo = new Map((cur.data.electives[action.kind] ?? []).map((c) => [c.courseNo, c]));
+      for (const c of action.courses) byNo.set(c.courseNo, c);
+      return set({ data: { ...cur.data, electives: { ...cur.data.electives, [action.kind]: [...byNo.values()] } } });
+    }
+    case "refreshCurriculum":
+      return set({
+        data: action.data,
+        source: action.source,
+        planId: action.data.plans.some((p) => p.id === cur.planId) ? cur.planId : (action.data.plans[0]?.id ?? cur.planId),
+      });
+    default:
+      return ws;
   }
 }
 

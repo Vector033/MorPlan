@@ -1,3 +1,4 @@
+import type { CurriculumState } from "./curriculum";
 export const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
 export type Day = (typeof DAYS)[number];
 
@@ -41,6 +42,7 @@ export type Workspace = {
   pool: Section[];
   plans: Plan[];
   activePlanId: string;
+  curriculum?: CurriculumState;
 };
 
 export type Conflict =

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SLOT_KINDS } from "@/lib/core/curriculum";
 import { DAYS, type Workspace } from "@/lib/core/types";
 import { emptyWorkspace } from "./reducer";
 
@@ -37,6 +38,70 @@ export const sectionSchema = z.object({
   note: text(200).optional(),
 });
 
+const credits = z.number().min(0).max(30);
+const source = z.object({
+  url: text(500).optional(),
+  title: text(200),
+  readAt: text(200),
+  provenance: z.enum(["link", "owner", "private"]),
+});
+const planItem = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("course"), courseNo, title: text(200), credits }),
+  z.object({ type: z.literal("slot"), kind: z.enum(SLOT_KINDS), credits, note: text(200).optional() }),
+]);
+const electiveCourse = z.object({
+  courseNo,
+  title: text(200),
+  credits: credits.optional(),
+  level: z.number().int().min(0).max(9).optional(),
+});
+const minor = z.object({
+  name: text(200),
+  faculty: text(200).optional(),
+  rules: text(4000),
+  groups: z
+    .array(z.object({ label: text(200), minCredits: credits.optional(), courseNos: z.array(courseNo).max(200) }))
+    .max(12),
+});
+export const curriculumStateSchema = z.object({
+  ref: text(200).optional(),
+  data: z.object({
+    title: text(200),
+    university: text(200),
+    faculty: text(200),
+    major: text(200),
+    cohortFrom: z.number().int().min(0).max(99),
+    cohortTo: z.number().int().min(0).max(99).optional(),
+    plans: z
+      .array(
+        z.object({
+          id: text(200),
+          name: text(200),
+          minCredits: z.number().min(0).max(500).optional(),
+          terms: z
+            .array(
+              z.object({
+                year: z.number().int().min(1).max(20),
+                semester: z.number().int().min(0).max(9),
+                items: z.array(planItem).max(20),
+              }),
+            )
+            .max(20),
+        }),
+      )
+      .max(8),
+    electives: z.object(Object.fromEntries(SLOT_KINDS.map((k) => [k, z.array(electiveCourse).max(400).optional()]))),
+  }),
+  source,
+  cohort: z.number().int().min(0).max(99),
+  planId: text(200),
+  minor: minor.optional(),
+  minorSource: source.optional(),
+  passed: z.array(z.object({ courseNo, credits, slotId: text(200).optional() })).max(400),
+  doneSlots: z.array(text(200)).max(200),
+  viewTerm: z.object({ year: z.number().int().min(0).max(20), semester: z.number().int().min(0).max(9) }).optional(),
+});
+
 const planId = z.string().max(4);
 export const workspaceSchema = z.object({
   version: z.literal(1),
@@ -55,6 +120,7 @@ export const workspaceSchema = z.object({
     .min(1)
     .max(5),
   activePlanId: planId,
+  curriculum: curriculumStateSchema.optional(),
 });
 
 /** Validate untrusted JSON (browser storage, server rows, share snapshots). */

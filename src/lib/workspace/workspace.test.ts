@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { demoSections } from "@/lib/demo";
 import { activePlan, emptyWorkspace, MAX_PLANS, planSections, workspaceReducer, type Action } from "./reducer";
-import { loadWorkspace, saveWorkspace, STORAGE_KEY } from "./storage";
+import { STATE } from "@/lib/core/__fixtures__/coop-plan";
+import { loadWorkspace, parseWorkspace, saveWorkspace, STORAGE_KEY } from "./storage";
 
 const run = (...actions: Action[]) => actions.reduce(workspaceReducer, emptyWorkspace());
 const seeded = () => run({ type: "import", sections: demoSections(null) });
@@ -96,5 +97,76 @@ describe("other universities", () => {
     const ws = workspaceReducer(run({ type: "import", sections: [ku], university: "KU" }), { type: "place", sectionId: ku.id });
     saveWorkspace(ws, { setItem: (_k, v) => (saved = v) });
     expect(loadWorkspace({ getItem: () => saved })).toEqual(ws);
+  });
+});
+
+describe("curriculum state", () => {
+  it("parses a workspace saved before the curriculum feature, unchanged", () => {
+    const old = emptyWorkspace();
+    expect(parseWorkspace(JSON.parse(JSON.stringify(old)))).toEqual(old);
+  });
+  it("round-trips a workspace with curriculum state and rejects an oversized one", () => {
+    const ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    expect(parseWorkspace(JSON.parse(JSON.stringify(ws)))).toEqual(ws);
+    const big = { ...ws, curriculum: { ...STATE, passed: Array.from({ length: 401 }, (_, i) => ({ courseNo: `X${i}`, credits: 3 })) } };
+    expect(parseWorkspace(big)).toBeNull();
+  });
+  it("togglePassed adds then removes a course", () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    ws = workspaceReducer(ws, { type: "togglePassed", courseNo: "204315", credits: 3 });
+    expect(ws.curriculum!.passed).toEqual([{ courseNo: "204315", credits: 3 }]);
+    ws = workspaceReducer(ws, { type: "togglePassed", courseNo: "204315", credits: 3 });
+    expect(ws.curriculum!.passed).toEqual([]);
+  });
+  it("naming a course that is required in the plan records it as required, not against the slot", () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    ws = workspaceReducer(ws, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo: "204490", credits: 3 });
+    expect(ws.curriculum!.passed).toEqual([{ courseNo: "204490", credits: 3 }]);
+    ws = workspaceReducer(ws, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo: "204311", credits: 3 });
+    ws = workspaceReducer(ws, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo: "204311", credits: 3 });
+    expect(ws.curriculum!.passed.filter((p) => p.courseNo === "204311")).toHaveLength(1);
+    expect(ws.curriculum!.passed.find((p) => p.courseNo === "204311")!.slotId).toBe("coop:3-2-3");
+    ws = workspaceReducer(ws, { type: "removeNamed", courseNo: "204311" });
+    expect(ws.curriculum!.passed.some((p) => p.courseNo === "204311")).toBe(false);
+  });
+  it("tickTerm marks every required course passed and every slot done, and is idempotent", () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    ws = workspaceReducer(ws, { type: "tickTerm", year: 3, semester: 2 });
+    ws = workspaceReducer(ws, { type: "tickTerm", year: 3, semester: 2 });
+    expect(ws.curriculum!.passed.map((p) => p.courseNo).sort()).toEqual(["204306", "204315", "204490"]);
+    expect(ws.curriculum!.doneSlots.sort()).toEqual(["coop:3-2-3", "coop:3-2-4", "coop:3-2-5"]);
+  });
+  it("wantCourses adds codes that are not in the pool, once each", () => {
+    const ws = workspaceReducer(emptyWorkspace(), { type: "wantCourses", courseNos: ["204306", "204315", "204306"] });
+    expect(activePlan(ws).courseNos).toEqual(["204306", "204315"]);
+  });
+  it("refreshCurriculum swaps the data and keeps progress; addElectives merges by code", () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    ws = workspaceReducer(ws, { type: "togglePassed", courseNo: "204315", credits: 3 });
+    ws = workspaceReducer(ws, { type: "refreshCurriculum", data: { ...STATE.data, title: "ใหม่" }, source: { ...STATE.source, readAt: "2026-12-01" } });
+    expect(ws.curriculum).toMatchObject({ data: { title: "ใหม่" }, planId: "coop", passed: [{ courseNo: "204315", credits: 3 }] });
+    ws = workspaceReducer(ws, { type: "addElectives", kind: "major-elective", courses: [{ courseNo: "204311", title: "a" }] });
+    ws = workspaceReducer(ws, { type: "addElectives", kind: "major-elective", courses: [{ courseNo: "204311", title: "a" }, { courseNo: "204333", title: "b" }] });
+    expect(ws.curriculum!.data.electives["major-elective"]!.map((c) => c.courseNo)).toEqual(["204311", "204333"]);
+  });
+  it("setStudyPlan clears slot progress, ignores unknown ids; setMinor and clearCurriculum work", () => {
+    const two = { ...STATE, data: { ...STATE.data, plans: [...STATE.data.plans, { ...STATE.data.plans[0], id: "std" }] } };
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: two });
+    ws = workspaceReducer(ws, { type: "tickTerm", year: 3, semester: 2 });
+    ws = workspaceReducer(ws, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo: "204311", credits: 3 });
+    expect(workspaceReducer(ws, { type: "setStudyPlan", planId: "nope" })).toBe(ws);
+    ws = workspaceReducer(ws, { type: "setStudyPlan", planId: "std" });
+    expect(ws.curriculum).toMatchObject({ planId: "std", doneSlots: [] });
+    expect(ws.curriculum!.passed.find((p) => p.courseNo === "204311")).toEqual({ courseNo: "204311", credits: 3 });
+    const minor = { name: "m", rules: "r", groups: [] };
+    ws = workspaceReducer(ws, { type: "setMinor", minor, source: STATE.source });
+    expect(ws.curriculum).toMatchObject({ minor, minorSource: STATE.source });
+    ws = workspaceReducer(ws, { type: "setMinor", minor: null });
+    expect(ws.curriculum!.minor).toBeUndefined();
+    expect(workspaceReducer(ws, { type: "clearCurriculum" }).curriculum).toBeUndefined();
+  });
+  it("curriculum actions are no-ops when no curriculum is set", () => {
+    const ws = emptyWorkspace();
+    expect(workspaceReducer(ws, { type: "togglePassed", courseNo: "204315", credits: 3 })).toBe(ws);
   });
 });
