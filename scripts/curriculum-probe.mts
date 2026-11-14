@@ -95,11 +95,11 @@ console.log(`source: ${text.length} chars`);
 if (process.argv.includes("--save")) writeFileSync(FIX + { plan: "cs-cmu-64-plan", electives: "cs-cmu-64-electives", minors: "cmu-minors-2565" }[kind] + ".txt", text.replace(/\r?\n/g, "\r\n"));
 
 const llm = new GeminiProvider(process.env.GEMINI_API_KEY!, process.env.GEMINI_MODEL);
-const schema = { plan: Plan, electives: Electives, minors: Minors }[kind] as z.ZodType<any>;
+const schema = { plan: Plan, electives: Electives, minors: Minors }[kind] as z.ZodType<unknown>;
 // plan is one document (tracks span the page), so never split it; the others merge across chunks.
 const parts = kind === "plan" ? [text] : chunks(text);
 console.log(`chunks: ${parts.length} (CHUNK_CHARS ${CHUNK_CHARS})`);
-const results: any[] = [];
+const results: unknown[] = [];
 let maxSecs = 0;
 for (const [i, part] of parts.entries()) {
   const t0 = Date.now();
@@ -141,13 +141,13 @@ if (kind === "plan") {
   checks.push(["co-op Y3S2 total 19 credits", y3.reduce((a, i) => a + i.credits, 0) === 19]);
   checks.push(["co-op Y4S1 courses = 204390 204496", sorted(term(4, 1).flatMap((i) => (i.courseNo ? [i.courseNo] : []))) === "204390,204496"]);
 } else if (kind === "electives") {
-  const cs = results.flatMap((r) => r.courses) as { courseNo: string }[];
+  const cs = results.flatMap((r) => (r as z.infer<typeof Electives>).courses);
   cs.forEach((c) => codes.add(c.courseNo));
   console.log(`courses: ${cs.length}`);
   checks.push([">= 27 courses", cs.length >= 27]);
   checks.push(["204311 and 204423 present", codes.has("204311") && codes.has("204423")]);
 } else {
-  const ms = results.flatMap((r) => r.minors) as z.infer<typeof Minors>["minors"];
+  const ms = results.flatMap((r) => (r as z.infer<typeof Minors>).minors);
   console.log(`minors: ${ms.length}`);
   for (const m of ms) for (const g of m.groups) for (const c of g.courses) for (const n of c.numbers) codes.add(c.prefix + "|" + n);
   const codesOf = (m?: { groups: { courses: { prefix: string; numbers: string[] }[] }[] }) => m?.groups.flatMap((g) => g.courses.flatMap((c) => c.numbers.map((n) => c.prefix + n))) ?? [];
