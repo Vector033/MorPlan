@@ -1,0 +1,214 @@
+วิชาบังคับ
+(Required Courses)
+24 หน่วยกิต
+วิชาเอกบังคับประจำแผน
+(Plan-specific Compulsory Courses)
+วิชาแกน
+(Core Courses)
+24 หน่วยกิต
+วิชาเอกบังคับร่วม
+(Compulsory Courses)
+41 หน่วยกิต
+วิชาเลือกทั่วไป
+(GE Elective Courses)
+6 หน่วยกิต
+วิชาเอกเลือก
+(Major Elective Courses)
+วิชาเลือกเสรี
+(Free Elective Courses)
+6 หน่วยกิต
+วิชาโท
+(Minor Courses)
+15 หน่วยกิต
+ภาคการศึกษาที่ 1	18 หน่วย
+001101	Fundamental English 1
+ภาษาอังกฤษพื้นฐาน 1	3
+140104	Citizenship
+การเป็นพลเมือง	3
+203103	General Chemistry 1
+เคมีทั่วไป 1	3
+204111	Fundamentals of Programming
+การเขียนโปรแกรมเบื้องต้น	3
+206111	Calculus 1
+แคลคูลัส 1	3
+206183	Discrete Structure
+โครงสร้างวิยุต	3
+ภาคการศึกษาที่ 2	18 หน่วย
+001102	Fundamental English 2
+ภาษาอังกฤษพื้นฐาน 2	3
+202101	Basic Biology 1
+ชีววิทยาพื้นฐาน 1	3
+204100	Information Technology and Modern Life
+เทคโนโลยีสารสนเทศและชีวิตสมัยใหม่	3
+204114	Introduction to Object-oriented Programming
+การเขียนโปรแกรมเชิงวัตถุเบื้องต้น	3
+206112	Calculus 2
+แคลคูลัส 2	3
+207187	Physics 1
+ฟิสิกส์ 1	3
+ภาคการศึกษาที่ 1	18 หน่วย
+001201	Critical Reading and Effective Writing
+การอ่านเชิงวิเคราะห์และการเขียนอย่างมีประสิทธิผล	3
+201190	Critical Thinking, Problem Solving and Science Communication
+การคิดอย่างมีวิจารณญาณ การแก้ปัญหา และการสื่อสารทางวิทยาศาสตร์	3
+204203	Computer Science Technology
+เทคโนโลยีด้านวิทยาการคอมพิวเตอร์	3
+204231	Computer Organization and Architecture
+การจัดระบบและสถาปัตยกรรมคอมพิวเตอร์	3
+204252	Data Structures and Analysis
+โครงสร้างข้อมูลและการวิเคราะห์	3
+208269	Statistics for Computer Science
+สถิติสำหรับวิทยาการคอมพิวเตอร์	3
+ภาคการศึกษาที่ 2	18 หน่วย
+001225	English in Science and Technology Context
+ภาษาอังกฤษในบริบทวิทยาศาสตร์และเทคโนโลยี	3
+201111	The World of Science
+โลกแห่งวิทยาศาสตร์	3
+204212	Modern Application Development
+การพัฒนาแอปพลิเคชันสมัยใหม่	3
+204232	Computer Networks and Protocols
+เครือข่ายคอมพิวเตอร์และเกณฑ์วิธี	3
+204271	Introduction to Artificial Intelligence
+ปัญญาประดิษฐ์เบื้องต้น	3
+******	Minor Course
+วิชาโท	3
+ภาคการศึกษาที่ 1	18 หน่วย
+204321	Database Systems
+ระบบฐานข้อมูล	3
+204341	Operating Systems
+ระบบปฏิบัติการ	3
+204361	Software Engineering
+วิศวกรรมซอฟต์แวร์	3
+204451	Algorithm Design and Analysis
+การออกแบบและการวิเคราะห์อัลกอริทึม	3
+******	GE Elective Course
+วิชาศึกษาทั่วไป (เลือกจาก 3 กลุ่มวิชา)	3
+******	Minor Course
+วิชาโท	3
+ภาคการศึกษาที่ 2	19 หน่วย
+204306	Ethics for Computer Professionals
+จริยธรรมสำหรับผู้ประกอบวิชาชีพคอมพิวเตอร์	1
+204315	Organization of Programming Languages
+การจัดระเบียบของภาษาโปรแกรม	3
+204490	Research in Computer Science
+การวิจัยทางวิทยาการคอมพิวเตอร์	3
+******	Major Elective Courses Level 300 or 400
+วิชาเอกเลือกระดับ 300 หรือ 400	6
+******	Minor Course
+วิชาโท	3
+******	Free Elective Course
+วิชาเลือกเสรี	3
+ภาคการศึกษาที่ 1	14 หน่วย
+204390	Computer Job Training
+การฝึกงานคอมพิวเตอร์	1
+204491	Independent Study 1
+การค้นคว้าอิสระ 1	1
+******	GE Elective Course
+วิชาศึกษาทั่วไป (เลือกจาก 3 กลุ่มวิชา)	3
+******	Major Elective Courses Level 400
+วิชาเอกเลือกระดับ 400	6
+******	Minor Course
+วิชาโท	3
+ภาคการศึกษาที่ 2	11 หน่วย
+204499	Independent Study 2
+การค้นคว้าอิสระ 2	2
+******	Major Elective Courses Level 400
+วิชาเอกเลือกระดับ 400	3
+******	Minor Course
+วิชาโท	3
+******	Free Elective Course
+วิชาเลือกเสรี	3
+ภาคการศึกษาที่ 1	18 หน่วย
+204321	Database Systems
+ระบบฐานข้อมูล	3
+204341	Operating Systems
+ระบบปฏิบัติการ	3
+204361	Software Engineering
+วิศวกรรมซอฟต์แวร์	3
+204451	Algorithm Design and Analysis
+การออกแบบและการวิเคราะห์อัลกอริทึม	3
+******	GE Elective Course
+วิชาศึกษาทั่วไป (เลือกจาก 3 กลุ่มวิชา)	3
+******	Minor Course
+วิชาโท	3
+ภาคการศึกษาที่ 2	19 หน่วย
+204306	Ethics for Computer Professionals
+จริยธรรมสำหรับผู้ประกอบวิชาชีพคอมพิวเตอร์	1
+204315	Organization of Programming Languages
+การจัดระเบียบของภาษาโปรแกรม	3
+204490	Research in Computer Science
+การวิจัยทางวิทยาการคอมพิวเตอร์	3
+******	Major Elective Courses Level 300 or 400
+วิชาเอกเลือกระดับ 300 หรือ 400	3
+******	Minor Course
+วิชาโท	6
+******	Free Elective Course
+วิชาเลือกเสรี	3
+ภาคการศึกษาที่ 1	7 หน่วย
+204390	Computer Job Training
+การฝึกงานคอมพิวเตอร์	1
+204496	Cooperative Education
+สหกิจศึกษา	6
+ภาคการศึกษาที่ 2	19 หน่วย
+204497	Seminar in Computer Science
+สัมมนาทางวิทยาการคอมพิวเตอร์	1
+******	GE Elective Course
+วิชาศึกษาทั่วไป (เลือกจาก 3 กลุ่มวิชา)	3
+******	Major Elective Courses Level 300 or 400
+วิชาเอกเลือกระดับ 300 หรือ 400	3
+******	Major Elective Courses Level 400
+วิชาเอกเลือกระดับ 400	6
+******	Minor Course
+วิชาโท	3
+******	Free Elective Course
+วิชาเลือกเสรี	3
+ภาคการศึกษาที่ 1	18 หน่วย
+204321	Database Systems
+ระบบฐานข้อมูล	3
+204341	Operating Systems
+ระบบปฏิบัติการ	3
+204361	Software Engineering
+วิศวกรรมซอฟต์แวร์	3
+204451	Algorithm Design and Analysis
+การออกแบบและการวิเคราะห์อัลกอริทึม	3
+******	GE Elective Course
+วิชาศึกษาทั่วไป (เลือกจาก 3 กลุ่มวิชา)	3
+******	Minor Course
+วิชาโท	3
+ภาคการศึกษาที่ 2	19 หน่วย
+204306	Ethics for Computer Professionals
+จริยธรรมสำหรับผู้ประกอบวิชาชีพคอมพิวเตอร์	1
+204315	Organization of Programming Languages
+การจัดระเบียบของภาษาโปรแกรม	3
+204490	Research in Computer Science
+การวิจัยทางวิทยาการคอมพิวเตอร์	3
+******	Major Elective Courses Level 300 or 400
+วิชาเอกเลือกระดับ 300 หรือ 400	6
+******	Minor Course
+วิชาโท	3
+******	Free Elective Course
+วิชาเลือกเสรี	3
+ภาคการศึกษาที่ 1	20 หน่วย
+204390	Computer Job Training
+การฝึกงานคอมพิวเตอร์	1
+204491	Independent Study 1
+การค้นคว้าอิสระ 1	1
+******	GE Elective Course
+วิชาศึกษาทั่วไป (เลือกจาก 3 กลุ่มวิชา)	3
+******	Major Elective Courses Level 400
+วิชาเอกเลือกระดับ 400	6
+******	Major Elective Courses Level 700
+วิชาเอกเลือกระดับ 700	6
+******	Minor Course
+วิชาโท	3
+ภาคการศึกษาที่ 2	17 หน่วย
+204499	Independent Study 2
+การค้นคว้าอิสระ 2	2
+******	Major Elective Courses Level 400
+วิชาเอกเลือกระดับ 400	3
+******	Major Elective Courses Level 700
+วิชาเอกเลือกระดับ 700	6
+******	Minor Course
+วิชาโท	3
+******	Free Elective Course
+วิชาเลือกเสรี	3

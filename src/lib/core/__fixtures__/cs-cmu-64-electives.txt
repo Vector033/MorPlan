@@ -1,0 +1,107 @@
+รหัส	ชื่อวิชา	หน่วยกิต
+204311	Mobile Application Development Frameworks
+เฟรมเวิร์คการพัฒนาโมบายแอปพลิเคชัน	3
+204312	Simulation and Experience Reality Design
+การออกแบบการจำลองและประสบการณ์เสมือนจริง	3
+204325	System Analysis and Design
+การวิเคราะห์ระบบงานและการออกแบบงาน	3
+204333	Web Application Architecture
+สถาปัตยกรรมเว็บแอปพลิเคชัน	3
+204335	Microcontroller and Internet of Things
+ไมโครคอนโทรลเลอร์และอินเทอร์เน็ตของสรรพสิ่ง	3
+204355	Competitive Programming
+การเขียนโปรแกรมเชิงแข่งขัน	3
+204362	Object-oriented Design
+การออกแบบเชิงวัตถุ	3
+204363	Software Modeling and Requirements
+ความต้องการและการสร้างตัวแบบซอฟต์แวร์	3
+204364	Software Design and Implementation
+การออกแบบและสร้างซอฟต์แวร์	3
+204365	Human-computer Interaction
+ปฏิสัมพันธ์ระหว่างมนุษย์และคอมพิวเตอร์	3
+204381	Numerical Computation and Software
+การคำนวณเชิงตัวเลขและซอฟต์แวร์	3
+204382	Computer Graphics
+คอมพิวเตอร์กราฟิก	3
+204383	Image Processing
+การประมวลผลภาพ	3
+206325	Linear Algebra
+พีชคณิตเชิงเส้น	3
+206336	Real analysis 1
+การวิเคราะห์เชิงจริง 1	3
+206370	Probability 1
+ความน่าจะเป็น 1	3
+รหัส	ชื่อวิชา	หน่วยกิต
+204422	Data Warehousing
+คลังข้อมูล	3
+204423	Data Mining
+การทำเหมืองข้อมูล	3
+204424	Ontology Design and Development
+การออกแบบและพัฒนาออนโทโลยี	3
+204425	Management Information System
+ระบบสารสนเทศเพื่อการจัดการ	3
+204426	Data Engineering
+วิศวกรรมข้อมูล	3
+204432	Computer Network Design and Management
+การออกแบบและจัดการเครือข่ายคอมพิวเตอร์	3
+204435	Parallel Processing
+การประมวลผลแบบขนาน	3
+204441	Concurrent Programming and Distributed System
+การเขียนโปรแกรมแบบทำงานหลายอย่างพร้อมกันและระบบกระจาย	3
+204442	Compiler Construction
+การสร้างคอมไพเลอร์	3
+204443	Computer System Security
+ความปลอดภัยในระบบคอมพิวเตอร์	3
+204452	Theory of Computation
+ทฤษฎีการคำนวณ	3
+204453	Pattern Recognition
+การรู้จำแบบ	3
+204454	Combinatorial Optimization Algorithms and Programming
+อัลกอริทึมและการเขียนโปรแกรมในการหาค่าเหมาะที่สุดเชิงการจัด	3
+204456	Machine Learning
+การเรียนรู้ของเครื่อง	3
+204471	Artificial Intelligence
+ปัญญาประดิษฐ์	3
+204481	Mathematical Programming and Software
+กำหนดการเชิงคณิตศาสตร์และซอฟต์แวร์	3
+204482	Simulation and Modelling
+การจำลองแบบปัญหาและแบบจำลอง	3
+204483	Computer Vision
+การมองเห็นของคอมพิวเตอร์	3
+204494	Selected Topics in Computer Science 1
+หัวข้อเลือกสรรทางวิทยาการคอมพิวเตอร์ 1	3
+204495	Selected Topics in Computer Science 2
+หัวข้อเลือกสรรทางวิทยาการคอมพิวเตอร์ 2	3
+206428	Coding Theory
+ทฤษฎีรหัส	3
+206463	Deterministic Optimization
+การหาค่าเหมาะที่สุดเชิงกำหนด	3
+206476	Game theory
+ทฤษฎีเกม	3
+206481	Graph Theory
+ทฤษฎีกราฟ	3
+รหัส	ชื่อวิชา	หน่วยกิต
+204712	Computer Systems and Networks
+ระบบและเครือข่ายคอมพิวเตอร์	3
+204713	Cloud Computing and Big Data
+การประมวลผลแบบกลุ่มเมฆและข้อมูลขนาดใหญ่	3
+204715	Intelligent Embedded System
+ระบบฝังตัวอัจฉริยะ	3
+204721	Data Engineering
+วิศวกรรมข้อมูล	3
+204725	Data Analytic and Machine Learning
+การวิเคราะห์ข้อมูลและการเรียนรู้ของเครื่อง	3
+204728	Data Manipulation
+การจัดดำเนินการข้อมูล	3
+204732	Software Engineering:Theory and Application
+วิศวกรรมซอฟต์แวร์:ทฤษฎีและการประยุกต์	3
+204735	Computation and Algorithms
+การคำนวณและขั้นตอนวิธี	3
+204736	Software Process Improvement
+การปรับปรุงกระบวนการซอฟต์แวร์	3
+204737	Software Quality Engineering
+วิศวกรรมคุณภาพซอฟต์แวร์	3
+204779	SELECTED TOPICS IN COMPUTER SCIENCE
+หัวข้อพิเศษทางด้านวิทยาการคอมพิวเตอร์	2
+204789	SELECTED TOPICS IN COMPUTER SCIENCE
+หัวข้อพิเศษทางด้านวิทยาการคอมพิวเตอร์	3
