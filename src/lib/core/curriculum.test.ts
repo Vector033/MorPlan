@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import { covers, normalizeKey, progress, termPosition, termView } from "./curriculum";
+import { COOP } from "./__fixtures__/coop-plan";
+
+describe("normalizeKey", () => {
+  it("drops prefixes, spaces and case", () => {
+    expect(normalizeKey(" คณะวิทยาศาสตร์ ")).toBe(normalizeKey("วิทยาศาสตร์"));
+    expect(normalizeKey("สาขาวิชาวิทยาการคอมพิวเตอร์")).toBe(normalizeKey("วิทยาการ คอมพิวเตอร์"));
+    expect(normalizeKey("Computer  Science")).toBe("computerscience");
+    expect(normalizeKey("มหาวิทยาลัยเชียงใหม่")).not.toBe(normalizeKey("มหาวิทยาลัยขอนแก่น"));
+  });
+});
+describe("covers", () => {
+  it("handles open and closed ranges", () => {
+    expect(covers({ cohortFrom: 64 }, 67)).toBe(true);
+    expect(covers({ cohortFrom: 64 }, 63)).toBe(false);
+    expect(covers({ cohortFrom: 59, cohortTo: 62 }, 62)).toBe(true);
+    expect(covers({ cohortFrom: 59, cohortTo: 62 }, 63)).toBe(false);
+  });
+});
+describe("termPosition", () => {
+  it("maps cohort and term to year and semester", () => {
+    expect(termPosition(67, "2/2569")).toEqual({ year: 3, semester: 2 });
+    expect(termPosition(67, "1/2567")).toEqual({ year: 1, semester: 1 });
+    expect(termPosition(69, "3/2569")).toEqual({ year: 1, semester: 3 });
+    expect(termPosition(70, "2/2569")).toEqual({ year: 0, semester: 2 }); // before entry: still a value, no throw
+  });
+});
+describe("termView", () => {
+  const none = { passed: [], doneSlots: [] };
+  it("shows year 3 semester 2 of the co-op plan", () => {
+    const v = termView(COOP, { year: 3, semester: 2 }, none);
+    expect(v.inPlan).toBe(true);
+    expect(v.credits).toBe(19);
+    expect(v.required.map((c) => c.courseNo)).toEqual(["204306", "204315", "204490"]);
+    expect(v.slots.map((s) => [s.kind, s.credits, s.doneCredits])).toEqual([["major-elective", 3, 0], ["minor", 6, 0], ["free", 3, 0]]);
+    expect(v.slots[0].id).toBe("coop:3-2-3");
+  });
+  it("lists earlier required courses not passed as overdue", () => {
+    const passed = ["204321", "204341", "204361"].map((courseNo) => ({ courseNo, credits: 3 }));
+    expect(termView(COOP, { year: 3, semester: 2 }, { passed, doneSlots: [] }).overdue.map((c) => c.courseNo)).toEqual(["204451"]);
+  });
+  it("marks passed courses and slot credits", () => {
+    const v = termView(COOP, { year: 3, semester: 2 }, { passed: [{ courseNo: "204315", credits: 3 }, { courseNo: "208263", credits: 3, slotId: "coop:3-2-4" }], doneSlots: ["coop:3-2-5"] });
+    expect(v.required.find((c) => c.courseNo === "204315")!.done).toBe(true);
+    expect(v.slots.map((s) => s.doneCredits)).toEqual([0, 3, 3]);
+  });
+  it("returns an empty view for a term outside the plan", () => {
+    for (const at of [{ year: 0, semester: 2 }, { year: 5, semester: 1 }, { year: 3, semester: 3 }]) {
+      const v = termView(COOP, at, none);
+      expect(v).toMatchObject({ inPlan: false, credits: 0, required: [], slots: [] });
+    }
+  });
+});
+describe("progress", () => {
+  it("sums credits by kind and counts a course once", () => {
+    const state = { passed: [{ courseNo: "204321", credits: 3 }, { courseNo: "204321", credits: 3 }, { courseNo: "204311", credits: 3, slotId: "coop:3-2-3" }], doneSlots: ["coop:3-1-4"] };
+    const p = progress(COOP, state);
+    expect(p.required).toEqual({ done: 3, total: 26 });
+    expect(p["major-elective"]).toEqual({ done: 3, total: 3 });
+    expect(p.ge).toEqual({ done: 3, total: 3 });
+    expect(p.minor).toEqual({ done: 0, total: 9 });
+    expect(p.all).toEqual({ done: 9, total: 44 });
+  });
+  it("caps a slot at its own credits", () => {
+    const state = { passed: [{ courseNo: "A1", credits: 3, slotId: "coop:3-2-3" }, { courseNo: "A2", credits: 3, slotId: "coop:3-2-3" }], doneSlots: [] };
+    expect(progress(COOP, state)["major-elective"]).toEqual({ done: 3, total: 3 });
+  });
+});
