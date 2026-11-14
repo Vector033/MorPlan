@@ -846,3 +846,8 @@ Run 2026-11-15 with `gemini-flash-lite-latest` (free tier), `scripts/curriculum-
 - The probe now asserts every pass criterion per kind, prints PASS/FAIL per criterion and exits 1 on any FAIL.
 - Minors "missing from source" now uses the project rule: the full code anywhere (Thai digits read as Arabic), or the number as a standalone token in the same paragraph (to the next blank line, at most 600 chars) after an occurrence of the prefix. The old 3-digit-suffix shortcut is gone. Checked that `018999` and `001999` are rejected.
 - Re-run numbers: plan 14.7 s (35 codes, 0 missing); electives 3.1 s (52 courses, 0 missing); minors 20.1 / 12.9 / 11.2 s over 3 chunks (93 minors, 644 codes, **0 missing under the stricter rule**). All criteria PASS in all three runs; the minors criterion still passes.
+
+### Probe results: fix round 2 (2026-11-15)
+
+- The digit boundary in the minors rule was broken (`\d` inside a template literal became `d`). Now `String.raw`, moved into `numberAfterPrefix`, with a self-check that runs before every probe ("230" is not found in "ENGL (001) 1230, 2305", is found in "ENGL (001) 230, 250", and does not cross a blank line).
+- Minors re-run with the correct rule: 93 minors, 640 codes, **0 missing**; all criteria PASS (calls 32.0 / 13.3 / 11.3 s, max under 40 s but the first call was slower this time).

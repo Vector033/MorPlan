@@ -75,6 +75,19 @@ function chunks(text: string): string[] {
   return cur ? [...out, cur] : out;
 }
 
+// A number counts when it is a standalone token in the paragraph (to the next blank line, max 600 chars) after the prefix.
+function numberAfterPrefix(src: string, prefix: string, num: string): boolean {
+  const re = new RegExp(String.raw`(?<!\d)${num}(?!\d)`);
+  for (let at = src.indexOf(prefix); at >= 0; at = src.indexOf(prefix, at + 1)) {
+    if (re.test(src.slice(at + prefix.length, at + prefix.length + 600).split(/\n\s*\n/)[0])) return true;
+  }
+  return false;
+}
+// Self-check of the digit boundary, runs before every probe.
+if (numberAfterPrefix("ENGL (001) 1230, 2305", "001", "230") || !numberAfterPrefix("ENGL (001) 230, 250", "001", "230")
+  || numberAfterPrefix("ENGL (001) 230\n\n250", "001", "250")) throw new Error("numberAfterPrefix self-check failed");
+console.log("self-check: numberAfterPrefix boundary OK");
+
 const kind = process.argv[2] as "plan" | "electives" | "minors";
 if (!SYSTEM[kind]) { console.error("usage: plan|electives|minors [--save]"); process.exit(1); }
 const text = await getText(kind);
@@ -151,14 +164,7 @@ if (kind === "plan") {
 // token within the same paragraph (to the next blank line, at most 600 chars) after an occurrence of the prefix.
 const arabic = text.replace(/[๐-๙]/g, (d) => String(d.charCodeAt(0) - 0x0e50));
 const flat = arabic.replace(/\s+/g, "");
-const inParagraph = (prefix: string, num: string) => {
-  const re = new RegExp(`(?<!\d)${num}(?!\d)`);
-  for (let at = arabic.indexOf(prefix); at >= 0; at = arabic.indexOf(prefix, at + 1)) {
-    const rest = arabic.slice(at + prefix.length, at + prefix.length + 600).split(/\n\s*\n/)[0];
-    if (re.test(rest)) return true;
-  }
-  return false;
-};
+const inParagraph = (prefix: string, num: string) => numberAfterPrefix(arabic, prefix, num);
 const missing = [...codes].filter((c) => {
   if (!c.includes("|")) return !flat.includes(c);
   const [prefix, num] = c.split("|");
