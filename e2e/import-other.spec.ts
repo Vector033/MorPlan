@@ -33,7 +33,6 @@ test("another university: look up, read a paste with AI, import without CMU-only
       json: {
         officialName: "มหาวิทยาลัยมหิดล",
         courseSearchUrl: "https://op.mahidol.ac.th/ra/courses",
-        sources: [{ title: "mahidol.ac.th", uri: "https://example.com/redirect" }],
       },
     }),
   );

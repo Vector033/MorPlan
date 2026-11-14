@@ -20,7 +20,8 @@ export async function POST(request: Request) {
 
   try {
     const opts = { strategy: RAG_STRATEGY, threshold: RAG_THRESHOLD, signal: RAG_SIGNAL, retriever: RAG_RETRIEVER };
-    const llm = getLlm();
+    // Extractive unless opted in, so a key added for other-university import does not change regulation answers.
+    const llm = process.env.ASK_LLM === "true" ? getLlm() : null;
     // If the model is down or slow, fall back to extractive passages rather than failing the question.
     const answer = await answerQuestion(parsed.data.question, getRetrieval(), { ...opts, llm }).catch((e) => {
       if (!llm) throw e;

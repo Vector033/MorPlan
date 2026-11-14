@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { extractJson, getLlm, LlmError, OpenAiCompatProvider } from "./llm";
+import { extractJson, GeminiProvider, getLlm, LlmError, OpenAiCompatProvider } from "./llm";
 
 describe("extractJson", () => {
   it("reads bare, fenced and reasoning-wrapped JSON", () => {
@@ -38,6 +38,35 @@ describe("OpenAiCompatProvider", () => {
     vi.stubGlobal("fetch", async () => Response.json({ choices: [{ message: { content: '{"x":1}' } }] }));
     const llm = new OpenAiCompatProvider("http://h/v1", "k", "m");
     await expect(llm.json({ system: "s", prompt: "p", schema: z.object({ answer: z.string() }) })).rejects.toThrow(LlmError);
+  });
+});
+
+describe("GeminiProvider", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends the schema without maxItems (Gemini rejects it) but still enforces the limit on the reply", async () => {
+    const schema = z.object({ items: z.array(z.string()).max(2) });
+    const fetchMock = vi.fn(async () => Response.json({ candidates: [{ content: { parts: [{ text: '{"items":["a","b","c"]}' }] } }] }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(new GeminiProvider("k").json({ system: "s", prompt: "p", schema })).rejects.toThrow(LlmError);
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.stringify(JSON.parse(init.body as string).generationConfig.responseJsonSchema);
+    expect(sent).toContain('"items"');
+    expect(sent).not.toContain("maxItems");
+  });
+
+  it("retries once on 503, then gives up", async () => {
+    const ok = () => Response.json({ candidates: [{ content: { parts: [{ text: '{"a":1}' }] } }] });
+    const busy = () => new Response("busy", { status: 503 });
+    const schema = z.object({ a: z.number() });
+    const once = vi.fn().mockResolvedValueOnce(busy()).mockResolvedValueOnce(ok());
+    vi.stubGlobal("fetch", once);
+    expect((await new GeminiProvider("k").json({ system: "s", prompt: "p", schema })).data).toEqual({ a: 1 });
+    expect(once).toHaveBeenCalledTimes(2);
+    const always = vi.fn(async () => busy());
+    vi.stubGlobal("fetch", always);
+    await expect(new GeminiProvider("k").json({ system: "s", prompt: "p", schema })).rejects.toThrow(/Gemini 503/);
+    expect(always).toHaveBeenCalledTimes(2);
   });
 });
 

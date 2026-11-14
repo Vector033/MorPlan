@@ -22,7 +22,8 @@ export class GeminiProvider implements LlmProvider {
 
   constructor(
     private apiKey: string,
-    private model = "gemini-flash-latest",
+    // Flash-Lite answers in about a second on the free tier; "gemini-flash-latest" now times out there.
+    private model = "gemini-flash-lite-latest",
   ) {
     this.name = `gemini:${model}`;
   }
@@ -32,7 +33,7 @@ export class GeminiProvider implements LlmProvider {
   }
 
   async json<T>({ system, prompt, schema }: { system: string; prompt: string; schema: z.ZodType<T> }) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`, {
+    const send = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
       body: JSON.stringify({
@@ -41,11 +42,15 @@ export class GeminiProvider implements LlmProvider {
         generationConfig: {
           temperature: 0,
           responseMimeType: "application/json",
-          responseJsonSchema: z.toJSONSchema(schema, { target: "draft-7" }),
+          // Gemini answers 400 to a schema with maxItems; the limits are still enforced by schema.safeParse below.
+          responseJsonSchema: JSON.parse(JSON.stringify(z.toJSONSchema(schema, { target: "draft-7" }), (k, v) => (k === "maxItems" ? undefined : v))),
         },
       }),
       signal: AbortSignal.timeout(60_000),
     });
+    // The free tier answers 503 "high demand" about one call in ten; a second try usually goes through.
+    let res = await send();
+    if (res.status === 503) res = await send();
     if (!res.ok) throw new LlmError(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const body = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
@@ -148,9 +153,10 @@ export function freeLlm(model: string): LlmProvider | null {
 }
 
 /**
- * The configured provider, or null for extractive answers.
+ * The configured provider, or null when no model is available.
  * LLM_PROVIDER=freellmapi picks the local router (FREELLMAPI_MODEL, default "auto");
- * otherwise Gemini when GEMINI_API_KEY is set. Production sets neither.
+ * otherwise Gemini when GEMINI_API_KEY is set. Other-university import needs one;
+ * regulation answers use it only when ASK_LLM=true (see /api/ask).
  */
 export function getLlm(): LlmProvider | null {
   if (process.env.LLM_PROVIDER === "freellmapi") return freeLlm(process.env.FREELLMAPI_MODEL || "auto");
