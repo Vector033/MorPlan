@@ -10,6 +10,9 @@ import {
 import type { Plan, Section, Workspace } from "@/lib/core/types";
 
 export const MAX_PLANS = 5;
+/** Bounds of a view position; the workspace schema uses the same ones. */
+export const VIEW_YEAR_MAX = 20;
+export const VIEW_SEMESTER_MAX = 9;
 export const PLAN_NAMES = ["A", "B", "C", "D", "E"];
 
 export type Action =
@@ -155,8 +158,12 @@ function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action):
     case "setStudyPlan":
       if (!cur.data.plans.some((p) => p.id === action.planId)) return ws;
       return set({ planId: action.planId, doneSlots: [], passed: cur.passed.map((p) => ({ courseNo: p.courseNo, credits: p.credits })) });
-    case "setViewTerm":
-      return set({ viewTerm: { year: action.year, semester: action.semester } });
+    case "setViewTerm": {
+      const { year, semester } = action;
+      if (!Number.isInteger(year) || year < 1 || year > VIEW_YEAR_MAX) return ws;
+      if (!Number.isInteger(semester) || semester < 1 || semester > VIEW_SEMESTER_MAX) return ws;
+      return set({ viewTerm: { year, semester } });
+    }
     case "togglePassed":
       return set({
         passed: cur.passed.some((p) => p.courseNo === action.courseNo)
@@ -180,11 +187,13 @@ function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action):
     case "tickTerm": {
       const term = plan?.terms.find((t) => t.year === action.year && t.semester === action.semester);
       if (!plan || !term) return ws;
-      const passed = [...cur.passed];
+      let passed = [...cur.passed];
       const doneSlots = [...cur.doneSlots];
       term.items.forEach((item, i) => {
         if (item.type === "course") {
-          if (!passed.some((p) => p.courseNo === item.courseNo)) passed.push({ courseNo: item.courseNo, credits: item.credits });
+          // Required in this term: counts as required even if it was named for a slot before.
+          passed = passed.filter((p) => p.courseNo !== item.courseNo);
+          passed.push({ courseNo: item.courseNo, credits: item.credits });
         } else if (!doneSlots.includes(slotId(plan, term, i))) doneSlots.push(slotId(plan, term, i));
       });
       return set({ passed, doneSlots });

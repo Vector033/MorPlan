@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { SLOT_KINDS } from "@/lib/core/curriculum";
 import { DAYS, type Workspace } from "@/lib/core/types";
-import { emptyWorkspace } from "./reducer";
+import { emptyWorkspace, VIEW_SEMESTER_MAX, VIEW_YEAR_MAX } from "./reducer";
 
 export const STORAGE_KEY = "morplan:workspace:v1";
 
@@ -99,7 +99,7 @@ export const curriculumStateSchema = z.object({
   minorSource: source.optional(),
   passed: z.array(z.object({ courseNo, credits, slotId: text(200).optional() })).max(400),
   doneSlots: z.array(text(200)).max(200),
-  viewTerm: z.object({ year: z.number().int().min(0).max(20), semester: z.number().int().min(0).max(9) }).optional(),
+  viewTerm: z.object({ year: z.number().int().min(1).max(VIEW_YEAR_MAX), semester: z.number().int().min(1).max(VIEW_SEMESTER_MAX) }).optional(),
 });
 
 const planId = z.string().max(4);

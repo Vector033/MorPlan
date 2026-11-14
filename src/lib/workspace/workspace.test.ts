@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { demoSections } from "@/lib/demo";
 import { activePlan, emptyWorkspace, MAX_PLANS, planSections, workspaceReducer, type Action } from "./reducer";
+import { progress } from "@/lib/core/curriculum";
 import { STATE } from "@/lib/core/__fixtures__/coop-plan";
 import { loadWorkspace, parseWorkspace, saveWorkspace, STORAGE_KEY } from "./storage";
 
@@ -168,5 +169,27 @@ describe("curriculum state", () => {
   it("curriculum actions are no-ops when no curriculum is set", () => {
     const ws = emptyWorkspace();
     expect(workspaceReducer(ws, { type: "togglePassed", courseNo: "204315", credits: 3 })).toBe(ws);
+  });
+  it("setViewTerm ignores positions outside the schema bounds, so the saved workspace stays valid", () => {
+    const ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    for (const [year, semester] of [[0, 1], [-2, 1], [25, 1], [1, 0], [1.5, 1]])
+      expect(workspaceReducer(ws, { type: "setViewTerm", year, semester })).toBe(ws);
+    const ok = workspaceReducer(ws, { type: "setViewTerm", year: 4, semester: 2 });
+    expect(ok.curriculum!.viewTerm).toEqual({ year: 4, semester: 2 });
+    expect(parseWorkspace(JSON.parse(JSON.stringify(ok)))).toEqual(ok);
+  });
+  it("tickTerm turns a slot-attributed required course into a plain required one", () => {
+    const start = { ...emptyWorkspace(), curriculum: { ...STATE, passed: [{ courseNo: "204321", credits: 3, slotId: "coop:3-2-3" }] } };
+    const ws = workspaceReducer(start, { type: "tickTerm", year: 3, semester: 1 });
+    expect(ws.curriculum!.passed.every((x) => x.slotId === undefined)).toBe(true);
+    expect(ws.curriculum!.passed.find((x) => x.courseNo === "204321")).toEqual({ courseNo: "204321", credits: 3 });
+    const p = progress(STATE.data.plans[0], ws.curriculum!);
+    expect(p["major-elective"].done).toBe(0);
+    expect(p.required.done).toBe(12);
+  });
+  it("togglePassed never stores a slotId", () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    ws = workspaceReducer(ws, { type: "togglePassed", courseNo: "204321", credits: 3 });
+    expect(ws.curriculum!.passed).toEqual([{ courseNo: "204321", credits: 3 }]);
   });
 });
