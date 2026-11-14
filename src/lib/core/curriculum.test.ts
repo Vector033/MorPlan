@@ -66,4 +66,9 @@ describe("progress", () => {
     const state = { passed: [{ courseNo: "A1", credits: 3, slotId: "coop:3-2-3" }, { courseNo: "A2", credits: 3, slotId: "coop:3-2-3" }], doneSlots: [] };
     expect(progress(COOP, state)["major-elective"]).toEqual({ done: 3, total: 3 });
   });
+  it("counts a course listed twice in one slot once", () => {
+    const state = { passed: [{ courseNo: "A1", credits: 3, slotId: "coop:3-2-4" }, { courseNo: "A1", credits: 3, slotId: "coop:3-2-4" }], doneSlots: [] };
+    expect(termView(COOP, { year: 3, semester: 2 }, state).slots[1].doneCredits).toBe(3);
+    expect(progress(COOP, state).minor).toEqual({ done: 3, total: 9 });
+  });
 });

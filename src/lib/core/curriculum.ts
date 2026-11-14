@@ -70,7 +70,7 @@ export type TermView = {
 
 function doneCredits(id: string, slot: PlanSlot, state: Done): number {
   if (state.doneSlots.includes(id)) return slot.credits;
-  const named = state.passed.filter((p) => p.slotId === id).reduce((n, p) => n + p.credits, 0);
+  const named = [...new Map(state.passed.filter((p) => p.slotId === id).map((p) => [p.courseNo, p.credits])).values()].reduce((n, c) => n + c, 0); // a course counts once
   return Math.min(named, slot.credits);
 }
 
