@@ -86,7 +86,7 @@ export function sourcePrompt(meta: { university: string; faculty?: string; major
   const lines = [`University: ${meta.university}`];
   if (meta.faculty) lines.push(`Faculty: ${meta.faculty}`);
   if (meta.major) lines.push(`Major: ${meta.major}`);
-  return `${lines.join("\n")}\n<document>\n${text}\n</document>`;
+  return `${lines.join("\n")}\n<document>\n${text.replace(/<\/document/gi, "< /document")}\n</document>`;
 }
 
 export class CurriculumError extends Error {}
@@ -95,10 +95,13 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** True when the code, or its prefix and number separately, appears in the source. */
 export function codeInSource(source: string, code: string, prefix?: string, number?: string): boolean {
-  if (key(source).includes(key(code))) return true;
+  const src = arabic(source).toUpperCase();
+  // Characters may be separated by spaces, "-" or parentheses only, and no letter or digit may touch either end.
+  const sep = String.raw`[ \t\-()]*`;
+  const full = new RegExp(String.raw`(?<![0-9A-Z])${[...key(code)].join(sep)}(?![0-9A-Z])`);
+  if (full.test(src)) return true;
   if (!prefix || !number) return false;
-  const src = arabic(source);
-  const pre = arabic(prefix);
+  const pre = arabic(prefix).toUpperCase();
   const re = new RegExp(String.raw`(?<!\d)${escape(arabic(number))}(?!\d)`);
   for (let at = src.indexOf(pre); at >= 0; at = src.indexOf(pre, at + 1)) {
     // same paragraph: up to the next blank line, at most 600 characters
@@ -108,6 +111,8 @@ export function codeInSource(source: string, code: string, prefix?: string, numb
 }
 
 const CODE = /^[0-9A-Z]{2,12}$/;
+/** Short codes match too easily: at least 4 characters, and all-digit codes at least 5. */
+const validCode = (c: string) => CODE.test(c) && c.length >= 4 && (!/^\d+$/.test(c) || c.length >= 5);
 
 export function levelOf(courseNo: string): number | undefined {
   const m = /(\d)\d\d$/.exec(key(courseNo));
@@ -129,7 +134,7 @@ export function checkCurriculum(
       for (const it of t.items) {
         if (it.courseNo) {
           const courseNo = key(it.courseNo);
-          if (!CODE.test(courseNo)) dropped.push(`${it.courseNo}: รหัสวิชาอ่านไม่ได้ (${label})`);
+          if (!validCode(courseNo)) dropped.push(`${it.courseNo}: รหัสวิชาอ่านไม่ได้ (${label})`);
           else if (!codeInSource(source, courseNo)) dropped.push(`${courseNo}: ไม่พบในเอกสาร (${label})`);
           else items.push({ type: "course", courseNo, title: it.title.trim() || courseNo, credits: it.credits });
         } else if (it.slot) {
@@ -162,7 +167,7 @@ export function checkElectives(source: string, reply: ElectivesReply): { courses
   const seen = new Map<string, ElectiveCourse>();
   for (const c of reply.courses) {
     const courseNo = key(c.courseNo);
-    if (!CODE.test(courseNo)) dropped.push(`${c.courseNo}: รหัสวิชาอ่านไม่ได้`);
+    if (!validCode(courseNo)) dropped.push(`${c.courseNo}: รหัสวิชาอ่านไม่ได้`);
     else if (!codeInSource(source, courseNo)) dropped.push(`${courseNo}: ไม่พบในเอกสาร`);
     else if (!seen.has(courseNo)) {
       const level = levelOf(courseNo);
@@ -185,7 +190,7 @@ export function checkMinors(source: string, reply: MinorsReply): { minors: Minor
           const prefix = key(c.prefix);
           const number = key(n);
           const code = prefix + number;
-          if (!CODE.test(code)) dropped.push(`${c.prefix} ${n}: รหัสวิชาอ่านไม่ได้ (${m.name})`);
+          if (prefix.length < 2 || !validCode(code)) dropped.push(`${c.prefix} ${n}: รหัสวิชาอ่านไม่ได้ (${m.name})`);
           else if (!codeInSource(source, code, prefix, number)) dropped.push(`${code}: ไม่พบในเอกสาร (${m.name})`);
           else courseNos.add(code);
         }
