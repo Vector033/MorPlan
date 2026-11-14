@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { covers, normalizeKey, progress, termPosition, termView } from "./curriculum";
+import { covers, minorProgress, normalizeKey, passedNos, progress, rankElectives, termPosition, termView } from "./curriculum";
 import { COOP } from "./__fixtures__/coop-plan";
+import type { Section } from "./types";
 
 describe("normalizeKey", () => {
   it("drops prefixes, spaces and case", () => {
@@ -70,5 +71,32 @@ describe("progress", () => {
     const state = { passed: [{ courseNo: "A1", credits: 3, slotId: "coop:3-2-4" }, { courseNo: "A1", credits: 3, slotId: "coop:3-2-4" }], doneSlots: [] };
     expect(termView(COOP, { year: 3, semester: 2 }, state).slots[1].doneCredits).toBe(3);
     expect(progress(COOP, state).minor).toEqual({ done: 3, total: 9 });
+  });
+});
+describe("rankElectives", () => {
+  const sec = (courseNo: string, days: string[], start: number, end: number) =>
+    ({ id: `${courseNo}-001-000`, courseNo, title: courseNo, lec: "001", lab: "000", meetings: [{ days, start, end }], instructors: [] }) as unknown as Section;
+  const placed = [sec("204315", ["Mo"], 540, 630)];
+  const pool = [...placed, sec("204311", ["Mo"], 540, 630), sec("204333", ["Tu"], 540, 630)];
+  const candidates = [{ courseNo: "204311", title: "a" }, { courseNo: "204333", title: "b" }, { courseNo: "204362", title: "c" }, { courseNo: "204365", title: "d" }];
+  it("puts courses that fit first, then offered, then unknown, and hides passed ones", () => {
+    const r = rankElectives(candidates, new Set(["204365"]), pool, placed);
+    expect(r.map((c) => [c.courseNo, c.offered, c.fits])).toEqual([["204333", true, true], ["204311", true, false], ["204362", false, false]]);
+  });
+  it("with an empty pool keeps list order by courseNo and marks nothing offered", () => {
+    const r = rankElectives([...candidates].reverse(), new Set(), [], []);
+    expect(r.every((c) => !c.offered && !c.fits)).toBe(true);
+    expect(r.map((c) => c.courseNo)).toEqual(["204311", "204333", "204362", "204365"]);
+  });
+});
+describe("minorProgress", () => {
+  it("splits each group into done and left", () => {
+    const minor = { name: "ภาษาญี่ปุ่น", rules: "…", groups: [{ label: "วิชาบังคับ", minCredits: 12, courseNos: ["018131", "018132", "018133", "018134"] }] };
+    expect(minorProgress(minor, new Set(["018131", "018999"]))[0]).toMatchObject({ done: ["018131"], left: ["018132", "018133", "018134"] });
+  });
+});
+describe("passedNos", () => {
+  it("collects distinct course numbers", () => {
+    expect([...passedNos({ passed: [{ courseNo: "A1", credits: 3 }, { courseNo: "A1", credits: 3 }, { courseNo: "B2", credits: 3 }] })]).toEqual(["A1", "B2"]);
   });
 });

@@ -1,3 +1,5 @@
+import { findConflicts } from "./conflicts";
+import type { Section } from "./types";
 export const SLOT_KINDS = ["major-elective", "minor", "ge", "free", "other"] as const;
 export type SlotKind = (typeof SLOT_KINDS)[number];
 export type PlanCourse = { type: "course"; courseNo: string; title: string; credits: number };
@@ -115,4 +117,33 @@ export function progress(plan: StudyPlan, state: Done): Progress {
     out.all.total += out[k].total;
   }
   return out;
+}
+
+export type RankedCourse = ElectiveCourse & { offered: boolean; fits: boolean };
+
+/** Not-yet-passed candidates: those with a section that fits the placed timetable first, then offered ones, then the rest; ties by courseNo. */
+export function rankElectives(candidates: ElectiveCourse[], passedNos: ReadonlySet<string>, pool: Section[], placed: Section[]): RankedCourse[] {
+  const rank = (c: RankedCourse) => (c.fits ? 0 : c.offered ? 1 : 2);
+  return candidates
+    .filter((c) => !passedNos.has(c.courseNo))
+    .map((c) => {
+      const secs = pool.filter((s) => s.courseNo === c.courseNo);
+      const fits = secs.some((s) => !findConflicts([...placed, s]).some((x) => x.a === s.id || x.b === s.id));
+      return { ...c, offered: secs.length > 0, fits };
+    })
+    .sort((a, b) => rank(a) - rank(b) || a.courseNo.localeCompare(b.courseNo));
+}
+
+export type MinorGroupProgress = MinorGroup & { done: string[]; left: string[] };
+
+export function minorProgress(minor: Minor, passedNos: ReadonlySet<string>): MinorGroupProgress[] {
+  return minor.groups.map((g) => ({
+    ...g,
+    done: g.courseNos.filter((n) => passedNos.has(n)),
+    left: g.courseNos.filter((n) => !passedNos.has(n)),
+  }));
+}
+
+export function passedNos(state: Pick<CurriculumState, "passed">): Set<string> {
+  return new Set(state.passed.map((p) => p.courseNo));
 }
