@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { WarningIcon } from "@/components/icons";
 import { Calendar } from "@/components/planner/calendar";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { findConflicts } from "@/lib/core/conflicts";
@@ -51,9 +52,12 @@ export function SharedPlan({ term, name, sections, createdAt }: { term: string; 
       </div>
 
       {conflicts.length > 0 && (
-        <ul className="card flex flex-col gap-1 p-4 text-sm text-danger">
+        <ul className="card flex flex-col gap-2 p-4 text-sm font-medium text-danger tabular-nums">
           {conflicts.map((c, i) => (
-            <li key={i}>{conflictText(c, byId)}</li>
+            <li key={i} className="flex items-start gap-2">
+              <WarningIcon className="mt-0.5 size-4 shrink-0" />
+              <span>{conflictText(c, byId)}</span>
+            </li>
           ))}
         </ul>
       )}

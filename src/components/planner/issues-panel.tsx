@@ -31,7 +31,7 @@ export function IssuesPanel() {
         <div className="p-4">
           {conflicts.length === 0 ? (
             placed.length ? (
-              <p className="inline-flex items-center gap-1.5 text-sm font-medium text-[#14603a]">
+              <p className="inline-flex items-center gap-1.5 text-sm font-medium text-ok">
                 <CheckCircleIcon className="size-4 shrink-0" />
                 ไม่มีเวลาเรียนหรือวันสอบชนกัน
               </p>

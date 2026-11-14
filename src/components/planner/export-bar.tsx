@@ -76,7 +76,7 @@ export function ExportBar({ calendarRef }: { calendarRef: RefObject<HTMLDivEleme
         </p>
       )}
       {error && (
-        <p className="w-full text-xs text-danger sm:w-auto" role="alert">
+        <p className="w-full text-xs font-semibold text-ink sm:w-auto" role="alert">
           {error}
         </p>
       )}

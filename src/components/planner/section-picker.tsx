@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { WarningIcon, XIcon } from "@/components/icons";
 import { findConflicts } from "@/lib/core/conflicts";
 import { conflictText, examLabel, meetingLabel, sectionLabel } from "@/lib/ui";
 import { sectionsOfCourse } from "@/lib/workspace/reducer";
@@ -24,7 +25,7 @@ export function SectionPicker({ courseNo, onClose }: { courseNo: string; onClose
       ref={ref}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && ref.current?.close()}
-      className="anim-modal m-auto w-[min(560px,calc(100vw-1.5rem))] rounded-2xl border border-line bg-white p-0 text-ink shadow-lg backdrop:bg-ink/40"
+      className="anim-modal m-auto w-[min(560px,calc(100vw-1.5rem))] rounded-md border border-line bg-white p-0 text-ink shadow-lg backdrop:bg-ink/40"
       aria-labelledby="picker-title"
     >
       <div className="flex items-start justify-between gap-3 border-b border-line p-4">
@@ -34,8 +35,8 @@ export function SectionPicker({ courseNo, onClose }: { courseNo: string; onClose
           </h2>
           <p className="text-sm text-muted">{sections[0]?.title}</p>
         </div>
-        <button className="btn-ghost" onClick={() => ref.current?.close()} aria-label="ปิด">
-          ✕
+        <button className="btn-ghost size-9 shrink-0 p-0" onClick={() => ref.current?.close()} aria-label="ปิด">
+          <XIcon />
         </button>
       </div>
       <ul className="max-h-[60vh] divide-y divide-line overflow-y-auto">
@@ -45,7 +46,7 @@ export function SectionPicker({ courseNo, onClose }: { courseNo: string; onClose
           return (
             <li key={s.id} className={`p-4 ${isCurrent ? "bg-canvas" : ""}`}>
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 text-sm">
+                <div className="min-w-0 text-sm tabular-nums">
                   <p className="font-medium">
                     {sectionLabel(s)} {isCurrent && <span className="text-xs font-semibold">(ในตารางตอนนี้)</span>}
                   </p>
@@ -57,16 +58,18 @@ export function SectionPicker({ courseNo, onClose }: { courseNo: string; onClose
                   ))}
                   {s.instructors.length > 0 && <p className="text-muted">{s.instructors.join(", ")}</p>}
                   <p className="text-xs text-muted">
-                    กลางภาค {examLabel(s.midterm)} · ปลายภาค {examLabel(s.final)}
+                    <span className="whitespace-nowrap">กลางภาค {examLabel(s.midterm)}</span> ·{" "}
+                    <span className="whitespace-nowrap">ปลายภาค {examLabel(s.final)}</span>
                   </p>
                   {clashes.map((c, i) => (
-                    <p key={i} className="mt-1 text-xs font-medium text-danger">
-                      {conflictText(c, byId)}
+                    <p key={i} className="mt-1 flex items-start gap-1.5 text-xs font-medium text-danger">
+                      <WarningIcon className="mt-0.5 size-3.5 shrink-0" />
+                      <span>{conflictText(c, byId)}</span>
                     </p>
                   ))}
                 </div>
                 <button
-                  className={isCurrent ? "btn" : "btn-primary"}
+                  className={`shrink-0 whitespace-nowrap ${isCurrent ? "btn" : "btn-primary"}`}
                   onClick={() => {
                     if (isCurrent) dispatch({ type: "unplace", courseNo });
                     else dispatch({ type: "place", sectionId: s.id });

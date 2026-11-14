@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { VolumeOffIcon, VolumeOnIcon, WarningIcon } from "@/components/icons";
+import { VolumeOffIcon, VolumeOnIcon, WarningIcon, XIcon } from "@/components/icons";
 import { conflictedIds, findConflicts } from "@/lib/core/conflicts";
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
@@ -90,7 +90,9 @@ export function Planner() {
   if (!ready) return <PlannerSkeleton />;
 
   const byId = new Map(ws.pool.map((s) => [s.id, s]));
-  const days = [...DAYS.slice(0, 5), ...DAYS.slice(5).filter((d) => placed.some((s) => s.meetings.some((m) => m.days.includes(d))))];
+  // Nothing imported yet: the page is the landing hero, not a workspace.
+  const hero = ws.pool.length === 0;
+  const days =[...DAYS.slice(0, 5), ...DAYS.slice(5).filter((d) => placed.some((s) => s.meetings.some((m) => m.days.includes(d))))];
 
   return (
     <DndContext
@@ -104,6 +106,17 @@ export function Planner() {
       accessibility={{ screenReaderInstructions, announcements: announcements((id) => courseFromId(id)) }}
     >
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        {hero && (
+          <header className="pt-2 pb-2 sm:pt-6 lg:col-span-2">
+            <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
+            <h1 className="mt-1 text-title font-bold sm:text-display">
+              จัดตารางเรียน มช. <span className="whitespace-nowrap">ให้ลงตัวในไม่กี่นาที</span>
+            </h1>
+            <p className="mt-2 max-w-[65ch] text-base text-muted sm:text-lg">
+              เช็กเวลาเรียนและวันสอบชนอัตโนมัติ <span className="whitespace-nowrap">เทียบแผน A / B / C ได้ทันที</span>
+            </p>
+          </header>
+        )}
         {/* On phones the timetable leads once it has something on it; search and tray follow. */}
         <aside className={`flex flex-col gap-4 ${placed.length ? "order-last lg:order-none" : ""} lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1`}>
           {ws.pool.length === 0 ? (
@@ -123,20 +136,22 @@ export function Planner() {
         </aside>
 
         <main className="flex min-w-0 flex-col gap-4">
-          <header className="order-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2 md:order-none">
-            <div>
-              <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
-              <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
-            </div>
-            {/* Three giant zeros say nothing on an empty plan; the summary appears with the first course. */}
-            {placed.length > 0 && (
-              <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
-                <Stat value={placed.length} label="วิชา" />
-                <Stat value={shownCredits} label="หน่วยกิต" />
-                <Stat value={conflicts.length} label={conflicts.length ? "จุดที่ชน" : "ไม่มีวิชาชน"} alert={conflicts.length > 0} />
-              </dl>
-            )}
-          </header>
+          {!hero && (
+            <header className="order-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2 md:order-none">
+              <div>
+                <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
+                <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
+              </div>
+              {/* Three giant zeros say nothing on an empty plan; the summary appears with the first course. */}
+              {placed.length > 0 && (
+                <dl className="flex items-end gap-6 sm:gap-8" aria-label="สรุปแผนนี้">
+                  <Stat value={placed.length} label="วิชา" />
+                  <Stat value={shownCredits} label="หน่วยกิต" />
+                  <Stat value={conflicts.length} label={conflicts.length ? "จุดที่ชน" : "ไม่มีวิชาชน"} alert={conflicts.length > 0} />
+                </dl>
+              )}
+            </header>
+          )}
 
           <div className="contents md:flex md:flex-col md:gap-3">
             <div className="order-2 min-w-0 md:order-none">
@@ -181,14 +196,14 @@ export function Planner() {
             // Top-of-timetable alert pill: exact conflicting sections; full list sits below.
             <a
               href="#clash-h"
-              className="anim-rise order-4 flex items-center gap-3 rounded-2xl border border-danger/35 bg-danger-soft p-2 text-sm font-semibold text-danger hover:border-danger/60 sm:rounded-full sm:p-1.5 sm:pr-4 md:order-none"
+              className="anim-rise order-4 flex items-center gap-3 rounded-md border border-danger/35 bg-danger-soft p-2 text-sm font-semibold text-danger hover:border-danger/60 sm:rounded-full sm:p-1.5 sm:pr-4 md:order-none"
             >
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-danger px-2.5 py-0.5 font-mono text-xs font-bold text-white tabular-nums">
                 <WarningIcon className="size-3" />
                 ชน {conflicts.length}
               </span>
               <span className="line-clamp-2 min-w-0 flex-1 tabular-nums sm:truncate">{conflictText(conflicts[0], byId)}</span>
-              {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-danger/80">ดูทั้งหมด ↓</span>}
+              {conflicts.length > 1 && <span className="shrink-0 text-xs font-medium text-danger">ดูทั้งหมด ↓</span>}
             </a>
           )}
 
@@ -377,8 +392,8 @@ function TrayItem({
         {clashed && placed && <WarningIcon className="size-3 shrink-0" />}
         {placed ? `ตอน ${placed.lec === "000" ? placed.lab : placed.lec}` : "เลือกตอน"}
       </button>
-      <button type="button" onClick={onRemove} className="btn-ghost min-w-8 px-1.5 text-xs" aria-label={`เอา ${courseNo} ออก`}>
-        ✕
+      <button type="button" onClick={onRemove} className="btn-ghost size-8 p-0" aria-label={`เอา ${courseNo} ออก`}>
+        <XIcon className="size-3.5" />
       </button>
     </li>
   );
@@ -393,7 +408,7 @@ function MobileDayList({ day, sections, onPick }: { day: Day; sections: Section[
         <p>
           ไม่มีเวลาเรียนในตาราง (TBA):{" "}
           {tba.map((s) => (
-            <button key={s.id} className="mr-1 underline" onClick={() => onPick(s.courseNo)}>
+            <button key={s.id} className="mr-1 min-h-6 font-mono underline" onClick={() => onPick(s.courseNo)}>
               {s.courseNo}
             </button>
           ))}
@@ -408,7 +423,7 @@ function MobileDayList({ day, sections, onPick }: { day: Day; sections: Section[
 function EmptyPool({ onDemo }: { onDemo: () => void }) {
   return (
     <section className="card">
-      <h2 className="bar">จัดตารางแบบไม่พลาดวิชาชนหรือสอบซ้อน</h2>
+      <h2 className="bar">เริ่มใน 3 ขั้น</h2>
       <div className="space-y-3 px-4 pt-2 text-sm text-muted">
         <ol className="flex flex-col gap-1.5 text-xs text-ink">
           <li className="flex items-center gap-2">
@@ -426,7 +441,7 @@ function EmptyPool({ onDemo }: { onDemo: () => void }) {
         </ol>
         <p className="text-xs text-muted">
           คัดลอกผลค้นหาจาก <span className="whitespace-nowrap">reg ของ มช.</span> มาวางเองได้เลย{" "}
-          <strong className="font-medium text-ink">MorPlan ไม่เคยขอรหัสผ่าน reg</strong>
+          <strong className="font-medium whitespace-nowrap text-ink">MorPlan ไม่เคยขอรหัสผ่าน reg</strong>
         </p>
       </div>
       <div className="flex flex-wrap gap-2 p-4">

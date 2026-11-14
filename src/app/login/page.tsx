@@ -32,14 +32,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         ไม่ต้องเข้าสู่ระบบก็ใช้ได้ แผนจะเก็บในเบราว์เซอร์นี้{" "}
         <span className="inline-block">เข้าสู่ระบบเมื่ออยากเปิดแผนเดียวกันจากหลายเครื่อง</span>
       </p>
-      <div className="mb-5 rounded-xl bg-accent-soft p-3 text-sm text-ink" role="note">
+      <div className="mb-5 rounded-xs bg-accent-soft p-3 text-sm text-ink" role="note">
         <strong>บัญชีนี้แยกจาก CMU Account และ reg</strong>{" "}
         <span className="inline-block">ห้ามใช้รหัสผ่าน CMU หรือ reg ที่นี่</span> ตั้งรหัสผ่านใหม่
         <span className="whitespace-nowrap">สำหรับ MorPlan เท่านั้น</span>
       </div>
       {(error || notice) && (
         <p
-          className={`mb-4 rounded-xl px-3 py-2 text-sm ${error ? "bg-danger-soft text-danger" : "bg-white text-ink ring-1 ring-line"}`}
+          className={`mb-4 rounded-xs px-3 py-2 text-sm text-ink ${error ? "bg-accent-soft font-medium" : "bg-white ring-1 ring-line"}`}
           role={error ? "alert" : "status"}
         >
           {error ?? notice}

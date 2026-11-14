@@ -33,7 +33,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:py-8">
       <header className="flex flex-wrap items-center gap-4 pb-5">
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-accent-soft text-2xl font-bold text-accent" aria-hidden>
+        <span className="grid size-14 shrink-0 place-items-center rounded-md bg-accent-soft text-2xl font-bold text-accent" aria-hidden>
           {initialOf(account.name, account.email)}
         </span>
         <div className="min-w-0">
@@ -172,9 +172,9 @@ function Row({ label, description, children }: { label: string; description?: st
 
 function Method({ on, label, offText }: { on: boolean; label: string; offText: string }) {
   return (
-    <li className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2">
+    <li className="flex items-center justify-between gap-3 rounded-xs border border-line px-3 py-2">
       <span className="font-medium">{label}</span>
-      <span className={`chip shrink-0 whitespace-nowrap ${on ? "bg-[#e6f6ec] text-[#14603a]" : ""}`}>{on ? "ใช้งานอยู่" : offText}</span>
+      <span className={`chip shrink-0 whitespace-nowrap ${on ? "bg-ok-soft text-ok" : ""}`}>{on ? "ใช้งานอยู่" : offText}</span>
     </li>
   );
 }

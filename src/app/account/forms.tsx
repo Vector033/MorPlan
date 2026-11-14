@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import { CheckIcon } from "@/components/icons";
 import { PasswordField } from "@/components/password-field";
 import { submitKeepingValues } from "@/components/submit-keeping-values";
 import { PASSWORD_MIN } from "@/lib/account";
@@ -9,14 +10,15 @@ import { changePassword, deleteAccount, updateProfile, type FormState } from "./
 function Feedback({ state }: { state: FormState }) {
   if (state.error)
     return (
-      <p className="text-sm text-danger" role="alert">
+      <p className="error-note" role="alert">
         {state.error}
       </p>
     );
   if (state.message)
     return (
-      <p className="text-sm font-medium text-[#14603a]" role="status">
-        ✓ {state.message}
+      <p className="inline-flex items-center gap-1.5 text-sm font-medium text-ok" role="status">
+        <CheckIcon />
+        {state.message}
       </p>
     );
   return null;
@@ -114,7 +116,7 @@ export function DeleteForm({ email }: { email: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <button
           disabled={pending}
-          className="inline-flex min-h-9 items-center justify-center rounded-full bg-danger px-5 py-2 text-sm font-semibold text-white hover:bg-[#b0170f] disabled:bg-line disabled:text-muted"
+          className="inline-flex min-h-9 items-center justify-center rounded-full bg-danger px-5 py-2 text-sm font-semibold text-white hover:bg-danger-strong disabled:bg-line disabled:text-muted"
         >
           {pending ? "กำลังลบ…" : "ลบบัญชีถาวร"}
         </button>

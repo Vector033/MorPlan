@@ -74,14 +74,15 @@ export function CourseSearch() {
                 </button>
               </div>
               {expanded && (
-                <ul className="mx-3 mb-3 flex flex-col gap-2 border-t border-line pt-2 text-xs">
+                <ul className="mx-3 mb-3 flex flex-col gap-2 border-t border-line pt-2 text-xs tabular-nums">
                   {c.sections.map((s) => (
                     <li key={s.id}>
                       <span className="font-medium">{sectionLabel(s)}</span>{" "}
                       <span className="text-muted">{s.meetings.map(meetingLabel).join(" / ") || "TBA"}</span>
                       {s.instructors.length > 0 && <span className="block text-muted">{s.instructors.join(", ")}</span>}
                       <span className="block text-muted">
-                        กลางภาค {examLabel(s.midterm)} · ปลายภาค {examLabel(s.final)}
+                        <span className="whitespace-nowrap">กลางภาค {examLabel(s.midterm)}</span> ·{" "}
+                        <span className="whitespace-nowrap">ปลายภาค {examLabel(s.final)}</span>
                       </span>
                     </li>
                   ))}

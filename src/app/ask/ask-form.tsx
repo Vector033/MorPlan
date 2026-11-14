@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { ArrowRightIcon, CheckIcon, WarningIcon } from "@/components/icons";
+import { ArrowRightIcon, CheckIcon } from "@/components/icons";
 import type { Answer } from "@/lib/rag/types";
 
 const EXAMPLES = [
@@ -74,7 +74,7 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
               </button>
             ))}
           </div>
-          <button className="btn-primary" disabled={busy || q.trim().length < 3}>
+          <button className="btn-primary ml-auto" disabled={busy || q.trim().length < 3}>
             {busy ? "กำลังค้น…" : "ถาม"}
           </button>
         </div>
@@ -98,9 +98,8 @@ export function AskForm({ compact = false }: { compact?: boolean }) {
               </div>
             )}
             {t.error && (
-              <p className="mt-3 inline-flex max-w-[65ch] items-center gap-1.5 text-sm font-medium text-danger" role="alert">
-                <WarningIcon className="size-4 shrink-0" />
-                <span>{t.error}</span>
+              <p className="error-note mt-3 max-w-[65ch]" role="alert">
+                {t.error}
               </p>
             )}
             {t.answer && <AnswerView a={t.answer} />}
@@ -115,7 +114,7 @@ function AnswerView({ a }: { a: Answer }) {
   return (
     <div className="anim-rise mt-3 flex max-w-[65ch] flex-col gap-3 text-sm">
       {a.status === "not_found" ? (
-        <div className="rounded-xl border border-line bg-canvas p-4 text-base leading-[1.65]">
+        <div className="rounded-xs border border-line bg-canvas p-4 text-base leading-[1.65]">
           <p>
             <strong>ไม่พบ</strong> ในเอกสารที่ MorPlan มี
           </p>
@@ -139,7 +138,7 @@ function AnswerView({ a }: { a: Answer }) {
           {a.citations.map((c, i) => (
             <li key={`${c.docId}:${c.page}`} className="anim-rise" style={{ "--i": i + 1 } as CSSProperties}>
               {/* Citation chip: number, document, page. Opens to the quoted passage. */}
-              <details className="group overflow-hidden rounded-xl border border-line bg-white open:border-accent/40">
+              <details className="group overflow-hidden rounded-xs border border-line bg-white open:border-accent/40">
                 <summary className="flex cursor-pointer list-none items-stretch text-xs hover:bg-canvas [&::-webkit-details-marker]:hidden">
                   <span className="grid w-7 shrink-0 place-items-center bg-accent-soft font-mono font-bold text-accent">{c.n}</span>
                   <span className="min-w-0 flex-1 truncate px-2 py-1.5 font-semibold" title={c.title}>
@@ -167,7 +166,7 @@ function AnswerView({ a }: { a: Answer }) {
         </ul>
       )}
 
-      <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs leading-[1.6] text-ink">
+      <p className="rounded-xs bg-accent-soft px-3 py-2 text-xs leading-[1.6] text-ink">
         <strong>{a.notice}</strong> ข้อความมาจากการแปลงเอกสารด้วย OCR อาจมีตัวเลขหรือคำผิด ดูหน้าเอกสารต้นฉบับจากลิงก์ด้านบน
       </p>
       <p className="text-[11px] text-muted tabular-nums">

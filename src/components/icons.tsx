@@ -64,6 +64,16 @@ export function VolumeOffIcon({ className = "size-4 shrink-0", ...props }: IconP
   );
 }
 
+/** Close / remove glyph, so dismiss buttons share the icon stroke instead of a font "✕". */
+export function XIcon({ className = "size-4 shrink-0", ...props }: IconProps) {
+  return (
+    <svg {...base} className={className} {...props}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
 /** Compact step/hint glyph for RAG answer bullet lists and onboarding cues. */
 export function ArrowRightIcon({ className = "size-4 shrink-0", ...props }: IconProps) {
   return (

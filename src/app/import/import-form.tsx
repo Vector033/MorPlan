@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { CheckIcon } from "@/components/icons";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { attachExams } from "@/lib/core/exams";
 import type { ExtractResult } from "@/lib/core/extract";
@@ -30,7 +31,7 @@ export function ImportForm() {
   return ready ? (
     <ImportFormReady />
   ) : (
-    <div className="card h-64" aria-busy="true" />
+    <div className="card h-64 animate-pulse" aria-busy="true" />
   );
 }
 
@@ -253,7 +254,7 @@ function ImportFormReady() {
           {error && (
             <p
               role="alert"
-              className="rounded-xl bg-accent-soft p-3 text-sm text-ink"
+              className="error-note"
             >
               {error}
             </p>
@@ -286,7 +287,7 @@ function Preview({
       </p>
       {result.warnings.length > 0 && (
         <details
-          className="rounded-xl bg-accent-soft p-3 text-sm text-ink"
+          className="rounded-xs bg-accent-soft p-3 text-sm text-ink"
           open={result.sections.length === 0}
         >
           <summary className="cursor-pointer font-medium">
@@ -306,8 +307,8 @@ function Preview({
       )}
       {result.sections.length > 0 && (
         <>
-          <div className="max-h-80 overflow-auto rounded-xl border border-line">
-            <table className="w-full text-left text-xs">
+          <div className="max-h-80 overflow-auto rounded-xs border border-line">
+            <table className="w-full text-left text-xs tabular-nums">
               <thead className="sticky top-0 bg-canvas text-muted">
                 <tr>
                   <th className="p-2">วิชา</th>
@@ -333,7 +334,14 @@ function Preview({
                     <td className="p-2">{s.instructors.join(", ")}</td>
                     {cmu && (
                       <td className="p-2">
-                        {s.midterm || s.final ? "✓" : "–"}
+                        {s.midterm || s.final ? (
+                          <>
+                            <CheckIcon className="size-3.5 text-ok" />
+                            <span className="sr-only">มีวันสอบ</span>
+                          </>
+                        ) : (
+                          "–"
+                        )}
                       </td>
                     )}
                   </tr>
@@ -358,7 +366,7 @@ function Preview({
 
 function Steps({ items }: { items: { title: string; body: ReactNode }[] }) {
   return (
-    <ol className="grid overflow-hidden rounded-2xl border border-line bg-white text-sm sm:grid-cols-3">
+    <ol className="card grid overflow-hidden text-sm sm:grid-cols-3">
       {items.map((it, i) => (
         <li
           key={it.title}
@@ -464,7 +472,7 @@ function OtherUniversity({
     }
   }
 
-  const searchUrl = info?.courseSearchUrl ?? info?.registrarUrl;
+  const searchUrl = info?.courseSearchUrl ?? info?.registrarUrl ?? info?.homeUrl;
   return (
     <>
       <section className="card" aria-labelledby="uni-h">
@@ -503,7 +511,7 @@ function OtherUniversity({
           )}
           {info && (
             <div
-              className="rounded-xl bg-canvas p-3 text-sm"
+              className="rounded-xs bg-canvas p-3 text-sm"
               aria-live="polite"
             >
               <p className="font-semibold">{info.officialName}</p>
@@ -517,11 +525,18 @@ function OtherUniversity({
                   >
                     {info.courseSearchUrl
                       ? "หน้าค้นหารายวิชา"
-                      : "เว็บสำนักทะเบียน"}
+                      : info.registrarUrl
+                        ? "เว็บสำนักทะเบียน"
+                        : "เว็บไซต์มหาวิทยาลัย"}
                   </a>{" "}
                   <span className="text-xs text-muted">
                     ({new URL(searchUrl).hostname})
                   </span>
+                  {!info.courseSearchUrl && !info.registrarUrl && (
+                    <span className="block text-xs text-muted">
+                      ยืนยันลิงก์หน้าลงทะเบียนไม่ได้ เข้าเว็บมหาวิทยาลัยแล้วหาเมนูลงทะเบียนจากที่นั่น
+                    </span>
+                  )}
                 </p>
               ) : (
                 <p className="text-muted">
@@ -535,20 +550,7 @@ function OtherUniversity({
                 </p>
               )}
               <p className="mt-1 text-xs text-muted">
-                ค้นด้วย Google Search ผ่าน Gemini จาก{" "}
-                {info.sources.map((s, i) => (
-                  <span key={s.uri}>
-                    {i > 0 && ", "}
-                    <a
-                      className="underline"
-                      href={s.uri}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {s.title}
-                    </a>
-                  </span>
-                ))}{" "}
+                แนะนำโดย AI (Gemini) และแสดงเฉพาะลิงก์โดเมน .ac.th ที่เปิดได้จริง{" "}
                 ตรวจสอบลิงก์ก่อนล็อกอิน
                 และอย่ากรอกรหัสผ่านที่ไหนนอกจากเว็บของมหาวิทยาลัยเอง
               </p>

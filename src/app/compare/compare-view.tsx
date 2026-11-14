@@ -15,7 +15,12 @@ type PlanRow = { plan: Plan; sections: Section[]; conflicts: Conflict[]; stats: 
 
 export function CompareView() {
   const { ws, dispatch, ready } = useWorkspace();
-  if (!ready) return <div className="mx-auto h-96 w-full max-w-7xl animate-pulse p-4" aria-busy />;
+  if (!ready)
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-8" aria-busy>
+        <div className="card h-96 animate-pulse" />
+      </div>
+    );
 
   const rows: PlanRow[] = ws.plans.map((plan) => {
     const sections = planSections(ws, plan);
@@ -40,20 +45,73 @@ export function CompareView() {
             <span className="whitespace-nowrap">แล้วเลือกแผนที่ลงตัวที่สุด</span>
           </p>
         </div>
-        <Link href="/" className="btn-primary shrink-0">
-          กลับไปหน้าตาราง
-        </Link>
+        {nonEmpty.length > 0 && (
+          <Link href="/" className="btn-primary shrink-0">
+            กลับไปหน้าตาราง
+          </Link>
+        )}
       </header>
 
+      {nonEmpty.length === 0 ? (
+        // A table of zeros and dashes compares nothing: say what to do instead.
+        <section className="card max-w-xl p-6" aria-labelledby="compare-empty-h">
+          <h2 id="compare-empty-h" className="text-heading font-bold">
+            ยังไม่มีแผนให้เทียบ
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            วางวิชาลงตารางอย่างน้อยหนึ่งแผน แล้วกลับมาดูจุดชน วันว่าง{" "}
+            <span className="whitespace-nowrap">และชั่วโมงเรียนเทียบกันที่นี่</span>
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/" className="btn-primary">
+              ไปจัดตาราง
+            </Link>
+            <Link href="/import" className="btn">
+              ลองชุดตัวอย่างแผน A / B
+            </Link>
+          </div>
+        </section>
+      ) : (
+        <CompareBody rows={rows} nonEmpty={nonEmpty} bestId={bestId} showFreeBadge={showFreeBadge} maxFreeDays={maxFreeDays} onEdit={(id) => dispatch({ type: "setActive", id })} />
+      )}
+    </main>
+  );
+}
+
+function CompareBody({
+  rows,
+  nonEmpty,
+  bestId,
+  showFreeBadge,
+  maxFreeDays,
+  onEdit,
+}: {
+  rows: PlanRow[];
+  nonEmpty: PlanRow[];
+  bestId: string | null;
+  showFreeBadge: boolean;
+  maxFreeDays: number;
+  onEdit: (id: string) => void;
+}) {
+  return (
+    <>
+      {nonEmpty.length === 1 && (
+        <p className="-mt-4 max-w-[65ch] text-sm text-muted">
+          ตอนนี้มีแผนเดียวที่มีวิชา กด “+ แผนใหม่” ในหน้าตารางเพื่อคัดลอกเป็นอีกแผน{" "}
+          <span className="whitespace-nowrap">แล้วสลับตอนเรียนมาเทียบกัน</span>
+        </p>
+      )}
+
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[580px] text-left text-sm">
-          <thead className="border-b border-line bg-canvas/55 text-xs text-muted">
+        {/* Two plans fit a phone without sideways scroll; from three on, the row labels stay pinned. */}
+        <table className="w-full text-left text-sm" style={{ minWidth: `${7 + rows.length * 7}rem` }}>
+          <thead className="border-b border-line bg-canvas text-xs text-muted">
             <tr>
-              <th className="w-44 px-4 py-3.5 font-semibold text-muted">หัวข้อเปรียบเทียบ</th>
+              <th className="sticky left-0 w-28 bg-canvas px-3 py-3.5 font-semibold text-muted sm:w-44 sm:px-4">หัวข้อเปรียบเทียบ</th>
               {rows.map((r) => {
                 const isBest = r.plan.id === bestId;
                 return (
-                  <th key={r.plan.id} className={`px-4 py-3.5 align-bottom font-semibold text-ink ${isBest ? "bg-accent-soft/30" : ""}`}>
+                  <th key={r.plan.id} className={`px-3 py-3.5 align-bottom font-semibold text-ink sm:px-4 ${isBest ? "bg-accent-soft/60" : ""}`}>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-sm font-bold text-ink">{r.plan.name}</span>
                       <PlanStatusBadge row={r} isBest={isBest} />
@@ -76,7 +134,7 @@ export function CompareView() {
                     ชน {r.conflicts.length} จุด
                   </span>
                 ) : r.sections.length ? (
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-[#14603a]">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-ok">
                     <CheckIcon className="size-4 shrink-0" />
                     ไม่มีชน
                   </span>
@@ -90,13 +148,14 @@ export function CompareView() {
               bestId={bestId}
               rows={rows}
               render={(r) => {
-                const free = r.stats.freeDays.map((d) => DAY_TH_SHORT[d]).join(" ") || "–";
+                // An empty plan is free every day, which says nothing.
+                const free = (r.sections.length ? r.stats.freeDays.map((d) => DAY_TH_SHORT[d]).join(" ") : "") || "–";
                 const topFree = showFreeBadge && r.conflicts.length === 0 && r.stats.freeDays.length === maxFreeDays;
                 return (
                   <span className="inline-flex flex-wrap items-center gap-1.5">
                     <span>{free}</span>
                     {topFree && (
-                      <span className="rounded-full bg-[#e6f6ec] px-2 py-0.5 text-[11px] font-semibold text-[#14603a]">
+                      <span className="rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-ok">
                         ว่าง {r.stats.freeDays.length} วัน
                       </span>
                     )}
@@ -125,9 +184,9 @@ export function CompareView() {
                 <Link
                   href="/"
                   className={isBest ? "btn-primary min-h-8 shrink-0 px-3.5 py-1 text-xs" : "btn min-h-8 shrink-0 px-3.5 py-1 text-xs"}
-                  onClick={() => dispatch({ type: "setActive", id: r.plan.id })}
+                  onClick={() => onEdit(r.plan.id)}
                 >
-                  แก้แผนนี้
+                  {isBest ? "ใช้แผนนี้" : "แก้แผนนี้"}
                 </Link>
               </div>
               <Calendar sections={r.sections} order={r.plan.courseNos} conflicts={r.conflicts} compact />
@@ -135,7 +194,7 @@ export function CompareView() {
           );
         })}
       </div>
-    </main>
+    </>
   );
 }
 
@@ -154,7 +213,7 @@ function PlanStatusBadge({ row, isBest }: { row: PlanRow; isBest: boolean }) {
       className={
         isBest
           ? "inline-flex items-center gap-1 rounded-full border border-accent/25 bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-accent"
-          : "inline-flex items-center gap-1 rounded-full bg-[#e6f6ec] px-2 py-0.5 text-[11px] font-semibold text-[#14603a]"
+          : "inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-ok"
       }
     >
       <CheckIcon className="size-3" />
@@ -166,11 +225,11 @@ function PlanStatusBadge({ row, isBest }: { row: PlanRow; isBest: boolean }) {
 function Row({ label, rows, bestId, render }: { label: string; rows: PlanRow[]; bestId: string | null; render: (r: PlanRow) => ReactNode }) {
   return (
     <tr>
-      <th scope="row" className="px-4 py-3 text-xs font-semibold text-muted">
+      <th scope="row" className="sticky left-0 bg-white px-3 py-3 text-xs font-semibold text-muted sm:px-4">
         {label}
       </th>
       {rows.map((r) => (
-        <td key={r.plan.id} className={`px-4 py-3 tabular-nums ${r.plan.id === bestId ? "bg-accent-soft/20 font-medium text-ink" : ""}`}>
+        <td key={r.plan.id} className={`px-3 py-3 tabular-nums sm:px-4 ${r.plan.id === bestId ? "bg-accent-soft/30 font-medium text-ink" : ""}`}>
           {render(r)}
         </td>
       ))}

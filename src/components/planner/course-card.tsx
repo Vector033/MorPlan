@@ -30,7 +30,8 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
   return (
     <div
       className={`${anim} @container relative h-full overflow-hidden rounded-[4px] text-left ${frame} ${
-        compact ? "px-0.5 py-0 text-[8px] leading-tight" : "px-2 py-1.5 text-[11px] leading-snug"
+        // A clash frame is 2px on every side, so it gives back padding to keep the 6-digit code whole in a half-width lane.
+        compact ? "px-0.5 py-0 text-[8px] leading-tight" : `${clash ? "px-1" : "px-2"} py-1.5 text-[11px] leading-snug`
       }`}
     >
       {/* Clashing blocks share a lane and get narrow: one header row, so the time line never drops out of view. */}
@@ -38,15 +39,15 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
         {clash && compact && <WarningIcon className="absolute top-px right-px size-2 text-danger" aria-label={clash} />}
         <span
           className={`font-mono font-bold tabular-nums ${
-            compact ? (clash ? "pr-2 text-[7px] leading-none break-all" : "") : `min-w-0 truncate ${clash ? "text-xs" : "text-[13px]"}`
+            compact ? (clash ? "pr-2 text-[7px] leading-none break-all" : "") : `min-w-0 truncate @max-[4rem]:text-[10px] ${clash ? "text-xs" : "text-[13px]"}`
           }`}
         >
           {s.courseNo}
         </span>
         {clash && !compact && (
-          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-[2px] bg-danger px-1 py-0.5 text-[9.5px] leading-none font-bold whitespace-nowrap text-white">
+          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-[2px] bg-danger px-0.5 py-0.5 text-[9.5px] leading-none font-bold whitespace-nowrap text-white @max-[4rem]:absolute @max-[4rem]:top-0 @max-[4rem]:right-0 @max-[4rem]:rounded-none @max-[4rem]:rounded-bl-[2px] @min-[6.5rem]:px-1">
             <WarningIcon className="size-2.5 shrink-0" />
-            {/* Icon-only badge in a narrow block; the label stays for screen readers. */}
+            {/* Icon-only badge in a narrow block (a corner flag in the narrowest lanes); the label stays for screen readers. */}
             <span className="sr-only @min-[6.5rem]:not-sr-only">{clash}</span>
           </span>
         )}
@@ -54,11 +55,12 @@ export function CourseBlockCard({ section: s, meeting: m, palette, clash, motion
       {!compact && (
         <>
           <div className="truncate font-medium">{s.title}</div>
-          <div className="truncate tabular-nums opacity-90">
+          {/* Narrowest lanes: the section line gives way so the time can wrap after the dash instead of being cut. */}
+          <div className="truncate tabular-nums opacity-90 @max-[4rem]:hidden">
             {sectionLabel(s)}
             {m.room ? ` · ${m.room}` : ""}
           </div>
-          <div className="truncate font-mono tabular-nums opacity-90">
+          <div className="truncate font-mono tabular-nums opacity-90 @max-[4rem]:whitespace-normal">
             {fmtTime(m.start)}–{fmtTime(m.end)}
           </div>
         </>

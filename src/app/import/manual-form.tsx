@@ -86,7 +86,7 @@ export function ManualForm({ cmu = true, university = null }: { cmu?: boolean; u
         <div className="flex items-center gap-3 sm:col-span-6">
           <button className="btn-primary">เพิ่ม</button>
           {error && (
-            <p className="text-danger" role="alert">
+            <p className="error-note" role="alert">
               {error}
             </p>
           )}

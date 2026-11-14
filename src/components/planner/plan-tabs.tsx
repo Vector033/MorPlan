@@ -70,7 +70,7 @@ export function PlanTabs() {
                   </span>
                 ) : (
                   <span
-                    className="inline-flex items-center gap-0.5 rounded-full bg-[#e6f6ec] px-1.5 py-0.5 text-[10px] font-semibold text-[#14603a]"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-ok-soft px-1.5 py-0.5 text-[10px] font-semibold text-ok"
                     title="ไม่มีวิชาหรือวันสอบชน"
                   >
                     <CheckIcon className="size-2.5" />
@@ -112,7 +112,7 @@ export function PlanTabs() {
       )}
       {ws.plans.length > 1 && (
         <button
-          className="btn-ghost text-xs hover:text-danger"
+          className="btn-ghost text-xs"
           onClick={() => {
             if (confirm(`ลบ ${plan.name}?`)) dispatch({ type: "deletePlan", id: plan.id });
           }}
@@ -125,7 +125,7 @@ export function PlanTabs() {
         {sync === "loading" && "กำลังโหลด…"}
         {sync === "saving" && "กำลังบันทึก…"}
         {sync === "saved" && "บันทึกในบัญชีแล้ว"}
-        {sync === "error" && <span className="text-danger">บันทึกในบัญชีไม่สำเร็จ (ยังเก็บในเบราว์เซอร์)</span>}
+        {sync === "error" && <span className="font-semibold text-ink">บันทึกในบัญชีไม่สำเร็จ (ยังเก็บในเบราว์เซอร์)</span>}
       </span>
     </div>
   );

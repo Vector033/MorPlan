@@ -40,7 +40,7 @@ export function LoginForm({ next }: { next: string }) {
         autoComplete={mode === "signin" ? "current-password" : "new-password"}
       />
       {state.error && (
-        <p className="text-sm text-danger" role="alert">
+        <p className="error-note" role="alert">
           {state.error}
         </p>
       )}
