@@ -53,22 +53,33 @@ export function academicUrl(url?: string | null): string | undefined {
 }
 
 /**
- * Does the page really open? Follows at most three redirects by hand, and only
- * while each hop is still an academic URL, so the check never leaves .ac.th.
+ * GET a page, following at most three redirects by hand and only while each hop is
+ * still an academic URL, so a fetch never leaves .ac.th. Null on any other outcome.
  */
-export async function linkAlive(url: string, fetchFn: typeof fetch = fetch): Promise<boolean> {
+export async function fetchAcademic(url: string, fetchFn: typeof fetch = fetch, timeoutMs = 4_000): Promise<Response | null> {
   try {
     let next = academicUrl(url);
     for (let hop = 0; next && hop < 4; hop++) {
-      const res = await fetchFn(next, { redirect: "manual", signal: AbortSignal.timeout(4_000), headers: { "user-agent": "MorPlan link check" } });
+      const res = await fetchFn(next, { redirect: "manual", signal: AbortSignal.timeout(timeoutMs), headers: { "user-agent": "MorPlan link check" } });
+      if (res.status < 300 || res.status >= 400) {
+        if (res.ok) return res;
+        await res.body?.cancel();
+        return null;
+      }
       await res.body?.cancel();
-      if (res.status < 300 || res.status >= 400) return res.ok;
       next = academicUrl(new URL(res.headers.get("location") ?? "", next).toString());
     }
-    return false;
+    return null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** Does the page really open? */
+export async function linkAlive(url: string, fetchFn: typeof fetch = fetch): Promise<boolean> {
+  const res = await fetchAcademic(url, fetchFn);
+  await res?.body?.cancel();
+  return res !== null;
 }
 
 /** Keep a link only when it is an academic URL and `alive` says the page answers, so a made-up URL is dropped. */

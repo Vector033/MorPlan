@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { academicUrl, isCmu, linkAlive, verifyUniversity } from "./university";
+import { academicUrl, fetchAcademic, isCmu, linkAlive, verifyUniversity } from "./university";
 
 describe("academicUrl", () => {
   it("accepts Thai academic hosts only", () => {
@@ -104,5 +104,28 @@ describe("isCmu", () => {
   it("treats empty and CMU spellings as CMU", () => {
     for (const n of [undefined, "", "มช", "มช.", "CMU", "Chiang Mai University", "มหาวิทยาลัยเชียงใหม่"]) expect(isCmu(n)).toBe(true);
     expect(isCmu("มหาวิทยาลัยมหิดล")).toBe(false);
+  });
+});
+
+describe("fetchAcademic", () => {
+  // A tiny fake web: URL → [status, headers, body].
+  const web = (pages: Record<string, [number, Record<string, string>, string?]>) => {
+    const seen: string[] = [];
+    const fetchFn = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      seen.push(url);
+      const [status, headers, body] = pages[url] ?? [404, {}];
+      return new Response(body ?? null, { status, headers });
+    }) as typeof fetch;
+    return { fetchFn, seen };
+  };
+
+  it("returns the final response after an on-domain redirect and null off-domain", async () => {
+    const ok = web({ "http://cs.x.ac.th/": [301, { location: "https://cs.x.ac.th/th/" }], "https://cs.x.ac.th/th/": [200, {}, "hi"] });
+    expect(await (await fetchAcademic("http://cs.x.ac.th/", ok.fetchFn))!.text()).toBe("hi");
+    const off = web({ "https://cs.x.ac.th/": [302, { location: "http://169.254.169.254/" }] });
+    expect(await fetchAcademic("https://cs.x.ac.th/", off.fetchFn)).toBeNull();
+    expect(off.seen).toEqual(["https://cs.x.ac.th/"]);
+    expect(await fetchAcademic("https://example.com/", ok.fetchFn)).toBeNull();
   });
 });
