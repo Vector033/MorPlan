@@ -18,6 +18,9 @@ export const LIMITS = {
   // Each call spends model quota: a student imports a handful of times per term.
   extract: { bucket: "extract", limit: 15, windowSec: 3600 },
   university: { bucket: "university", limit: 10, windowSec: 3600 },
+  curriculumRead: { bucket: "curriculum-read", limit: 8, windowSec: 3600 },
+  curriculumFind: { bucket: "curriculum-find", limit: 8, windowSec: 3600 },
+  curriculumConfirm: { bucket: "curriculum-confirm", limit: 20, windowSec: 3600 },
 } satisfies Record<string, Limit>;
 
 /**

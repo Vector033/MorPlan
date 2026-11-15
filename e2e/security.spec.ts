@@ -25,6 +25,17 @@ test("API rejects cross-site and non-JSON writes", async ({ request }) => {
   expect((await request.post("/api/event", { data: { kind: "nope" } })).status()).toBe(400);
 });
 
+test("curriculum API rejects cross-site and non-JSON writes", async ({ request }) => {
+  const body = JSON.stringify({ id: "zzzzzzzzzz" });
+  for (const path of ["/api/curriculum/read", "/api/curriculum/confirm"]) {
+    const evil = await request.post(path, { data: body, headers: { "content-type": "application/json", origin: "https://evil.example" } });
+    expect(evil.status(), path).toBe(403);
+    const form = await request.post(path, { data: body, headers: { "content-type": "text/plain" } });
+    expect(form.status(), path).toBe(415);
+  }
+  expect((await request.get("/api/curriculum/zzzzzzzzzz")).status()).toBe(404);
+});
+
 test("signing out cannot be triggered from another site", async ({ request }) => {
   const res = await request.post("/auth/signout", { headers: { origin: "https://evil.example" }, maxRedirects: 0 });
   expect(res.status()).toBe(403);
