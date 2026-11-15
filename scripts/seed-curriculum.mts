@@ -21,6 +21,8 @@ const { and, eq } = await import("drizzle-orm");
 const { db } = await import("../src/db");
 const { curricula } = await import("../src/db/schema");
 const { normalizeKey } = await import("../src/lib/core/curriculum");
+const { boundTitle } = await import("../src/lib/core/curriculum-limits");
+const { universityKey } = await import("../src/lib/curriculum/rows");
 const { readUrl, readPdf } = await import("../src/lib/curriculum/source");
 const { readDocument } = await import("../src/lib/curriculum/read");
 const { confirm, saveOwner, savePending } = await import("../src/lib/curriculum/store");
@@ -29,7 +31,7 @@ const { getLlm } = await import("../src/lib/rag/llm");
 const llm = getLlm();
 if (!llm) throw new Error("no LLM configured (GEMINI_API_KEY in .env.local)");
 const source = a.url ? await readUrl(a.url) : await readPdf(new Uint8Array(readFileSync(a.file!)), a.title!);
-const sourceTitle = a.title ?? source.title;
+const sourceTitle = boundTitle(a.title ?? source.title);
 console.log(`source: ${sourceTitle} (${source.kind}, ${source.text.length} chars)`);
 
 const meta = { university: a.university, faculty: a.faculty ?? "", major: a.major ?? "", cohort: a.cohortFrom ?? 0 };
@@ -60,8 +62,7 @@ if (result.kind === "curriculum") {
 } else console.log(`${result.kind}: ${result.data.length}`);
 console.log(`dropped: ${result.dropped.length}${result.dropped.length ? " " + result.dropped.join(", ") : ""}`);
 
-const kept = result.kind === "curriculum" ? result.data.plans.length : result.data.length;
-const bad = refuseResult(kept, result.dropped.length);
+const bad = refuseResult(result);
 if (bad) {
   console.error(bad);
   process.exit(1);
@@ -76,7 +77,7 @@ const same = await db.select({ id: curricula.id }).from(curricula).where(
   and(
     eq(curricula.status, "shared"),
     eq(curricula.kind, a.kind),
-    eq(curricula.uniKey, normalizeKey(a.university)),
+    eq(curricula.uniKey, universityKey(a.university)),
     ...(a.faculty ? [eq(curricula.facultyKey, normalizeKey(a.faculty))] : []),
     ...(a.major ? [eq(curricula.majorKey, normalizeKey(a.major))] : []),
     a.url ? eq(curricula.sourceUrl, a.url) : eq(curricula.sourceTitle, sourceTitle),

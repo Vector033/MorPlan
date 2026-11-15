@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, type Mock } from "vitest";
 import type { LlmProvider } from "@/lib/rag/llm";
-import { readDocument } from "./read";
+import { LIST_MAX_CHUNKS, readDocument } from "./read";
 
 const meta = { university: "มหาวิทยาลัยเชียงใหม่", faculty: "วิทยาศาสตร์", major: "วิทยาการคอมพิวเตอร์", cohort: 64 };
 
@@ -56,5 +56,35 @@ describe("readDocument", () => {
     expect(r.data).toHaveLength(1);
     expect(r.data[0].groups).toHaveLength(1);
     expect(r.data[0].groups[0].courseNos).toEqual(["206101", "206102", "206103"]);
+  });
+});
+
+describe("list reads are bounded", () => {
+  const paras = (n: number) => Array.from({ length: n }, (_, i) => `20431${i} Elective ${i}\n${"x".repeat(11000)}`).join("\n\n");
+  const source = (n: number) => ({ text: paras(n), title: "t", kind: "text" as const });
+
+  it("refuses a source needing more than the chunk cap before any model call", async () => {
+    for (const kind of ["electives", "minors"] as const) {
+      const llm = fake([]);
+      await expect(readDocument(llm, kind, source(LIST_MAX_CHUNKS + 1), meta)).rejects.toMatchObject({ code: "too-large" });
+      expect(llm.json).not.toHaveBeenCalled();
+    }
+  });
+
+  it("starts no further chunk calls after one fails", async () => {
+    let calls = 0;
+    const llm = {
+      name: "fake",
+      cost: () => 0,
+      json: vi.fn(async () => {
+        const n = ++calls;
+        if (n === 1) throw new Error("model down");
+        await new Promise((r) => setTimeout(r, 20));
+        return { data: { courses: [] }, inputTokens: 0, outputTokens: 0 };
+      }),
+    } as unknown as LlmProvider;
+    await expect(readDocument(llm, "electives", source(LIST_MAX_CHUNKS), meta)).rejects.toThrow("model down");
+    await new Promise((r) => setTimeout(r, 60));
+    expect(calls).toBeLessThan(LIST_MAX_CHUNKS); // the chunks already in flight finish, the rest never start
   });
 });

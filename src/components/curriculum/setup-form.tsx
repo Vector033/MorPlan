@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { covers, type Curriculum, type Source } from "@/lib/core/curriculum";
-import { isCmu } from "@/lib/core/university";
+import { canonicalUniversity, CMU_NAME, isCmu } from "@/lib/core/university";
 import { CURRENT_TERM } from "@/lib/terms";
 import type { Meta } from "@/lib/curriculum/rows";
 import universities from "../../../data/universities-th.json";
@@ -13,7 +13,6 @@ import { call, Radio, sharedSource, Skeleton } from "./shared";
 import { SourceInput } from "./source-input";
 import { useReveal } from "./use-reveal";
 
-const CMU = "มหาวิทยาลัยเชียงใหม่";
 const THIS_YEAR = Number(CURRENT_TERM.split("/")[1]);
 const YEARS = Array.from({ length: 10 }, (_, i) => THIS_YEAR - i);
 
@@ -46,7 +45,7 @@ function useOptions(url: string | null): string[] {
 export function SetupForm({ onDone }: { onDone: () => void }) {
   const { ws, dispatch } = useWorkspace();
   const id = useId();
-  const [university, setUniversity] = useState(isCmu(ws.university) ? CMU : (ws.university ?? ""));
+  const [university, setUniversity] = useState(isCmu(ws.university) ? CMU_NAME : (ws.university ?? ""));
   const [faculty, setFaculty] = useState("");
   const [major, setMajor] = useState("");
   const [cohort, setCohort] = useState("");
@@ -75,11 +74,11 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
   const cohortNo = Number(cohort);
   const complete = university.trim().length >= 2 && faculty.trim() !== "" && major.trim() !== "" && cohort !== "";
 
-  const u = university.trim();
+  const u = canonicalUniversity(university.trim()); // "มช", "CMU" … search and read as the one Thai name
   const faculties = useOptions(u.length < 2 ? null : `/api/curriculum/options?university=${encodeURIComponent(u)}`);
   const majors = useOptions(u.length < 2 || !faculty.trim() ? null : `/api/curriculum/options?university=${encodeURIComponent(u)}&faculty=${encodeURIComponent(faculty.trim())}`);
 
-  const scope = () => ({ university: university.trim(), faculty: faculty.trim(), major: major.trim() });
+  const scope = () => ({ university: canonicalUniversity(university.trim()), faculty: faculty.trim(), major: major.trim() });
 
   const candRef = useReveal<HTMLHeadingElement>(searched && candidates.length > 0);
   const linksRef = useReveal<HTMLHeadingElement>(!!links && !finding);

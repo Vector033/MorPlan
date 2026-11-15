@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { mergeRange, parseData, readRow, type Row } from "./rows";
+import { mergeElectives, mergeRange, parseData, readRow, universityKey, type Row } from "./rows";
 
 const curriculum = {
   title: "หลักสูตร",
@@ -64,5 +64,38 @@ describe("mergeRange", () => {
   it("refuses a range that ends before it starts", () => {
     expect(mergeRange({ from: 20, to: 20 }, { from: 25 })).toBeNull();
     expect(mergeRange({ from: 20, to: 25 }, { to: 19 })).toBeNull();
+  });
+});
+
+describe("row bounds", () => {
+  it("bounds an over-long source title and skips a row with an over-long url", () => {
+    const r = readRow(row({ sourceTitle: `  ${"ก".repeat(300)}
+` }));
+    expect(r?.meta.sourceTitle).toHaveLength(200);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(readRow(row({ sourceUrl: `https://x.ac.th/${"a".repeat(500)}` }))).toBeNull();
+  });
+});
+
+describe("universityKey", () => {
+  it("gives every CMU spelling the key of the Thai name, and leaves an empty name alone", () => {
+    const cmu = universityKey("มหาวิทยาลัยเชียงใหม่");
+    for (const n of ["มช", "มช.", "CMU", " cmu "]) expect(universityKey(n)).toBe(cmu);
+    expect(universityKey("")).not.toBe(cmu);
+    expect(universityKey("มหาวิทยาลัยมหิดล")).not.toBe(cmu);
+  });
+});
+
+describe("mergeElectives", () => {
+  const list = (...codes: string[]) => codes.map((courseNo) => ({ courseNo, title: courseNo }));
+  const child = (provenance: "link" | "owner", ...codes: string[]) => ({ meta: { provenance }, data: list(...codes) });
+  it("merges only children whose provenance matches the parent's, first copy of a code wins", () => {
+    const kids = [child("link", "204311", "204312"), child("owner", "204313")];
+    expect(mergeElectives({ provenance: "link", own: list("204311") }, kids).map((c) => c.courseNo)).toEqual(["204311", "204312"]);
+    expect(mergeElectives({ provenance: "owner", own: list("204310") }, kids).map((c) => c.courseNo)).toEqual(["204310", "204313"]);
+  });
+  it("caps the merged list", () => {
+    const many = (from: number) => Array.from({ length: 300 }, (_, i) => String(300000 + from + i));
+    expect(mergeElectives({ provenance: "link", own: list(...many(0)) }, [child("link", ...many(300))])).toHaveLength(400);
   });
 });

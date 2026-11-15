@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { LIMITS } from "@/lib/core/curriculum-limits";
+import { boundTitle, LIMITS } from "@/lib/core/curriculum-limits";
 import type { curricula } from "@/db/schema";
-import type { Curriculum, ElectiveCourse, Minor } from "@/lib/core/curriculum";
+import { normalizeKey, type Curriculum, type ElectiveCourse, type Minor } from "@/lib/core/curriculum";
+import { canonicalUniversity } from "@/lib/core/university";
 import { curriculumSchema, electiveCourseSchema, minorSchema } from "@/lib/workspace/storage";
 import type { DocKind, ReadResult } from "./read";
 
@@ -45,14 +46,14 @@ export function toMeta(r: Row, data: unknown): Meta {
   return {
     id: r.id,
     kind: r.kind as DocKind,
-    title: title || r.sourceTitle,
+    title: title || boundTitle(r.sourceTitle),
     university: r.university,
     faculty: opt(r.faculty),
     major: opt(r.major),
     cohortFrom: opt(r.cohortFrom),
     cohortTo: opt(r.cohortTo),
     sourceUrl: opt(r.sourceUrl),
-    sourceTitle: r.sourceTitle,
+    sourceTitle: boundTitle(r.sourceTitle),
     provenance: r.provenance as "link" | "owner",
     readAt: r.readAt.toISOString(),
   };
@@ -61,7 +62,7 @@ export function toMeta(r: Row, data: unknown): Meta {
 /** Validate a stored row; a malformed or older-shape row is skipped and logged by id only. */
 export function readRow(row: Row): { meta: Meta; data: ReadResult["data"] } | null {
   const parsed = schemas[row.kind as DocKind]?.safeParse(row.data);
-  if (!parsed?.success) {
+  if (!parsed?.success || (row.sourceUrl?.length ?? 0) > LIMITS.url) {
     console.warn(`curricula: skipping unreadable row ${row.id}`);
     return null;
   }
@@ -75,4 +76,22 @@ export function mergeRange(current: Range, given: Range): { from?: number; to?: 
   const from = given.from ?? current.from ?? undefined;
   const to = given.to ?? current.to ?? undefined;
   return from != null && to != null && to < from ? null : { from, to };
+}
+
+/** The stored and searched university key. */
+export const universityKey = (name: string): string => normalizeKey(canonicalUniversity(name));
+
+/**
+ * A curriculum's major electives plus those of its shared electives children, first copy of a code wins.
+ * A child counts only when its provenance matches the parent's: an owner-read curriculum never takes a link's list.
+ */
+export function mergeElectives(
+  parent: { provenance: Meta["provenance"]; own: ElectiveCourse[] },
+  children: { meta: Pick<Meta, "provenance">; data: ElectiveCourse[] }[],
+): ElectiveCourse[] {
+  const merged = new Map<string, ElectiveCourse>();
+  for (const c of [...parent.own, ...children.filter((k) => k.meta.provenance === parent.provenance).flatMap((k) => k.data)]) {
+    if (!merged.has(c.courseNo)) merged.set(c.courseNo, c);
+  }
+  return [...merged.values()].slice(0, LIMITS.electives);
 }

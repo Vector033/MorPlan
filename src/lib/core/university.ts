@@ -103,6 +103,11 @@ export async function verifyUniversity(reply: z.infer<typeof universityReplySche
 }
 
 /** มช. in any common spelling: those students get the built-in parser and exam dates. */
+export const CMU_NAME = "มหาวิทยาลัยเชียงใหม่";
+
+/** One name for every CMU spelling ("มช", "CMU", …); any other name, and an empty one, is kept as given. */
+export const canonicalUniversity = (name: string): string => (name.trim() && isCmu(name) ? CMU_NAME : name);
+
 export function isCmu(name: string | null | undefined): boolean {
   if (!name) return true;
   return /^(มช\.?|cmu|chiang ?mai university|มหาวิทยาลัยเชียงใหม่)$/i.test(name.trim());

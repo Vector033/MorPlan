@@ -25,22 +25,27 @@ const body = z
     z.object({ pdfBase64: z.string().max(Math.ceil((MAX_UPLOAD_BYTES * 4) / 3) + 8), name: z.string().trim().max(200) }),
   ]),
   })
-  .refine((b) => !(b.kind === "electives" && "url" in b.source) || !!b.parentId);
+  .refine((b) => !(b.kind === "electives" && "url" in b.source) || !!b.parentId)
+  .refine((b) => b.kind !== "curriculum" || (b.faculty !== "" && b.major !== ""));
 
 /** Read a curriculum document into a preview. Only a link is stored (as pending): an upload or paste is never shared. */
 export async function POST(request: Request) {
   const blocked = await guardMutation(request, LIMITS.curriculumRead);
   if (blocked) return blocked;
   const parsed = body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง ตรวจชื่อมหาวิทยาลัย ปีรหัส และเอกสารที่ใส่" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง ตรวจชื่อมหาวิทยาลัย คณะ สาขา ปีรหัส และเอกสารที่ใส่" }, { status: 400 });
   const { kind, university, faculty, major, cohort, parentId, source } = parsed.data;
 
   const llm = getLlm();
   if (!llm) return NextResponse.json({ error: "ตอนนี้อ่านเอกสารใหม่ไม่ได้ หลักสูตรที่มีในระบบแล้วยังใช้ได้" }, { status: 503 });
 
   // A link's electives are shared through their curriculum: without a shared parent the row could never appear.
-  if (kind === "electives" && "url" in source && !(parentId && (await getShared(parentId)))) {
-    return NextResponse.json({ error: "ต้องเลือกหลักสูตรที่มีในระบบก่อน จึงจะเพิ่มรายชื่อวิชาเลือกให้คนอื่นใช้ได้" }, { status: 422 });
+  if (kind === "electives" && "url" in source) {
+    const parent = parentId ? await getShared(parentId) : null;
+    if (!parent) return NextResponse.json({ error: "ต้องเลือกหลักสูตรที่มีในระบบก่อน จึงจะเพิ่มรายชื่อวิชาเลือกให้คนอื่นใช้ได้" }, { status: 422 });
+    // An owner-read curriculum never merges a link's list (see mergeElectives), so the read would be lost.
+    if (parent.meta.provenance === "owner")
+      return NextResponse.json({ error: "หลักสูตรนี้มาจากเอกสารของมหาวิทยาลัย เพิ่มรายชื่อวิชาเลือกได้เฉพาะในแผนของคุณ" }, { status: 422 });
   }
 
   let text: SourceText;
@@ -76,6 +81,7 @@ export async function POST(request: Request) {
         : undefined;
     return NextResponse.json({ preview, sourceTitle: text.title, ...(pendingId ? { pendingId } : {}) });
   } catch (e) {
+    if (e instanceof SourceError) return NextResponse.json({ error: e.message }, { status: 422 });
     if (!(e instanceof CurriculumError)) console.error("curriculum read failed:", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "อ่านหลักสูตรจากเอกสารนี้ไม่ได้ ลองใช้เอกสารอื่น หรือวางเฉพาะส่วนแผนการศึกษา" }, { status: 502 });
   }

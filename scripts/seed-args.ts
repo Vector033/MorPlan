@@ -1,4 +1,5 @@
 import { parseArgs } from "node:util";
+import { courseItems, type ReadResult } from "../src/lib/curriculum/read";
 
 export type SeedArgs = {
   kind: "curriculum" | "electives" | "minors";
@@ -38,6 +39,7 @@ export function parseSeedArgs(argv: string[]): SeedArgs {
   if (v.file && !v.title) throw new Error("--file needs --title");
   if (v.kind === "curriculum" && (!v.faculty || !v.major)) throw new Error("--kind curriculum needs --faculty and --major");
   if (v.kind === "electives" && !v.parent) throw new Error("--kind electives needs --parent");
+  if (v.url && v.url.length > 500) throw new Error("--url is longer than 500 characters");
   return {
     kind: v.kind, university: v.university, faculty: v.faculty, major: v.major,
     cohortFrom: num(v["cohort-from"]), cohortTo: num(v["cohort-to"]), parent: v.parent,
@@ -64,8 +66,10 @@ export function assertWritable(databaseUrl: string | undefined, allowRemote: boo
   if (url.hostname !== "127.0.0.1" && url.hostname !== "localhost") throw refuse("is not local");
 }
 
-/** Reason not to write a read result, or null when it looks sane. */
-export function refuseResult(kept: number, dropped: number): string | null {
+/** Reason not to write a read result, or null when it looks sane. Dropped items are course codes, so they are weighed against kept course items. */
+export function refuseResult(result: ReadResult): string | null {
+  const kept = courseItems(result);
+  const dropped = result.dropped.length;
   if (kept === 0) return "the read found nothing (0 items); not writing";
   if (dropped > kept) return `dropped ${dropped} items but kept only ${kept}; not writing`;
   return null;

@@ -1,12 +1,12 @@
 import "server-only";
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/db";
 import { curricula } from "@/db/schema";
-import { LIMITS } from "@/lib/core/curriculum-limits";
+import { boundTitle } from "@/lib/core/curriculum-limits";
 import { normalizeKey, type Curriculum, type ElectiveCourse, type Minor } from "@/lib/core/curriculum";
 import type { DocKind } from "./read";
-import { mergeRange, parseData, readRow, type Meta } from "./rows";
+import { mergeElectives, mergeRange, parseData, readRow, universityKey, type Meta } from "./rows";
 
 export type { Meta };
 
@@ -14,7 +14,7 @@ const shared = (kind: DocKind) => and(eq(curricula.status, "shared"), eq(curricu
 
 /** Distinct faculty names of a university, or major names of one faculty, among shared curricula. */
 export async function options(university: string, faculty?: string): Promise<string[]> {
-  const uni = and(shared("curriculum"), eq(curricula.uniKey, normalizeKey(university)));
+  const uni = and(shared("curriculum"), eq(curricula.uniKey, universityKey(university)));
   const rows = faculty
     ? await db.select({ name: curricula.major }).from(curricula).where(and(uni, eq(curricula.facultyKey, normalizeKey(faculty))))
     : await db.select({ name: curricula.faculty }).from(curricula).where(uni);
@@ -28,12 +28,13 @@ export async function candidates(university: string, faculty: string, major: str
     .where(
       and(
         shared("curriculum"),
-        eq(curricula.uniKey, normalizeKey(university)),
+        eq(curricula.uniKey, universityKey(university)),
         eq(curricula.facultyKey, normalizeKey(faculty)),
         eq(curricula.majorKey, normalizeKey(major)),
       ),
     )
-    .orderBy(desc(curricula.cohortFrom), desc(curricula.createdAt));
+    // Owner-read rows first, then the earliest shared copy, then the newest cohort range.
+    .orderBy(sql`case when ${curricula.provenance} = 'owner' then 0 else 1 end`, asc(curricula.createdAt), desc(curricula.cohortFrom));
   return rows.flatMap((r) => readRow(r)?.meta ?? []);
 }
 
@@ -43,19 +44,20 @@ export async function getShared(id: string): Promise<{ meta: Meta; curriculum: C
   const parsed = readRow(row);
   if (!parsed) return null;
   const curriculum = parsed.data as Curriculum;
-  const children = await db.select().from(curricula).where(and(eq(curricula.parentId, id), shared("electives")));
-  const merged = new Map<string, ElectiveCourse>();
-  for (const c of [...(curriculum.electives["major-elective"] ?? []), ...children.flatMap((c) => (readRow(c)?.data as ElectiveCourse[] | undefined) ?? [])]) {
-    if (!merged.has(c.courseNo)) merged.set(c.courseNo, c);
-  }
-  return { meta: parsed.meta, curriculum: { ...curriculum, electives: { ...curriculum.electives, ...(merged.size ? { "major-elective": [...merged.values()].slice(0, LIMITS.electives) } : {}) } } };
+  const rows = await db.select().from(curricula).where(and(eq(curricula.parentId, id), shared("electives")));
+  const children = rows.flatMap((r) => {
+    const c = readRow(r);
+    return c ? [{ meta: c.meta, data: c.data as ElectiveCourse[] }] : [];
+  });
+  const merged = mergeElectives({ provenance: parsed.meta.provenance, own: curriculum.electives["major-elective"] ?? [] }, children);
+  return { meta: parsed.meta, curriculum: { ...curriculum, electives: { ...curriculum.electives, ...(merged.length ? { "major-elective": merged } : {}) } } };
 }
 
 export async function minorCatalogs(university: string): Promise<{ meta: Meta; minors: Minor[] }[]> {
   const rows = await db
     .select()
     .from(curricula)
-    .where(and(shared("minors"), eq(curricula.uniKey, normalizeKey(university))))
+    .where(and(shared("minors"), eq(curricula.uniKey, universityKey(university))))
     .orderBy(desc(curricula.createdAt));
   return rows.flatMap((r) => {
     const p = readRow(r);
@@ -82,7 +84,7 @@ async function insert(row: Omit<NewRow, "sourceUrl"> & { sourceUrl?: string }, s
     id,
     kind: row.kind,
     status,
-    uniKey: normalizeKey(row.university),
+    uniKey: universityKey(row.university),
     facultyKey: row.faculty ? normalizeKey(row.faculty) : null,
     majorKey: row.major ? normalizeKey(row.major) : null,
     university: row.university,
@@ -93,7 +95,7 @@ async function insert(row: Omit<NewRow, "sourceUrl"> & { sourceUrl?: string }, s
     parentId: row.parentId ?? null,
     data: parseData(row.kind, row.data),
     sourceUrl: row.sourceUrl ?? null,
-    sourceTitle: row.sourceTitle,
+    sourceTitle: boundTitle(row.sourceTitle),
     provenance,
   });
   return id;
