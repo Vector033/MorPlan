@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SLOT_KINDS } from "@/lib/core/curriculum";
-import { LIMITS } from "@/lib/core/curriculum-limits";
+import { COURSE_NO, LIMITS } from "@/lib/core/curriculum-limits";
 import { DAYS, type Workspace } from "@/lib/core/types";
 import { emptyWorkspace, VIEW_SEMESTER_MAX, VIEW_YEAR_MAX } from "./reducer";
 
@@ -11,8 +11,7 @@ export const STORAGE_KEY = "morplan:workspace:v1";
 const minutes = z.number().int().min(0).max(24 * 60);
 const slot = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start: minutes, end: minutes });
 const text = (max: number) => z.string().max(max);
-// มช. codes are 6 digits; other universities use 7–8 digits or letters ("01204111", "ITCS101").
-const courseNo = z.string().regex(/^[0-9A-Z]{2,12}$/);
+const courseNo = z.string().regex(COURSE_NO);
 const sectionNo = z.string().regex(/^[0-9A-Z]{1,6}$/);
 export const sectionSchema = z.object({
   id: z.string().regex(/^[0-9A-Z]{2,12}-[0-9A-Z]{1,6}-[0-9A-Z]{1,6}$/),
@@ -41,7 +40,7 @@ export const sectionSchema = z.object({
 
 const credits = z.number().min(0).max(LIMITS.credits);
 const source = z.object({
-  url: text(500).optional(),
+  url: text(LIMITS.url).optional(),
   title: text(LIMITS.text),
   readAt: text(200),
   provenance: z.enum(["link", "owner", "private"]),
@@ -99,8 +98,8 @@ export const curriculumStateSchema = z.object({
   planId: text(200),
   minor: minorSchema.optional(),
   minorSource: source.optional(),
-  passed: z.array(z.object({ courseNo, credits, slotId: text(200).optional() })).max(400),
-  doneSlots: z.array(text(200)).max(200),
+  passed: z.array(z.object({ courseNo, credits, slotId: text(200).optional() })).max(LIMITS.passed),
+  doneSlots: z.array(text(200)).max(LIMITS.doneSlots),
   viewTerm: z.object({ year: z.number().int().min(1).max(VIEW_YEAR_MAX), semester: z.number().int().min(1).max(VIEW_SEMESTER_MAX) }).optional(),
 });
 
@@ -142,12 +141,22 @@ export function loadWorkspace(storage: Pick<Storage, "getItem"> | undefined = sa
   }
 }
 
-export function saveWorkspace(ws: Workspace, storage: Pick<Storage, "setItem"> | undefined = safeLocalStorage()): void {
+/** The JSON to persist, or null when it would not load back: saving it would replace the last good copy with one that reads as empty. */
+export function storableJson(ws: Workspace): string | null {
+  const json = JSON.stringify(ws);
+  return parseWorkspace(JSON.parse(json)) ? json : null;
+}
+
+/** Writes only a workspace that loads back; returns false (and writes nothing) otherwise. */
+export function saveWorkspace(ws: Workspace, storage: Pick<Storage, "setItem"> | undefined = safeLocalStorage()): boolean {
+  const json = storableJson(ws);
+  if (json === null) return false;
   try {
-    storage?.setItem(STORAGE_KEY, JSON.stringify(ws));
+    storage?.setItem(STORAGE_KEY, json);
   } catch {
     // Quota or blocked storage: the session keeps working in memory.
   }
+  return true;
 }
 
 function safeLocalStorage(): Storage | undefined {

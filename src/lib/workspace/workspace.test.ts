@@ -3,7 +3,12 @@ import { demoSections } from "@/lib/demo";
 import { activePlan, emptyWorkspace, MAX_PLANS, planSections, workspaceReducer, type Action } from "./reducer";
 import { progress } from "@/lib/core/curriculum";
 import { STATE } from "@/lib/core/__fixtures__/coop-plan";
-import { loadWorkspace, parseWorkspace, saveWorkspace, STORAGE_KEY } from "./storage";
+import { loadWorkspace, parseWorkspace, saveWorkspace, storableJson, STORAGE_KEY } from "./storage";
+import { COURSE_NO } from "@/lib/core/curriculum-limits";
+import { key } from "@/lib/core/extract";
+import { toMeta, type Row } from "@/lib/curriculum/rows";
+import { sharedSource } from "@/components/curriculum/shared";
+import type { Workspace } from "@/lib/core/types";
 
 const run = (...actions: Action[]) => actions.reduce(workspaceReducer, emptyWorkspace());
 const seeded = () => run({ type: "import", sections: demoSections(null) });
@@ -197,5 +202,105 @@ describe("curriculum state", () => {
     let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
     ws = workspaceReducer(ws, { type: "togglePassed", courseNo: "204321", credits: 3 });
     expect(ws.curriculum!.passed).toEqual([{ courseNo: "204321", credits: 3 }]);
+  });
+});
+
+describe("every curriculum action leaves a workspace that loads back", () => {
+  const start = (over: Partial<typeof STATE> = {}) => workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: { ...STATE, ...over } });
+  const loadsBack = (ws: Workspace) => expect(parseWorkspace(JSON.parse(JSON.stringify(ws)))).not.toBeNull();
+  const long = "ก".repeat(300);
+  const codes = (n: number, from = 0) => Array.from({ length: n }, (_, i) => `X${from + i}`);
+
+  it("nameSlotCourse ignores codes and credits storage would refuse; the form normalises typed codes", () => {
+    const ws = start();
+    for (const [courseNo, credits] of [["cs101", 3], ["CS-101", 3], ["ab", 3], ["204311", 99], ["204311", -1]] as const)
+      expect(workspaceReducer(ws, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo, credits })).toBe(ws);
+    for (const typed of ["cs101", "CS-101", "ab"]) {
+      const next = workspaceReducer(ws, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo: key(typed), credits: 3 });
+      expect(next.curriculum!.passed).toHaveLength(1);
+      loadsBack(next);
+    }
+    expect(COURSE_NO.test(key("ก"))).toBe(false);
+  });
+  it("togglePassed and wantCourses ignore codes storage would refuse", () => {
+    const ws = start();
+    expect(workspaceReducer(ws, { type: "togglePassed", courseNo: "cs-101", credits: 3 })).toBe(ws);
+    expect(workspaceReducer(ws, { type: "togglePassed", courseNo: "204311", credits: 31 })).toBe(ws);
+    const want = workspaceReducer(ws, { type: "wantCourses", courseNos: ["cs101", "204311"] });
+    expect(activePlan(want).courseNos).toEqual(["204311"]);
+    loadsBack(want);
+  });
+  it("addElectives caps the merged list at the storage limit", () => {
+    let ws = start();
+    ws = workspaceReducer(ws, { type: "addElectives", kind: "major-elective", courses: codes(300).map((courseNo) => ({ courseNo, title: "a" })) });
+    ws = workspaceReducer(ws, { type: "addElectives", kind: "major-elective", courses: codes(300, 300).map((courseNo) => ({ courseNo, title: "b" })) });
+    expect(ws.curriculum!.data.electives["major-elective"]).toHaveLength(400);
+    loadsBack(ws);
+  });
+  it("setMinor bounds an over-long source title", () => {
+    const ws = workspaceReducer(start(), { type: "setMinor", minor: { name: "m", rules: "r", groups: [] }, source: { ...STATE.source, title: long } });
+    expect(ws.curriculum!.minorSource!.title).toHaveLength(200);
+    loadsBack(ws);
+  });
+  it("setCurriculum from a shared row with an over-long source title", () => {
+    const row = { id: "abcdefghi1", kind: "curriculum", status: "shared", uniKey: "u", facultyKey: "f", majorKey: "m", university: "u", faculty: "f", major: "m", cohortFrom: 64, cohortTo: null, parentId: null, data: STATE.data, sourceUrl: null, sourceTitle: long, provenance: "link", createdAt: new Date(), readAt: new Date() } as Row;
+    const source = sharedSource(toMeta(row, STATE.data));
+    loadsBack(workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: { ...STATE, ref: row.id, source } }));
+    loadsBack(start({ source: { ...STATE.source, title: long, url: `https://x.ac.th/${"a".repeat(600)}` } }));
+  });
+  it("togglePassed, nameSlotCourse, toggleSlot and tickTerm stop at the caps", () => {
+    const full = start({ passed: codes(400).map((courseNo) => ({ courseNo, credits: 3 })), doneSlots: codes(200) });
+    expect(workspaceReducer(full, { type: "togglePassed", courseNo: "204311", credits: 3 })).toBe(full);
+    expect(workspaceReducer(full, { type: "nameSlotCourse", slotId: "coop:3-2-3", courseNo: "204311", credits: 3 })).toBe(full);
+    expect(workspaceReducer(full, { type: "toggleSlot", slotId: "coop:3-2-3" })).toBe(full);
+    const ticked = workspaceReducer(full, { type: "tickTerm", year: 3, semester: 2 });
+    expect(ticked.curriculum!.passed).toHaveLength(400);
+    expect(ticked.curriculum!.doneSlots).toHaveLength(200);
+    loadsBack(ticked);
+    const near = start({ passed: codes(399).map((courseNo) => ({ courseNo, credits: 3 })), doneSlots: codes(199) });
+    const some = workspaceReducer(near, { type: "tickTerm", year: 3, semester: 2 });
+    expect(some.curriculum!.passed).toHaveLength(400);
+    expect(some.curriculum!.doneSlots).toHaveLength(200);
+    loadsBack(some);
+  });
+  it("setViewTerm round-trips", () => {
+    loadsBack(workspaceReducer(start(), { type: "setViewTerm", year: 20, semester: 9 }));
+  });
+});
+
+describe("save guard", () => {
+  it("never writes a workspace that would load back as empty", () => {
+    const store = new Map<string, string>();
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+    const good = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    expect(saveWorkspace(good, storage)).toBe(true);
+    const bad = { ...good, curriculum: { ...STATE, passed: [{ courseNo: "cs-101", credits: 3 }] } };
+    expect(storableJson(bad)).toBeNull();
+    expect(saveWorkspace(bad, storage)).toBe(false);
+    expect(loadWorkspace(storage)).toEqual(good);
+    expect(storableJson(good)).toBe(JSON.stringify(good));
+  });
+});
+
+describe("refreshCurriculum keeps the plan by name", () => {
+  const plans = (...names: string[]) => names.map((name, i) => ({ ...STATE.data.plans[0], id: `p${i + 1}`, name }));
+  const at = (ws: Workspace) => workspaceReducer(ws, { type: "nameSlotCourse", slotId: "p2:3-2-3", courseNo: "204311", credits: 3 });
+  const base = () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: { ...STATE, planId: "p2", data: { ...STATE.data, plans: plans("แผนปกติ", "แผนสหกิจศึกษา") } } });
+    ws = workspaceReducer(ws, { type: "tickTerm", year: 3, semester: 2 });
+    return at(ws);
+  };
+  it("follows the plan to its new position and moves its slot progress along", () => {
+    const ws = workspaceReducer(base(), { type: "refreshCurriculum", data: { ...STATE.data, plans: plans("แผนสหกิจศึกษา", "แผนปกติ") }, source: STATE.source });
+    expect(ws.curriculum!.planId).toBe("p1");
+    expect(ws.curriculum!.doneSlots.sort()).toEqual(["p1:3-2-3", "p1:3-2-4", "p1:3-2-5"]);
+    expect(ws.curriculum!.passed.find((p) => p.courseNo === "204311")!.slotId).toBe("p1:3-2-3");
+  });
+  it("falls back to the first plan and clears slot progress when the name is gone", () => {
+    const ws = workspaceReducer(base(), { type: "refreshCurriculum", data: { ...STATE.data, plans: plans("แผน ก", "แผน ข") }, source: STATE.source });
+    expect(ws.curriculum!.planId).toBe("p1");
+    expect(ws.curriculum!.doneSlots).toEqual([]);
+    expect(ws.curriculum!.passed.every((p) => p.slotId === undefined)).toBe(true);
+    expect(ws.curriculum!.passed.map((p) => p.courseNo)).toContain("204311");
   });
 });

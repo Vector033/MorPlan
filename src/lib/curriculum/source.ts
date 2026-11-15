@@ -1,3 +1,4 @@
+import { boundTitle } from "../core/curriculum-limits";
 import { decode, pageText } from "../core/import-reg";
 import { academicUrl, fetchAcademic } from "../core/university";
 
@@ -75,7 +76,7 @@ export async function readUrl(url: string, fetchFn: typeof fetch = fetch): Promi
   }
   const html = decoder.decode(bytes);
   const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1];
-  return { kind: "html", text: pageText(html), title: (title && decode(title).trim()) || lastSegment(safe) };
+  return { kind: "html", text: pageText(html), title: boundTitle((title && decode(title).trim()) || lastSegment(safe)) };
 }
 
 export async function readPdf(bytes: Uint8Array, title: string): Promise<SourceText> {
@@ -89,12 +90,12 @@ export async function readPdf(bytes: Uint8Array, title: string): Promise<SourceT
   }
   const text = pages.map((t, i) => `--- page ${i + 1} ---\n${t}`).join("\n");
   if (pages.join("").trim().length < MIN_TEXT_CHARS) throw new SourceError("no-text");
-  return { kind: "pdf", text, title };
+  return { kind: "pdf", text, title: boundTitle(title) };
 }
 
 export function readPasted(text: string): SourceText {
   if (text.trim().length < MIN_TEXT_CHARS) throw new SourceError("no-text");
-  return { kind: "text", text, title: "ข้อความที่วาง" };
+  return { kind: "text", text, title: boundTitle("ข้อความที่วาง") };
 }
 
 const LOOKS_LIKE_CURRICULUM = /หลักสูตร|แผนการ(ศึกษา|เรียน)|มคอ|curriculum|program|study[\s-]?plan|tqf/i;

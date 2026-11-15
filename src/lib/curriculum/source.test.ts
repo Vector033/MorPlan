@@ -34,6 +34,20 @@ describe("readUrl", () => {
     const { fetchFn } = web({ "https://cs.x.ac.th/t": [200, { "content-type": "text/html" }, `<title>หลักสูตร &#8211; คณะ &amp; สาขา</title><p>x</p>${"<p>ชั้นปีที่ 1</p>".repeat(20)}`] });
     expect((await readUrl("https://cs.x.ac.th/t", fetchFn)).title).toBe("หลักสูตร – คณะ & สาขา");
   });
+  it("collapses whitespace in a title and bounds it, from the page or the URL", async () => {
+    const body = `${"<p>ชั้นปีที่ 1</p>".repeat(20)}`;
+    const seg = "ก".repeat(300);
+    const { fetchFn } = web({
+      "https://cs.x.ac.th/long": [200, { "content-type": "text/html" }, `<title>  แผน
+
+  ${"ก".repeat(300)}</title>${body}`],
+      [`https://cs.x.ac.th/${encodeURIComponent(seg)}`]: [200, { "content-type": "text/html" }, body],
+    });
+    const t = (await readUrl("https://cs.x.ac.th/long", fetchFn)).title;
+    expect(t.startsWith("แผน ก")).toBe(true);
+    expect(t).toHaveLength(200);
+    expect((await readUrl(`https://cs.x.ac.th/${encodeURIComponent(seg)}`, fetchFn)).title).toHaveLength(200);
+  });
   it("rejects non-academic, unreachable, oversized and unsupported sources with typed errors", async () => {
     const big = "x".repeat(MAX_SOURCE_BYTES + 1);
     const { fetchFn } = web({

@@ -40,6 +40,7 @@ export function WorkspaceProvider({ children, signedIn }: { children: React.Reac
   const dispatch = useCallback((action: Action) => rootDispatch(action), []);
   const [sync, setSync] = useState<SyncState>(signedIn ? "loading" : "local");
   const lastSaved = useRef<string>("");
+  const warned = useRef(false);
 
   useEffect(() => {
     const local = loadWorkspace();
@@ -64,7 +65,12 @@ export function WorkspaceProvider({ children, signedIn }: { children: React.Reac
 
   useEffect(() => {
     if (!ready) return;
-    saveWorkspace(ws);
+    if (!saveWorkspace(ws)) {
+      // Keep the last good copy in storage and on the server; a bad one would load back as an empty workspace.
+      if (!warned.current) console.warn("workspace: not saved, it does not pass validation");
+      warned.current = true;
+      return;
+    }
     if (!signedIn) return;
     const json = JSON.stringify(ws);
     if (json === lastSaved.current) return;

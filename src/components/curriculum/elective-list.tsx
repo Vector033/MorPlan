@@ -3,6 +3,8 @@
 import { useId, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { passedNos, rankElectives, type ElectiveCourse, type PlanSlot, type RankedCourse } from "@/lib/core/curriculum";
+import { COURSE_NO } from "@/lib/core/curriculum-limits";
+import { key } from "@/lib/core/extract";
 import { DocumentAdd } from "./document-add";
 import { KIND_LABEL } from "./format";
 
@@ -10,10 +12,11 @@ const SHOWN = 30;
 
 /** Candidate courses with their fit badge; `onDone` is left out for a minor's courses, which are not tied to one slot. */
 export function CandidateRows({ ranked, onAdd, onDone }: { ranked: RankedCourse[]; onAdd: (c: RankedCourse) => void; onDone?: (c: RankedCourse) => void }) {
+  const [all, setAll] = useState(false);
   return (
     <>
       <ul className="flex flex-col divide-y divide-line">
-        {ranked.slice(0, SHOWN).map((c) => (
+        {(all ? ranked : ranked.slice(0, SHOWN)).map((c) => (
           <li key={c.courseNo} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
             <span className="font-mono font-semibold">{c.courseNo}</span>
             <span className="min-w-0 flex-1">{c.title}</span>
@@ -33,7 +36,14 @@ export function CandidateRows({ ranked, onAdd, onDone }: { ranked: RankedCourse[
           </li>
         ))}
       </ul>
-      {ranked.length > SHOWN && <p className="pt-1 text-xs text-muted">และอีก {ranked.length - SHOWN} วิชา</p>}
+      {!all && ranked.length > SHOWN && (
+        <p className="flex flex-wrap items-center gap-2 pt-1 text-xs text-muted">
+          และอีก {ranked.length - SHOWN} วิชา
+          <button type="button" className="btn-ghost min-h-6" onClick={() => setAll(true)}>
+            แสดงทั้งหมด
+          </button>
+        </p>
+      )}
     </>
   );
 }
@@ -59,7 +69,8 @@ export function SlotRow({ slot, say }: { slot: Slot; say: (s: string) => void })
   const needsMinor = slot.kind === "minor" && !cur.minor;
   const noList = !needsMinor && candidates.length === 0;
   const name = (courseNo: string, cr: number) => dispatch({ type: "nameSlotCourse", slotId: slot.id, courseNo, credits: cr });
-  const validCode = /^[\w-]{1,20}$/.test(code.trim());
+  const typed = key(code); // "cs-101" -> "CS101", the form storage accepts
+  const validCode = COURSE_NO.test(typed);
   const cr = Number(credits);
 
   return (
@@ -118,8 +129,8 @@ export function SlotRow({ slot, say }: { slot: Slot; say: (s: string) => void })
             className="flex flex-wrap items-end gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!validCode || !(cr > 0)) return;
-              name(code.trim(), cr);
+              if (!validCode || !(cr > 0 && cr <= 12)) return;
+              name(typed, cr);
               setCode("");
             }}
           >
@@ -132,9 +143,10 @@ export function SlotRow({ slot, say }: { slot: Slot; say: (s: string) => void })
               หน่วยกิต
               <input className="input w-20 tabular-nums" type="number" min={1} max={12} value={credits} onChange={(e) => setCredits(e.target.value)} />
             </label>
-            <button type="submit" className="btn min-h-8" disabled={!validCode || !(cr > 0)}>
+            <button type="submit" className="btn min-h-8" disabled={!validCode || !(cr > 0 && cr <= 12)}>
               บันทึกวิชา
             </button>
+            {code.trim() !== "" && !validCode && <p className="error-note w-full">รหัสวิชาใช้ตัวอักษรอังกฤษและตัวเลข 2–12 ตัว</p>}
           </form>
           <div>
             <label className="flex min-h-6 items-center gap-2 text-sm">
@@ -155,7 +167,7 @@ export function SlotRow({ slot, say }: { slot: Slot; say: (s: string) => void })
               {adding && (
                 <DocumentAdd
                   kind="electives"
-                  parentId={cur.ref}
+                  parentId={cur.source.provenance === "link" ? cur.ref : undefined /* an owner-read curriculum takes a list only for this student */}
                   scope={{ university: cur.data.university, faculty: cur.data.faculty, major: cur.data.major, cohort: cur.cohort }}
                   onAccept={(courses) => dispatch({ type: "addElectives", kind: slot.kind, courses })}
                   onClose={() => setAdding(false)}

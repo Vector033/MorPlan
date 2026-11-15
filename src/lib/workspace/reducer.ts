@@ -8,6 +8,7 @@ import {
   type SlotKind,
   type Source,
 } from "@/lib/core/curriculum";
+import { boundTitle, COURSE_NO, LIMITS } from "@/lib/core/curriculum-limits";
 import type { Plan, Section, Workspace } from "@/lib/core/types";
 
 export const MAX_PLANS = 5;
@@ -40,7 +41,7 @@ export type Action =
   | { type: "tickTerm"; year: number; semester: number }
   | { type: "setMinor"; minor: Minor | null; source?: Source }
   | { type: "addElectives"; kind: SlotKind; courses: ElectiveCourse[] }
-  /** A new copy of the same curriculum: keeps progress and minor; keeps planId if it still exists, else the first plan. */
+  /** A new copy of the same curriculum: keeps progress and minor; keeps the plan with the same name, else the first plan with slot progress cleared. */
   | { type: "refreshCurriculum"; data: Curriculum; source: Source; ref?: string }
   | { type: "wantCourses"; courseNos: string[] };
 
@@ -133,7 +134,7 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
     case "replace":
       return action.workspace;
     case "setCurriculum":
-      return { ...ws, curriculum: action.curriculum };
+      return { ...ws, curriculum: { ...action.curriculum, source: fitSource(action.curriculum.source) } };
     case "clearCurriculum": {
       const next = { ...ws };
       delete next.curriculum;
@@ -142,7 +143,7 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
     case "wantCourses":
       return updateActive(ws, (p) => {
         const courseNos = [...p.courseNos];
-        for (const c of action.courseNos) if (courseNos.length < 80 && !courseNos.includes(c)) courseNos.push(c);
+        for (const c of action.courseNos) if (courseNos.length < 80 && storable(c) && !courseNos.includes(c)) courseNos.push(c);
         return { ...p, courseNos };
       });
     default:
@@ -166,18 +167,15 @@ function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action):
       return set({ viewTerm: { year, semester } });
     }
     case "togglePassed":
-      return set({
-        passed: cur.passed.some((p) => p.courseNo === action.courseNo)
-          ? without(action.courseNo)
-          : [...cur.passed, { courseNo: action.courseNo, credits: action.credits }],
-      });
+      if (cur.passed.some((p) => p.courseNo === action.courseNo)) return set({ passed: without(action.courseNo) });
+      if (!storable(action.courseNo, action.credits) || cur.passed.length >= LIMITS.passed) return ws;
+      return set({ passed: [...cur.passed, { courseNo: action.courseNo, credits: action.credits }] });
     case "toggleSlot":
-      return set({
-        doneSlots: cur.doneSlots.includes(action.slotId)
-          ? cur.doneSlots.filter((s) => s !== action.slotId)
-          : [...cur.doneSlots, action.slotId],
-      });
+      if (cur.doneSlots.includes(action.slotId)) return set({ doneSlots: cur.doneSlots.filter((s) => s !== action.slotId) });
+      if (cur.doneSlots.length >= LIMITS.doneSlots) return ws;
+      return set({ doneSlots: [...cur.doneSlots, action.slotId] });
     case "nameSlotCourse": {
+      if (!storable(action.courseNo, action.credits) || without(action.courseNo).length >= LIMITS.passed) return ws;
       const entry = requiredNos.has(action.courseNo)
         ? { courseNo: action.courseNo, credits: action.credits }
         : { courseNo: action.courseNo, credits: action.credits, slotId: action.slotId };
@@ -194,8 +192,8 @@ function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action):
         if (item.type === "course") {
           // Required in this term: counts as required even if it was named for a slot before.
           passed = passed.filter((p) => p.courseNo !== item.courseNo);
-          passed.push({ courseNo: item.courseNo, credits: item.credits });
-        } else if (!doneSlots.includes(slotId(plan, term, i))) doneSlots.push(slotId(plan, term, i));
+          if (passed.length < LIMITS.passed) passed.push({ courseNo: item.courseNo, credits: item.credits });
+        } else if (!doneSlots.includes(slotId(plan, term, i)) && doneSlots.length < LIMITS.doneSlots) doneSlots.push(slotId(plan, term, i));
       });
       return set({ passed, doneSlots });
     }
@@ -204,24 +202,44 @@ function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action):
       delete next.minor;
       delete next.minorSource;
       if (action.minor) next.minor = action.minor;
-      if (action.minor && action.source) next.minorSource = action.source;
+      if (action.minor && action.source) next.minorSource = fitSource(action.source);
       return { ...ws, curriculum: next };
     }
     case "addElectives": {
       const byNo = new Map((cur.data.electives[action.kind] ?? []).map((c) => [c.courseNo, c]));
       for (const c of action.courses) byNo.set(c.courseNo, c);
-      return set({ data: { ...cur.data, electives: { ...cur.data.electives, [action.kind]: [...byNo.values()] } } });
+      return set({ data: { ...cur.data, electives: { ...cur.data.electives, [action.kind]: [...byNo.values()].slice(0, LIMITS.electives) } } });
     }
-    case "refreshCurriculum":
+    case "refreshCurriculum": {
       if (action.ref !== undefined && action.ref !== cur.ref) return ws; // a late reply for a curriculum that is no longer the chosen one
+      const source = fitSource(action.source);
+      // Plan ids ("p1", "p2") and slot ids are positional, so the plan is matched by name.
+      const same = action.data.plans.find((p) => p.name === plan?.name);
+      if (!same) {
+        const first = action.data.plans[0]?.id ?? cur.planId;
+        return set({ data: action.data, source, planId: first, doneSlots: [], passed: cur.passed.map((p) => ({ courseNo: p.courseNo, credits: p.credits })) });
+      }
+      const from = `${plan!.id}:`;
+      const move = (id: string) => (id.startsWith(from) ? `${same.id}:${id.slice(from.length)}` : id);
       return set({
         data: action.data,
-        source: action.source,
-        planId: action.data.plans.some((p) => p.id === cur.planId) ? cur.planId : (action.data.plans[0]?.id ?? cur.planId),
+        source,
+        planId: same.id,
+        doneSlots: cur.doneSlots.map(move),
+        passed: cur.passed.map((p) => (p.slotId ? { ...p, slotId: move(p.slotId) } : p)),
       });
+    }
     default:
       return ws;
   }
+}
+
+/** A course entry that fits storage: a code the schema accepts and credits within bounds. */
+const storable = (courseNo: string, credits = 0) => COURSE_NO.test(courseNo) && credits >= 0 && credits <= LIMITS.credits;
+
+/** A source as stored: title bounded, an over-long url left out. */
+function fitSource({ url, ...rest }: Source): Source {
+  return { ...rest, title: boundTitle(rest.title), ...(url && url.length <= LIMITS.url ? { url } : {}) };
 }
 
 function courseOf(ws: Workspace, sectionId: string): string | undefined {
