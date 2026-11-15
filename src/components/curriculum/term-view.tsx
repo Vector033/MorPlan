@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
-import { termPosition, termView, type PlanCourse, type StudyPlan } from "@/lib/core/curriculum";
+import { currentTermView, type PlanCourse, type StudyPlan } from "@/lib/core/curriculum";
 import { activePlan } from "@/lib/workspace/reducer";
 import { SlotRow } from "./elective-list";
 
@@ -25,8 +25,7 @@ export function TermView({ plan, say }: { plan: StudyPlan; say: (s: string) => v
   const cur = ws.curriculum!;
   const uid = useId();
   const terms = [...plan.terms].sort((a, b) => a.year - b.year || a.semester - b.semester);
-  const at = cur.viewTerm ?? termPosition(cur.cohort, ws.term);
-  const view = termView(plan, at, cur);
+  const { at, view } = currentTermView(cur, ws.term)!;
   const value = view.inPlan ? `${at.year}-${at.semester}` : "";
   const wanted = [...new Set([...view.overdue, ...view.required.filter((c) => !c.done)].map((c) => c.courseNo))];
 

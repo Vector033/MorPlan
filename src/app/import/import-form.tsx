@@ -7,7 +7,7 @@ import { useWorkspace } from "@/components/planner/workspace-context";
 import { attachExams } from "@/lib/core/exams";
 import type { ExtractResult } from "@/lib/core/extract";
 import { pageText, parseRegImport } from "@/lib/core/import-reg";
-import { termPosition, termView } from "@/lib/core/curriculum";
+import { currentTermView } from "@/lib/core/curriculum";
 import { isCmu, type UniversityInfo } from "@/lib/core/university";
 import { demoSections } from "@/lib/demo";
 import { EXAMS } from "@/lib/exams-data";
@@ -49,8 +49,7 @@ function ImportFormReady() {
   const [busy, setBusy] = useState(false);
   const [copy, setCopy] = useState<"ok" | "fail" | null>(null);
   const cur = ws.curriculum;
-  const curPlan = cur?.data.plans.find((p) => p.id === cur.planId);
-  const toSearch = cur && curPlan ? termView(curPlan, cur.viewTerm ?? termPosition(cur.cohort, ws.term), cur) : null;
+  const toSearch = (cur ? currentTermView(cur, ws.term) : null)?.view;
   const codes = toSearch ? [...new Set([...toSearch.overdue, ...toSearch.required.filter((c) => !c.done)].map((c) => c.courseNo))] : [];
   // Typing "มช." under "other" still gets the CMU parser; an empty name does not.
   const cmu = !other || (name.trim() !== "" && isCmu(name));

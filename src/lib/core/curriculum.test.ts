@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { covers, minorProgress, normalizeKey, passedNos, progress, rankElectives, termPosition, termView } from "./curriculum";
+import { covers, currentTermView, minorProgress, normalizeKey, passedNos, progress, rankElectives, termPosition, termView } from "./curriculum";
 import { COOP } from "./__fixtures__/coop-plan";
 import type { Section } from "./types";
 
@@ -98,5 +98,18 @@ describe("minorProgress", () => {
 describe("passedNos", () => {
   it("collects distinct course numbers", () => {
     expect([...passedNos({ passed: [{ courseNo: "A1", credits: 3 }, { courseNo: "A1", credits: 3 }, { courseNo: "B2", credits: 3 }] })]).toEqual(["A1", "B2"]);
+  });
+});
+
+describe("currentTermView", () => {
+  const state = { data: { plans: [COOP] }, planId: COOP.id, cohort: 67, passed: [], doneSlots: [] } as never as Parameters<typeof currentTermView>[0];
+  it("falls back to the term position", () => {
+    expect(currentTermView(state, "2/2569")?.at).toEqual({ year: 3, semester: 2 });
+  });
+  it("lets an explicit view term win", () => {
+    expect(currentTermView({ ...state, viewTerm: { year: 3, semester: 1 } }, "2/2569")?.at).toEqual({ year: 3, semester: 1 });
+  });
+  it("is null for an unknown plan id", () => {
+    expect(currentTermView({ ...state, planId: "nope" }, "2/2569")).toBeNull();
   });
 });

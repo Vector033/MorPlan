@@ -18,7 +18,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VolumeOffIcon, VolumeOnIcon, WarningIcon, XIcon } from "@/components/icons";
 import { conflictedIds, findConflicts } from "@/lib/core/conflicts";
-import { termPosition, termView } from "@/lib/core/curriculum";
+import { currentTermView, type TermView as TermViewData } from "@/lib/core/curriculum";
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
@@ -53,9 +53,9 @@ export function Planner() {
 
   const placedByCourse = useMemo(() => new Map(placed.map((s) => [s.courseNo, s])), [placed]);
   const cur = ws.curriculum;
-  const curPlan = cur?.data.plans.find((p) => p.id === cur.planId);
+  const curNow = cur ? currentTermView(cur, ws.term) : null;
   const curTitle = (courseNo: string) => {
-    const named = [...(curPlan?.terms.flatMap((t) => t.items) ?? []), ...Object.values(cur?.data.electives ?? {}).flat()].filter((i) => "courseNo" in i);
+    const named = [...(curNow?.plan.terms.flatMap((t) => t.items) ?? []), ...Object.values(cur?.data.electives ?? {}).flat()].filter((i) => "courseNo" in i);
     return named.find((i) => i.courseNo === courseNo)?.title ?? "";
   };
   const titleOf = (courseNo: string) => ws.pool.find((s) => s.courseNo === courseNo)?.title ?? curTitle(courseNo);
@@ -131,7 +131,7 @@ export function Planner() {
           ) : (
             <CourseSearch />
           )}
-          {cur && curPlan && <TermCard view={termView(curPlan, cur.viewTerm ?? termPosition(cur.cohort, ws.term), cur)} />}
+          {curNow && <TermCard view={curNow.view} />}
           <Tray
             courseNos={plan.courseNos}
             placedByCourse={placedByCourse}
@@ -454,7 +454,7 @@ function TrayDraggable({
   );
 }
 
-function TermCard({ view }: { view: ReturnType<typeof termView> }) {
+function TermCard({ view }: { view: TermViewData }) {
   return (
     <section className="card" aria-labelledby="term-card-h">
       <h2 id="term-card-h" className="bar">

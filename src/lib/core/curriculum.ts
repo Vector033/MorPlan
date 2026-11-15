@@ -95,6 +95,14 @@ export function termView(plan: StudyPlan, at: { year: number; semester: number }
   return view;
 }
 
+/** The student's plan, the term being viewed (explicit choice, else today's term) and that term's view; null when the plan id is unknown. */
+export function currentTermView(state: CurriculumState, term: string) {
+  const plan = state.data.plans.find((p) => p.id === state.planId);
+  if (!plan) return null;
+  const at = state.viewTerm ?? termPosition(state.cohort, term);
+  return { plan, at, view: termView(plan, at, state) };
+}
+
 export type Progress = Record<"required" | SlotKind, { done: number; total: number }> & { all: { done: number; total: number } };
 
 export function progress(plan: StudyPlan, state: Done): Progress {
