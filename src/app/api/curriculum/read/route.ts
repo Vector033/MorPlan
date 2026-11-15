@@ -3,7 +3,7 @@ import { z } from "zod";
 import { CurriculumError } from "@/lib/core/curriculum-extract";
 import { readDocument } from "@/lib/curriculum/read";
 import { MAX_UPLOAD_BYTES, readPasted, readPdf, readUrl, SourceError, type SourceText } from "@/lib/curriculum/source";
-import { savePending } from "@/lib/curriculum/store";
+import { getShared, savePending } from "@/lib/curriculum/store";
 import { getLlm } from "@/lib/rag/llm";
 import { guardMutation, LIMITS } from "@/lib/security/rate-limit";
 
@@ -11,7 +11,8 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const name = z.string().trim().max(100).default("");
-const body = z.object({
+const body = z
+  .object({
   kind: z.enum(["curriculum", "electives", "minors"]),
   university: z.string().trim().min(2).max(100),
   faculty: name,
@@ -23,7 +24,8 @@ const body = z.object({
     z.object({ text: z.string().max(200_000) }),
     z.object({ pdfBase64: z.string().max(Math.ceil((MAX_UPLOAD_BYTES * 4) / 3) + 8), name: z.string().trim().max(200) }),
   ]),
-});
+  })
+  .refine((b) => !(b.kind === "electives" && "url" in b.source) || !!b.parentId);
 
 /** Read a curriculum document into a preview. Only a link is stored (as pending): an upload or paste is never shared. */
 export async function POST(request: Request) {
@@ -35,6 +37,11 @@ export async function POST(request: Request) {
 
   const llm = getLlm();
   if (!llm) return NextResponse.json({ error: "ตอนนี้อ่านเอกสารใหม่ไม่ได้ หลักสูตรที่มีในระบบแล้วยังใช้ได้" }, { status: 503 });
+
+  // A link's electives are shared through their curriculum: without a shared parent the row could never appear.
+  if (kind === "electives" && "url" in source && !(parentId && (await getShared(parentId)))) {
+    return NextResponse.json({ error: "ต้องเลือกหลักสูตรที่มีในระบบก่อน จึงจะเพิ่มรายชื่อวิชาเลือกให้คนอื่นใช้ได้" }, { status: 422 });
+  }
 
   let text: SourceText;
   try {
@@ -62,7 +69,7 @@ export async function POST(request: Request) {
             major: major || undefined,
             parentId: kind === "electives" ? parentId : undefined,
             data: preview.data,
-            ...(kind === "curriculum" ? { cohortFrom: cohort, cohortTo: cohort } : {}),
+            ...(preview.kind === "curriculum" ? { cohortFrom: preview.data.cohortFrom, cohortTo: preview.data.cohortTo } : {}),
             sourceUrl: source.url,
             sourceTitle: text.title,
           })

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseData, readRow, type Row } from "./rows";
+import { mergeRange, parseData, readRow, type Row } from "./rows";
 
 const curriculum = {
   title: "หลักสูตร",
@@ -50,5 +50,19 @@ describe("parseData", () => {
   it("throws on data that does not match the kind", () => {
     expect(() => parseData("electives", [{ courseNo: "bad code!" }])).toThrow();
     expect(parseData("electives", [{ courseNo: "204111", title: "x" }])).toHaveLength(1);
+  });
+});
+
+describe("mergeRange", () => {
+  it("keeps current values the caller does not override", () => {
+    expect(mergeRange({ from: 64, to: 66 }, {})).toEqual({ from: 64, to: 66 });
+    expect(mergeRange({ from: 64 }, { to: 66 })).toEqual({ from: 64, to: 66 });
+  });
+  it("allows an open-ended range", () => {
+    expect(mergeRange({ from: 64 }, { from: 65 })).toEqual({ from: 65, to: undefined });
+  });
+  it("refuses a range that ends before it starts", () => {
+    expect(mergeRange({ from: 20, to: 20 }, { from: 25 })).toBeNull();
+    expect(mergeRange({ from: 20, to: 25 }, { to: 19 })).toBeNull();
   });
 });

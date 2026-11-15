@@ -6,7 +6,7 @@ import { curricula } from "@/db/schema";
 import { LIMITS } from "@/lib/core/curriculum-limits";
 import { normalizeKey, type Curriculum, type ElectiveCourse, type Minor } from "@/lib/core/curriculum";
 import type { DocKind } from "./read";
-import { parseData, readRow, type Meta } from "./rows";
+import { mergeRange, parseData, readRow, type Meta } from "./rows";
 
 export type { Meta };
 
@@ -105,11 +105,15 @@ export async function savePending(row: NewRow): Promise<string> {
   return insert(row, "pending", "link");
 }
 
-/** Pending -> shared; false when the row is missing or already shared. */
-export async function confirm(id: string, cohortFrom?: number, cohortTo?: number): Promise<boolean> {
-  const set = { status: "shared", ...(cohortFrom != null ? { cohortFrom } : {}), ...(cohortTo != null ? { cohortTo } : {}) };
+/** Pending -> shared. "missing" when the row is absent or already shared; "range" when the cohort range would end before it starts. */
+export async function confirm(id: string, cohortFrom?: number, cohortTo?: number): Promise<"ok" | "missing" | "range"> {
+  const [row] = await db.select({ from: curricula.cohortFrom, to: curricula.cohortTo }).from(curricula).where(and(eq(curricula.id, id), eq(curricula.status, "pending"))).limit(1);
+  if (!row) return "missing";
+  const range = mergeRange(row, { from: cohortFrom, to: cohortTo });
+  if (!range) return "range";
+  const set = { status: "shared", ...(range.from != null ? { cohortFrom: range.from } : {}), ...(range.to != null ? { cohortTo: range.to } : {}) };
   const rows = await db.update(curricula).set(set).where(and(eq(curricula.id, id), eq(curricula.status, "pending"))).returning({ id: curricula.id });
-  return rows.length > 0;
+  return rows.length > 0 ? "ok" : "missing";
 }
 
 export async function replaceData(id: string, data: unknown): Promise<void> {

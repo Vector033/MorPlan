@@ -16,6 +16,9 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง ปีรหัสต้องอยู่ระหว่าง 0–99 และปีสิ้นสุดต้องไม่น้อยกว่าปีเริ่ม" }, { status: 400 });
-  if (!(await confirm(parsed.data.id, parsed.data.cohortFrom, parsed.data.cohortTo))) return NextResponse.json({ error: "ไม่พบรายการที่รอยืนยัน" }, { status: 404 });
+  const { id, cohortFrom, cohortTo } = parsed.data;
+  const result = await confirm(id, cohortFrom, cohortTo);
+  if (result === "missing") return NextResponse.json({ error: "ไม่พบรายการที่รอยืนยัน" }, { status: 404 });
+  if (result === "range") return NextResponse.json({ error: "ช่วงปีรหัสไม่ถูกต้อง ปีสิ้นสุดต้องไม่น้อยกว่าปีเริ่ม" }, { status: 422 });
   return NextResponse.json({ ok: true });
 }

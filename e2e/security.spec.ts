@@ -34,6 +34,9 @@ test("curriculum API rejects cross-site and non-JSON writes", async ({ request }
     expect(form.status(), path).toBe(415);
   }
   expect((await request.get("/api/curriculum/zzzzzzzzzz")).status()).toBe(404);
+  const orphan = { kind: "electives", university: "มหาวิทยาลัยเชียงใหม่", faculty: "x", major: "y", cohort: 64, source: { url: "https://www.cmu.ac.th/x" } };
+  expect((await request.post("/api/curriculum/read", { data: orphan })).status()).toBe(400);
+  expect((await request.post("/api/curriculum/confirm", { data: { id: "zzzzzzzzzz", cohortFrom: 25 } })).status()).toBe(404);
 });
 
 test("signing out cannot be triggered from another site", async ({ request }) => {

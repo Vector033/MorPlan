@@ -67,3 +67,12 @@ export function readRow(row: Row): { meta: Meta; data: ReadResult["data"] } | nu
   }
   return { meta: toMeta(row, parsed.data), data: parsed.data as ReadResult["data"] };
 }
+
+type Range = { from?: number | null; to?: number | null };
+
+/** The cohort range after applying `given` over `current`; null when it would end before it starts. `to` may stay absent (open-ended). */
+export function mergeRange(current: Range, given: Range): { from?: number; to?: number } | null {
+  const from = given.from ?? current.from ?? undefined;
+  const to = given.to ?? current.to ?? undefined;
+  return from != null && to != null && to < from ? null : { from, to };
+}
