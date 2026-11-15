@@ -28,7 +28,8 @@ const hostOf = (url: string) => {
   }
 };
 
-function useOptions(url: string | null): string[] {
+/** The options at url; null while they load, [] when there is no url or the request failed. */
+function useOptions(url: string | null): string[] | null {
   const [got, setGot] = useState<{ url: string; list: string[] }>({ url: "", list: [] });
   useEffect(() => {
     if (!url) return;
@@ -36,10 +37,91 @@ function useOptions(url: string | null): string[] {
     fetch(url, { signal: ac.signal })
       .then((r) => r.json())
       .then((b: { options?: string[] }) => setGot({ url, list: b.options ?? [] }))
-      .catch(() => {});
+      .catch(() => {
+        if (!ac.signal.aborted) setGot({ url, list: [] });
+      });
     return () => ac.abort();
   }, [url]);
-  return url && got.url === url ? got.list : [];
+  if (!url) return [];
+  return got.url === url ? got.list : null;
+}
+
+const OTHER = "__other__"; // never a real faculty or major name
+
+/** A select of the listed names with a "type it yourself" way out; a plain text field when nothing is listed. */
+function ChoiceField(props: {
+  id: string;
+  label: string;
+  placeholder: string;
+  options: string[] | null;
+  value: string;
+  onChange: (v: string) => void;
+  /** Shown in a disabled select while an earlier field must be chosen first. */
+  waitFor?: string;
+}) {
+  const { id, label, placeholder, options, value, onChange, waitFor } = props;
+  const [typing, setTyping] = useState(false);
+  if (waitFor)
+    return (
+      <div>
+        <label className="label" htmlFor={id}>
+          {label}
+        </label>
+        <select id={id} className="input" disabled value="">
+          <option value="">{waitFor}</option>
+        </select>
+      </div>
+    );
+  if (options !== null && options.length === 0)
+    return (
+      <div>
+        <label className="label" htmlFor={id}>
+          {label}
+        </label>
+        <input id={id} className="input" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} autoComplete="off" required />
+      </div>
+    );
+  const free = typing || (value !== "" && !options?.includes(value));
+  return (
+    <div>
+      <label className="label" htmlFor={id}>
+        {label}
+      </label>
+      <select
+        id={id}
+        className="input"
+        value={free ? OTHER : value}
+        disabled={options === null}
+        required={!free}
+        onChange={(e) => {
+          setTyping(e.target.value === OTHER);
+          onChange(e.target.value === OTHER ? "" : e.target.value);
+        }}
+      >
+        <option value="" disabled>
+          {options === null ? "กำลังโหลดรายชื่อ…" : `เลือก${label}`}
+        </option>
+        {options?.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+        <option value={OTHER}>ไม่มีในรายการ พิมพ์เอง</option>
+      </select>
+      {free && (
+        <input
+          aria-label={`${label} (พิมพ์เอง)`}
+          className="input mt-2"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete="off"
+          autoFocus
+          required
+        />
+      )}
+    </div>
+  );
 }
 
 export function SetupForm({ onDone }: { onDone: () => void }) {
@@ -270,35 +352,53 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
             <label className="label" htmlFor={`${id}u`}>
               มหาวิทยาลัย
             </label>
-            <input id={`${id}u`} className="input" list={`${id}ul`} value={university} onChange={field(setUniversity)} autoComplete="off" required />
+            <input
+              id={`${id}u`}
+              className="input"
+              list={`${id}ul`}
+              placeholder="พิมพ์เพื่อค้นชื่อ"
+              value={university}
+              onChange={(e) => {
+                setUniversity(e.target.value);
+                setFaculty("");
+                setMajor("");
+                reset();
+              }}
+              autoComplete="off"
+              required
+            />
             <datalist id={`${id}ul`}>
               {universities.map((u) => (
                 <option key={u} value={u} />
               ))}
             </datalist>
           </div>
-          <div>
-            <label className="label" htmlFor={`${id}f`}>
-              คณะ
-            </label>
-            <input id={`${id}f`} className="input" list={`${id}fl`} placeholder="เช่น วิทยาศาสตร์" value={faculty} onChange={field(setFaculty)} autoComplete="off" required />
-            <datalist id={`${id}fl`}>
-              {faculties.map((u) => (
-                <option key={u} value={u} />
-              ))}
-            </datalist>
-          </div>
-          <div>
-            <label className="label" htmlFor={`${id}m`}>
-              สาขา
-            </label>
-            <input id={`${id}m`} className="input" list={`${id}ml`} placeholder="เช่น วิทยาการคอมพิวเตอร์" value={major} onChange={field(setMajor)} autoComplete="off" required />
-            <datalist id={`${id}ml`}>
-              {majors.map((u) => (
-                <option key={u} value={u} />
-              ))}
-            </datalist>
-          </div>
+          <ChoiceField
+            key={`f:${u}`}
+            id={`${id}f`}
+            label="คณะ"
+            placeholder="เช่น วิทยาศาสตร์"
+            options={faculties}
+            value={faculty}
+            onChange={(v) => {
+              setFaculty(v);
+              setMajor("");
+              reset();
+            }}
+          />
+          <ChoiceField
+            key={`m:${u}:${faculty}`}
+            id={`${id}m`}
+            label="สาขา"
+            placeholder="เช่น วิทยาการคอมพิวเตอร์"
+            options={majors}
+            waitFor={!faculty.trim() && faculties?.length ? "เลือกคณะก่อน" : undefined}
+            value={major}
+            onChange={(v) => {
+              setMajor(v);
+              reset();
+            }}
+          />
           <div>
             <label className="label" htmlFor={`${id}c`}>
               รหัสปีที่เข้า
@@ -314,6 +414,9 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
               ))}
             </select>
           </div>
+          <p className="text-xs text-muted sm:col-span-2">
+            รายชื่อคณะและสาขาจากข้อมูลหลักสูตรของ TCAS (course.mytcas.com) ถ้าไม่มีในรายการ เลือก “ไม่มีในรายการ พิมพ์เอง”
+          </p>
           <div className="sm:col-span-2">
             <button type="submit" className="btn-primary" disabled={!complete || searching} aria-busy={searching}>
               {searching ? "กำลังค้นหา…" : "ค้นหาหลักสูตร"}

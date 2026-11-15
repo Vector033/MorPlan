@@ -31,6 +31,7 @@ Screenshots are taken from the live site with the built-in demo data: `npx tsx s
 - Since PDPA, reg's course search (section, time, room, instructor) needs a reg login. MorPlan never asks for reg/CMU credentials and does not scrape behind the login. The student opens reg in their own browser, copies (or saves) the results page and pastes it into `/import`. Parsing happens in the browser. A manual form covers anything the parser can't read.
 - Imported sections stay in the student's browser (or their MorPlan account). They are never pooled into a shared catalogue, so MorPlan doesn't republish what reg stopped publishing.
 - The only thing scraped is the public exam timetable (`timetable_exam.php`, allowed by robots.txt): two requests per term with a 2 s gap, cached in `data/exams/`.
+- The curriculum setup form lists each university's faculties and majors from the public TCAS program list (course.mytcas.com, run by ทปอ.; its terms only forbid bots that abuse the service). `scripts/fetch-programs.mts` downloads it once and keeps university → faculty → majors in `data/programs-th.json`.
 - The regulation PDFs are public (`www.reg.cmu.ac.th/webreg/reg-files/…`). `data/docs.json` lists them, the PDFs themselves aren't committed, and the OCR text is in `data/pages.json`.
 
 ## RAG evaluation
@@ -109,6 +110,7 @@ npm run dev -- -p 3100
 | `EVAL_LLM_MODELS=typhoon-2.5-30b-a3b-instruct,claude-haiku-4-5 npm run eval` | compare answer models through a local FreeLLMAPI router (`FREELLMAPI_KEY` in `.env.local`; optional `EVAL_JUDGE_MODEL`, `EVAL_LLM_DELAY_MS`) → `eval/results/llm-compare.{json,md}` |
 | `npx tsx --conditions=react-server scripts/seed-curriculum.mts --kind curriculum|electives|minors --university U (--url URL | --file PATH --title T) [--yes]` | owner-only: read a trusted curriculum document into the shared table (preview without `--yes`; refuses a non-local `DATABASE_URL` without `--allow-remote`; skips an existing row unless `--replace`) |
 | `npm run fetch:exams 2/2569` | refresh the public exam timetable |
+| `npx tsx scripts/fetch-programs.mts` | refresh faculties and majors from TCAS (about once a year) → `data/programs-th.json`, and add new names to `data/universities-th.json` |
 | `docker build -t morplan-ingest ingest && docker run --rm -v "$PWD/data:/data" morplan-ingest` | re-OCR the corpus |
 
 ## Status

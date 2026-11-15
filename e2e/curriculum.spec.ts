@@ -55,8 +55,12 @@ test("set up a curriculum from a shared record", async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByLabel("มหาวิทยาลัย").fill("มหาวิทยาลัยเชียงใหม่");
-  await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
-  await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
+  // Listed faculties and majors come as choices, with a way to type one that is not listed.
+  await page.getByLabel("คณะ", { exact: true }).selectOption("วิทยาศาสตร์");
+  await page.getByLabel("สาขา", { exact: true }).selectOption("ไม่มีในรายการ พิมพ์เอง");
+  await page.getByLabel("สาขา (พิมพ์เอง)").fill("สาขาที่ไม่มีในรายการ");
+  await page.getByLabel("สาขา", { exact: true }).selectOption("วิทยาการคอมพิวเตอร์");
+  await expect(page.getByLabel("สาขา (พิมพ์เอง)")).toHaveCount(0);
   await page.getByLabel("รหัสปีที่เข้า").selectOption("67");
   await page.getByRole("button", { name: "ค้นหาหลักสูตร" }).click();
   // Two versions of one program: the one covering cohort 67 is preselected, the other stays selectable.
@@ -175,8 +179,8 @@ async function setUp(page: Page, cohort = "67") {
   await page.goto("/curriculum");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
-  await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
+  await page.getByLabel("คณะ", { exact: true }).selectOption("วิทยาศาสตร์");
+  await page.getByLabel("สาขา", { exact: true }).selectOption("วิทยาการคอมพิวเตอร์");
   await page.getByLabel("รหัสปีที่เข้า").selectOption(cohort);
   await page.getByRole("button", { name: "ค้นหาหลักสูตร" }).click();
   await page.getByRole("button", { name: "ใช้หลักสูตรนี้" }).click();

@@ -36,6 +36,10 @@
 - เช็กแล้ว: ปุ่มพาไป accounts.google.com, redirect_uri ถูก · หน้า Google แสดงโดเมน `…supabase.co` (ต้อง custom domain ถึงจะเปลี่ยน, เสียเงิน)
 - ไฟล์ `client_secret_MorePlan.json` อยู่ใน root ของ repo: gitignore แล้ว **ห้าม commit/อ่าน** ผู้ใช้ควรย้ายออกหรือลบ
 
+## รายชื่อคณะและสาขา (TCAS)
+
+ฟอร์ม `/curriculum` ให้เลือกคณะและสาขาจาก `data/programs-th.json` (77 มหาวิทยาลัย 859 คณะ ดึงจาก courses.json สาธารณะของ course.mytcas.com, ทปอ.) รวมกับที่มีในตาราง curricula · มหาวิทยาลัยที่ไม่อยู่ใน TCAS ช่องจะเป็นช่องพิมพ์ และทุกช่องมี "ไม่มีในรายการ พิมพ์เอง" · อัปเดตปีละครั้ง: `npx tsx scripts/fetch-programs.mts` · ตัวแยกชื่อสาขาอยู่ใน `src/lib/core/programs.ts` (ชื่อหลักสูตรใน TCAS ไม่เป็นระเบียบ บางสาขายังมีวงเล็บย่อย เช่น "เคมี (เคมีอุตสาหกรรม)")
+
 ## Seed หลักสูตรกลาง (owner เท่านั้น)
 
 ต้องใส่ `--conditions=react-server` เพราะ store import `server-only` · ไม่ใส่ `--yes` = preview ไม่เขียน · อ่าน `DATABASE_URL` จาก `.env.local` (prod: ตั้ง env เองแล้วใส่ `--allow-remote`) · seed ซ้ำจะข้าม ถ้าอยากแทนที่ใส่ `--replace`
