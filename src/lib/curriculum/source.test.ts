@@ -30,6 +30,10 @@ describe("readUrl", () => {
     expect(s).toMatchObject({ kind: "html", title: "แผนการศึกษา" });
     expect(s.text).toContain("204315");
   });
+  it("decodes entities in a page title", async () => {
+    const { fetchFn } = web({ "https://cs.x.ac.th/t": [200, { "content-type": "text/html" }, `<title>หลักสูตร &#8211; คณะ &amp; สาขา</title><p>x</p>${"<p>ชั้นปีที่ 1</p>".repeat(20)}`] });
+    expect((await readUrl("https://cs.x.ac.th/t", fetchFn)).title).toBe("หลักสูตร – คณะ & สาขา");
+  });
   it("rejects non-academic, unreachable, oversized and unsupported sources with typed errors", async () => {
     const big = "x".repeat(MAX_SOURCE_BYTES + 1);
     const { fetchFn } = web({

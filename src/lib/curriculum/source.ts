@@ -1,4 +1,4 @@
-import { pageText } from "../core/import-reg";
+import { decode, pageText } from "../core/import-reg";
 import { academicUrl, fetchAcademic } from "../core/university";
 
 export const MAX_SOURCE_BYTES = 8_000_000;
@@ -75,7 +75,7 @@ export async function readUrl(url: string, fetchFn: typeof fetch = fetch): Promi
   }
   const html = decoder.decode(bytes);
   const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1];
-  return { kind: "html", text: pageText(html), title: (title && pageText(title).trim()) || lastSegment(safe) };
+  return { kind: "html", text: pageText(html), title: (title && decode(title).trim()) || lastSegment(safe) };
 }
 
 export async function readPdf(bytes: Uint8Array, title: string): Promise<SourceText> {

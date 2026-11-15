@@ -66,6 +66,22 @@ export default function AboutPage() {
       </section>
 
       <section>
+        <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">หลักสูตรและวิชาโท</h2>
+        <p>
+          หลักสูตร รายวิชาเลือก และบัญชีวิชาโทที่อ่านจากเว็บไซต์หรือเอกสารของมหาวิทยาลัย (ลิงก์ที่เป็นเว็บ .ac.th) จะถูกเก็บไว้กลางพร้อมลิงก์ต้นทางและวันที่อ่าน{" "}
+          <span className="inline-block">เพื่อให้นักศึกษาคนถัดไปใช้ต่อได้โดยไม่ต้องอ่านใหม่</span>
+        </p>
+        <p className="mt-2">
+          สิ่งที่อยู่กับนักศึกษาเองคือวิชาที่ผ่านแล้ว ไฟล์ที่อัปโหลด และข้อความที่วาง{" "}
+          <span className="inline-block">เก็บในเบราว์เซอร์ของนักศึกษา ไม่ถูกรวมเป็นฐานข้อมูลกลาง</span>
+        </p>
+        <p className="mt-2">
+          หลักสูตรเหล่านี้อ่านโดย AI <strong>ตรวจสอบกับเอกสารของคณะอีกครั้ง</strong>{" "}
+          <span className="inline-block">MorPlan ไม่ยืนยันว่าสำเร็จการศึกษาหรือครบวิชาโท</span>
+        </p>
+      </section>
+
+      <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">เอกสารที่ใช้ตอบคำถามเรื่องระเบียบ</h2>
         <p className="mb-2">
           เอกสารสาธารณะจากเว็บ<span className="whitespace-nowrap">สำนักทะเบียนฯ</span> แปลงเป็นข้อความด้วย OCR (Tesseract){" "}

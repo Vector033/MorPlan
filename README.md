@@ -116,3 +116,4 @@ npm run dev -- -p 3100
 - Deployed 2026-11-04 to Vercel (`morplan.vercel.app`) with a hosted Supabase project (Auth + Postgres) in ap-southeast-1. The Playwright suite runs against it with `E2E_BASE_URL=https://morplan.vercel.app npm run test:e2e`.
 - No real users or usage numbers yet; anonymous counters (imports, shares, questions) are in place.
 - The reg import parser was written without a real logged-in results page, because that page isn't public. A saved sample in `samples/` will become a test fixture.
+- Curriculum advisor (`/curriculum`, branch `feat/curriculum`, not deployed): set up a curriculum from a shared record or a university web page / PDF / pasted text, term view, progress, electives, minors. Checked on real documents locally (CMU seed, KMUTT page); production seed and deploy are the owner's call. See `HANDOFF.md`.

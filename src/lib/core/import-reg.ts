@@ -187,7 +187,7 @@ function textRows(text: string): string[][] {
     .map((line) => (line.includes("\t") ? line.split("\t") : line.split(/\s{2,}/)).map((c) => c.trim()).filter(Boolean));
 }
 
-function decode(s: string) {
+export function decode(s: string) {
   return s
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
