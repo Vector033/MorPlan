@@ -36,6 +36,9 @@ test("curriculum API rejects cross-site and non-JSON writes", async ({ request }
   expect((await request.get("/api/curriculum/zzzzzzzzzz")).status()).toBe(404);
   const orphan = { kind: "electives", university: "มหาวิทยาลัยเชียงใหม่", faculty: "x", major: "y", cohort: 64, source: { url: "https://www.cmu.ac.th/x" } };
   expect((await request.post("/api/curriculum/read", { data: orphan })).status()).toBe(400);
+  const noMajor = { kind: "curriculum", university: "มหาวิทยาลัยเชียงใหม่", faculty: "วิทยาศาสตร์", major: " ", cohort: 64, source: { text: "x".repeat(300) } };
+  expect((await request.post("/api/curriculum/read", { data: noMajor })).status()).toBe(400);
+  expect((await request.post("/api/curriculum/refresh", { data: { id: "zzzzzzzzzz" } })).status()).toBe(404);
   expect((await request.post("/api/curriculum/confirm", { data: { id: "zzzzzzzzzz", cohortFrom: 25 } })).status()).toBe(404);
 });
 

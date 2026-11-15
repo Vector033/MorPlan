@@ -38,8 +38,10 @@ export function CurriculumHeader({ say }: { say: (s: string) => void }) {
     setBusy(false);
     if (live.current !== c.ref) return;
     if (!g.ok) return setErr(g.body.error ?? "เปิดหลักสูตรนี้ไม่ได้ ลองใหม่อีกครั้ง");
-    dispatch({ type: "refreshCurriculum", data: g.body.curriculum as Curriculum, source: sharedSource(g.body.meta as Meta), ref: c.ref });
-    say("อัปเดตแล้ว");
+    const data = g.body.curriculum as Curriculum;
+    dispatch({ type: "refreshCurriculum", data, source: sharedSource(g.body.meta as Meta), ref: c.ref });
+    // The reducer keeps the plan by name; without a match it falls back to the first plan.
+    say(data.plans.some((p) => p.name === plan?.name) ? "อัปเดตแล้ว" : "แผนการเรียนในเอกสารเปลี่ยนไป เลือกแผนอีกครั้งถ้าไม่ใช่แผนนี้");
   }
 
   return (
