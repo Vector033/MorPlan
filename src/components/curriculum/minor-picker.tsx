@@ -6,7 +6,8 @@ import { minorProgress, passedNos, rankElectives, type Minor, type Source } from
 import type { Meta } from "@/lib/curriculum/rows";
 import { CandidateRows } from "./elective-list";
 import { DocumentAdd } from "./document-add";
-import { call, sharedSource, Skeleton } from "./shared";
+import { DISCLAIMER } from "./format";
+import { call, sharedSource, Skeleton, SourceLine } from "./shared";
 
 type Entry = { minor: Minor; source: Source };
 type Catalog = { meta: Meta; minors: Minor[] };
@@ -71,7 +72,7 @@ export function MinorPicker({ say }: { say: (s: string) => void }) {
             {err}
           </p>
         )}
-        {shared !== null && entries.length === 0 && <p className="text-sm text-muted">ยังไม่มีบัญชีวิชาโทของมหาวิทยาลัยนี้</p>}
+        {shared !== null && !err && entries.length === 0 && <p className="text-sm text-muted">ยังไม่มีบัญชีวิชาโทของมหาวิทยาลัยนี้</p>}
         {entries.length > 0 && (
           <div>
             <label className="label" htmlFor={`${uid}i`}>
@@ -89,6 +90,14 @@ export function MinorPicker({ say }: { say: (s: string) => void }) {
           <div className="flex flex-col gap-3">
             <p className="font-semibold">{cur.minor.name}</p>
             <p className="text-sm whitespace-pre-line">{cur.minor.rules}</p>
+            <p className="text-xs text-muted">
+              {cur.minorSource && (
+                <>
+                  <SourceLine source={cur.minorSource} /> ·{" "}
+                </>
+              )}
+              {DISCLAIMER}
+            </p>
             {groups.map((g) => (
               <div key={g.label} className="rounded-xs bg-canvas p-3">
                 <p className="text-sm font-semibold">

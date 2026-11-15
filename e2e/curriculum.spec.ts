@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { COOP } from "../src/lib/core/__fixtures__/coop-plan";
 
 // Every curriculum API is mocked: this covers the page flow, the routes have their own tests.
@@ -146,4 +146,95 @@ test("cancelling during a slow confirm saves nothing", async ({ page }) => {
   await page.waitForTimeout(1600);
   await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "ค้นหาหลักสูตร" })).toBeVisible();
+});
+
+async function setUp(page: Page, cohort = "67") {
+  await page.goto("/curriculum");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
+  await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
+  await page.getByLabel("รหัสปีที่เข้า").selectOption(cohort);
+  await page.getByRole("button", { name: "ค้นหาหลักสูตร" }).click();
+  await page.getByRole("button", { name: "ใช้หลักสูตรนี้" }).click();
+  await page.getByLabel("แผนสหกิจศึกษา").check();
+  await page.getByRole("button", { name: "ยืนยันแผนการเรียน" }).click();
+  await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toBeVisible();
+}
+
+test("a pasted electives list is kept for this student and never confirmed on the server", async ({ page }) => {
+  let confirmCalls = 0;
+  await page.route("**/api/curriculum/**", async (r) => {
+    const { pathname } = new URL(r.request().url());
+    if (pathname.endsWith("/confirm")) {
+      confirmCalls++;
+      return r.fulfill({ json: { ok: true } });
+    }
+    if (pathname.endsWith("/read"))
+      return r.fulfill({
+        json: { preview: { kind: "electives", data: [{ courseNo: "204311", title: "Elective A" }, { courseNo: "204333", title: "Elective B" }], dropped: ["999999"] }, sourceTitle: "รายชื่อที่วางเอง" },
+      });
+    return r.fallback();
+  });
+  await setUp(page);
+  const slot = page.getByRole("group", { name: "เอกเลือก 3 นก." });
+  await slot.getByRole("button", { name: /ระบุวิชา/ }).click();
+  await expect(slot.getByText("ยังไม่มีรายการวิชาของช่องนี้")).toBeVisible();
+  await slot.getByRole("button", { name: "เพิ่มเอกสาร" }).click();
+  await slot.getByText("วางข้อความ", { exact: true }).click();
+  await slot.getByLabel("ข้อความจากเอกสาร").fill("204311 Elective A\n204333 Elective B");
+  await slot.getByRole("button", { name: "อ่านเอกสาร" }).click();
+  await expect(slot.getByText("เจอ 2 วิชา")).toBeVisible();
+  await expect(slot.getByText("จากเอกสารที่คุณเพิ่มเอง")).toBeVisible();
+  await expect(slot.getByText("ตัดออก 1 รายการที่ไม่พบในเอกสาร")).toBeVisible();
+  await slot.getByRole("button", { name: "ใช้รายการนี้" }).click();
+  await expect(slot.getByText("204311")).toBeVisible();
+  await expect(slot.getByText("204333")).toBeVisible();
+  expect(confirmCalls).toBe(0);
+});
+
+test("re-reading from the source says whether the data was replaced", async ({ page }) => {
+  let replaced = true;
+  await page.route("**/api/curriculum/refresh", (r) => r.fulfill({ json: { replaced } }));
+  await setUp(page);
+  await page.getByRole("button", { name: "อ่านใหม่จากต้นทาง" }).click();
+  await expect(page.getByRole("status")).toHaveText("อัปเดตแล้ว");
+  replaced = false;
+  await page.getByRole("button", { name: "อ่านใหม่จากต้นทาง" }).click();
+  await expect(page.getByRole("status")).toHaveText("ยังใช้ฉบับเดิม (อ่านใหม่ได้ข้อมูลไม่ครบ)");
+});
+
+test("a term outside the plan says so and offers the plan's terms", async ({ page }) => {
+  await setUp(page, "69"); // entered 2569: 2/2569 is year 1, the plan starts in year 3
+  await expect(page.getByRole("heading", { name: "เทอมนี้ตามแผน (ปี 1 เทอม 2)" })).toBeVisible();
+  await expect(page.getByText("เทอมนี้ไม่อยู่ในแผนการเรียน เลือกเทอมที่ต้องการดูจากรายการด้านบน")).toBeVisible();
+  await page.getByLabel("ดูเทอม").selectOption("3-1");
+  await expect(page.getByRole("heading", { name: /ปี 3 เทอม 1 · 18 หน่วยกิต/ })).toBeVisible();
+  await expect(page.getByText("เทอมนี้ไม่อยู่ในแผนการเรียน")).toHaveCount(0);
+});
+
+test("the page never claims a plan or minor is complete", async ({ page }) => {
+  await setUp(page);
+  await page.getByLabel("เลือกวิชาโท").fill("ภาษาญี่ปุ่น");
+  const minor = page.getByRole("region", { name: "วิชาโท", exact: true });
+  await expect(minor.getByText("ผ่านแล้ว 0 วิชา")).toBeVisible();
+  await expect(minor.getByText("จากเอกสารที่คุณเพิ่มเอง")).toHaveCount(0);
+  await expect(minor.getByText(/หลักสูตรวิทยาการคอมพิวเตอร์ 64/)).toBeVisible(); // source of the chosen minor
+  for (const b of await page.getByRole("button", { name: "ติ๊กทั้งเทอม" }).all()) await b.click();
+  await expect(page.locator("body")).not.toContainText("ครบแล้ว");
+});
+
+test("overdue courses can be added even when the term has no required courses", async ({ page }) => {
+  await setUp(page, "66"); // 2/2569 is year 4 semester 2: nothing planned, everything earlier is overdue
+  await expect(page.getByText("ค้างจากเทอมก่อน")).toBeVisible();
+  await page.getByRole("button", { name: "เพิ่มทั้งหมดลงรายการ" }).click();
+  await expect(page.getByRole("status")).toHaveText("เพิ่ม 9 วิชาลงรายการแล้ว");
+});
+
+test("a failed minor catalog shows the error and not the 'no catalog' line", async ({ page }) => {
+  await page.route("**/api/curriculum/minors**", (r) => r.fulfill({ status: 500, json: { error: "โหลดไม่ได้" } }));
+  await setUp(page);
+  const minor = page.getByRole("region", { name: "วิชาโท", exact: true });
+  await expect(minor.getByRole("alert")).toHaveText("โหลดไม่ได้");
+  await expect(minor.getByText("ยังไม่มีบัญชีวิชาโทของมหาวิทยาลัยนี้")).toHaveCount(0);
 });

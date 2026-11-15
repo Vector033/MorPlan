@@ -40,7 +40,7 @@ export type Action =
   | { type: "setMinor"; minor: Minor | null; source?: Source }
   | { type: "addElectives"; kind: SlotKind; courses: ElectiveCourse[] }
   /** A new copy of the same curriculum: keeps progress and minor; keeps planId if it still exists, else the first plan. */
-  | { type: "refreshCurriculum"; data: Curriculum; source: Source }
+  | { type: "refreshCurriculum"; data: Curriculum; source: Source; ref?: string }
   | { type: "wantCourses"; courseNos: string[] };
 
 export function emptyWorkspace(term = "2/2569"): Workspace {
@@ -212,6 +212,7 @@ function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action):
       return set({ data: { ...cur.data, electives: { ...cur.data.electives, [action.kind]: [...byNo.values()] } } });
     }
     case "refreshCurriculum":
+      if (action.ref !== undefined && action.ref !== cur.ref) return ws; // a late reply for a curriculum that is no longer the chosen one
       return set({
         data: action.data,
         source: action.source,

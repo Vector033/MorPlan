@@ -37,6 +37,12 @@ export function TermView({ plan, say }: { plan: StudyPlan; say: (s: string) => v
     say(fresh ? `เพิ่ม ${fresh} วิชาลงรายการแล้ว` : "วิชาเหล่านี้อยู่ในรายการแล้ว");
   }
 
+  const addBtn = wanted.length > 0 && (
+    <button type="button" className="btn min-h-8" onClick={addAll}>
+      เพิ่มทั้งหมดลงรายการ
+    </button>
+  );
+
   return (
     <section className="card" aria-labelledby={`${uid}h`}>
       <div className="bar flex flex-wrap items-center justify-between gap-2">
@@ -73,15 +79,14 @@ export function TermView({ plan, say }: { plan: StudyPlan; say: (s: string) => v
           <div className="flex flex-wrap items-start gap-x-3 gap-y-2 py-3">
             <span className="w-full shrink-0 font-semibold sm:w-28">ค้างจากเทอมก่อน</span>
             <Chips courses={view.overdue} />
+            {view.required.length === 0 && addBtn}
           </div>
         )}
         {view.required.length > 0 && (
           <div className="flex flex-wrap items-start gap-x-3 gap-y-2 py-3">
             <span className="w-full shrink-0 font-semibold sm:w-28">วิชาบังคับ</span>
             <Chips courses={view.required} />
-            <button type="button" className="btn min-h-8" disabled={wanted.length === 0} onClick={addAll}>
-              เพิ่มทั้งหมดลงรายการ
-            </button>
+            {addBtn}
           </div>
         )}
         {view.slots.map((s) => (

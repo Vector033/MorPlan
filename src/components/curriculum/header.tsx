@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import type { Curriculum } from "@/lib/core/curriculum";
 import type { Meta } from "@/lib/curriculum/rows";
-import { DISCLAIMER, thaiDate } from "./format";
-import { call, sharedSource } from "./shared";
+import { DISCLAIMER } from "./format";
+import { call, sharedSource, SourceLine } from "./shared";
 
 /** One line about the chosen curriculum: where it came from, how to change or re-read it. */
 export function CurriculumHeader({ say }: { say: (s: string) => void }) {
@@ -13,6 +13,10 @@ export function CurriculumHeader({ say }: { say: (s: string) => void }) {
   const c = ws.curriculum!;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const live = useRef(c.ref); // the curriculum chosen right now, for replies that arrive after a change
+  useEffect(() => {
+    live.current = c.ref;
+  }, [c.ref]);
   const plan = c.data.plans.find((p) => p.id === c.planId) ?? c.data.plans[0];
   const { source } = c;
 
@@ -21,6 +25,7 @@ export function CurriculumHeader({ say }: { say: (s: string) => void }) {
     setBusy(true);
     setErr(null);
     const r = await call("/api/curriculum/refresh", { id: c.ref });
+    if (live.current !== c.ref) return setBusy(false);
     if (!r.ok) {
       setBusy(false);
       return setErr(r.body.error ?? "อ่านใหม่ไม่สำเร็จ ลองใหม่อีกครั้ง");
@@ -31,8 +36,9 @@ export function CurriculumHeader({ say }: { say: (s: string) => void }) {
     }
     const g = await call(`/api/curriculum/${c.ref}`);
     setBusy(false);
+    if (live.current !== c.ref) return;
     if (!g.ok) return setErr(g.body.error ?? "เปิดหลักสูตรนี้ไม่ได้ ลองใหม่อีกครั้ง");
-    dispatch({ type: "refreshCurriculum", data: g.body.curriculum as Curriculum, source: sharedSource(g.body.meta as Meta) });
+    dispatch({ type: "refreshCurriculum", data: g.body.curriculum as Curriculum, source: sharedSource(g.body.meta as Meta), ref: c.ref });
     say("อัปเดตแล้ว");
   }
 
@@ -53,18 +59,7 @@ export function CurriculumHeader({ say }: { say: (s: string) => void }) {
         </button>
       </div>
       <p className="mt-1 text-sm text-muted">
-        {source.provenance === "link" && source.url ? (
-          <a className="link" href={source.url} target="_blank" rel="noreferrer">
-            {source.title}
-          </a>
-        ) : source.provenance === "owner" ? (
-          `จากเอกสารของมหาวิทยาลัย: ${source.title}`
-        ) : source.provenance === "private" ? (
-          "จากเอกสารที่คุณเพิ่มเอง"
-        ) : (
-          source.title
-        )}{" "}
-        · อ่านเมื่อ {thaiDate(source.readAt)}
+        <SourceLine source={source} />
         {source.provenance === "link" && c.ref && (
           <>
             {" "}

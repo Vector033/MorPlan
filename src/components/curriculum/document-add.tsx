@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import type { ElectiveCourse, Minor, Source } from "@/lib/core/curriculum";
 import { DISCLAIMER } from "./format";
-import { call, Skeleton } from "./shared";
+import { call, Skeleton, SourceLine } from "./shared";
 import { SourceInput, type SourceTab } from "./source-input";
 
 type Scope = { university: string; faculty: string; major: string; cohort: number };
@@ -37,6 +37,8 @@ export function DocumentAdd(props: Props) {
     setPending({ data: p.data, dropped: p.dropped, title: String(body.sourceTitle ?? ""), url: "url" in source ? String(source.url) : undefined, pendingId: body.pendingId as string | undefined });
   }
 
+  const sourceOf = (p: Pending): Source => ({ url: p.url, title: p.title, readAt: new Date().toISOString().slice(0, 10), provenance: p.pendingId ? "link" : "private" });
+
   async function keep() {
     if (!pending || saving) return;
     setSaving(true);
@@ -48,7 +50,7 @@ export function DocumentAdd(props: Props) {
         return setErr(c.body.error ?? "ยืนยันไม่สำเร็จ ลองใหม่อีกครั้ง");
       }
     }
-    const source: Source = { url: pending.url, title: pending.title, readAt: new Date().toISOString().slice(0, 10), provenance: pending.pendingId ? "link" : "private" };
+    const source = sourceOf(pending);
     if (kind === "electives") props.onAccept(pending.data as ElectiveCourse[], source, !!pending.pendingId);
     else props.onAccept(pending.data as Minor[], source, !!pending.pendingId);
     onClose();
@@ -74,8 +76,9 @@ export function DocumentAdd(props: Props) {
       )}
       {pending && !reading && (
         <div className="flex flex-col gap-2 text-sm">
-          <p className="font-semibold">
-            เจอ {count} จาก {pending.title}
+          <p className="font-semibold">เจอ {count}</p>
+          <p className="text-xs text-muted">
+            <SourceLine source={sourceOf(pending)} />
           </p>
           <ul className="max-h-48 overflow-auto rounded-xs border border-line bg-white p-2 text-xs">
             {kind === "electives"

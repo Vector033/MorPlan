@@ -1,5 +1,6 @@
 import type { Source } from "@/lib/core/curriculum";
 import type { Meta } from "@/lib/curriculum/rows";
+import { thaiDate } from "./format";
 
 export const MAX_PDF = 3_000_000;
 export type Body = Record<string, unknown> & { error?: string };
@@ -44,5 +45,25 @@ export function Radio({ name, checked, onChange, children }: { name: string; che
       <input type="radio" name={name} className="mt-1.5 accent-accent" checked={checked} onChange={onChange} />
       <span className="min-w-0 flex-1">{children}</span>
     </label>
+  );
+}
+
+/** Where a curriculum, minor or elective list came from, by provenance, with the read date. */
+export function SourceLine({ source }: { source: Source }) {
+  return (
+    <>
+      {source.provenance === "link" && source.url ? (
+        <a className="link" href={source.url} target="_blank" rel="noreferrer">
+          {source.title}
+        </a>
+      ) : source.provenance === "owner" ? (
+        `จากเอกสารของมหาวิทยาลัย: ${source.title}`
+      ) : source.provenance === "private" ? (
+        "จากเอกสารที่คุณเพิ่มเอง"
+      ) : (
+        source.title
+      )}{" "}
+      · อ่านเมื่อ {thaiDate(source.readAt)}
+    </>
   );
 }

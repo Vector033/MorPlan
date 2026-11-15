@@ -63,7 +63,7 @@ export function SlotRow({ slot, say }: { slot: Slot; say: (s: string) => void })
   const cr = Number(credits);
 
   return (
-    <div className="py-3">
+    <div className="py-3" role="group" aria-label={`${KIND_LABEL[slot.kind]} ${slot.credits} นก.`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="w-28 shrink-0 font-semibold">{KIND_LABEL[slot.kind]} {slot.credits} นก.</span>
         <span className="min-w-0 flex-1 text-sm text-muted">

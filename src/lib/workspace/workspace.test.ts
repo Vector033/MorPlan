@@ -150,6 +150,12 @@ describe("curriculum state", () => {
     ws = workspaceReducer(ws, { type: "addElectives", kind: "major-elective", courses: [{ courseNo: "204311", title: "a" }, { courseNo: "204333", title: "b" }] });
     expect(ws.curriculum!.data.electives["major-elective"]!.map((c) => c.courseNo)).toEqual(["204311", "204333"]);
   });
+  it("refreshCurriculum ignores data for a different curriculum", () => {
+    const ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: { ...STATE, ref: "abcdefghi1" } });
+    const late = { type: "refreshCurriculum", ref: "zzzzzzzzz9", data: { ...STATE.data, title: "อื่น" }, source: STATE.source } as const;
+    expect(workspaceReducer(ws, late)).toBe(ws);
+    expect(workspaceReducer(ws, { ...late, ref: "abcdefghi1" }).curriculum!.data.title).toBe("อื่น");
+  });
   it("setStudyPlan clears slot progress, ignores unknown ids; setMinor and clearCurriculum work", () => {
     const two = { ...STATE, data: { ...STATE.data, plans: [...STATE.data.plans, { ...STATE.data.plans[0], id: "std" }] } };
     let ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: two });
