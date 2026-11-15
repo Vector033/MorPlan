@@ -16,9 +16,11 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DISCLAIMER } from "@/components/curriculum/format";
+import { SourceLine } from "@/components/curriculum/shared";
 import { VolumeOffIcon, VolumeOnIcon, WarningIcon, XIcon } from "@/components/icons";
 import { conflictedIds, findConflicts } from "@/lib/core/conflicts";
-import { currentTermView, type TermView as TermViewData } from "@/lib/core/curriculum";
+import { currentTermView, type Source, type TermView as TermViewData } from "@/lib/core/curriculum";
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
@@ -131,7 +133,7 @@ export function Planner() {
           ) : (
             <CourseSearch />
           )}
-          {curNow && <TermCard view={curNow.view} />}
+          {curNow && cur && <TermCard view={curNow.view} source={cur.source} />}
           <Tray
             courseNos={plan.courseNos}
             placedByCourse={placedByCourse}
@@ -454,7 +456,7 @@ function TrayDraggable({
   );
 }
 
-function TermCard({ view }: { view: TermViewData }) {
+function TermCard({ view, source }: { view: TermViewData; source: Source }) {
   return (
     <section className="card" aria-labelledby="term-card-h">
       <h2 id="term-card-h" className="bar">
@@ -470,7 +472,10 @@ function TermCard({ view }: { view: TermViewData }) {
           </span>
         ))}
       </p>
-      <div className="p-4">
+      <div className="flex flex-col gap-1 p-4">
+        <p className="text-xs text-muted">
+          <SourceLine source={source} /> · {DISCLAIMER}
+        </p>
         <Link href="/curriculum" className="link text-sm">
           ดูหลักสูตร
         </Link>

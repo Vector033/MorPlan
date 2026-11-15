@@ -84,8 +84,14 @@ test("set up a curriculum from a shared record", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "ยังไม่มีตอนเรียน" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "ดูหลักสูตร" })).toBeVisible();
+  // Plan codes always come with their source, read date and the AI disclaimer.
+  const termCard = page.getByRole("region", { name: /เทอมนี้ตามแผน/ });
+  await expect(termCard.getByRole("link", { name: "หลักสูตรวิทยาการคอมพิวเตอร์ 64" })).toBeVisible();
+  await expect(termCard.getByText(/อ่านเมื่อ .*อ่านโดย AI ตรวจสอบกับเอกสารของคณะอีกครั้ง/)).toBeVisible();
   await page.goto("/import");
   await expect(page.getByText("ค้นรหัสเหล่านี้ในเว็บลงทะเบียน:")).toBeVisible();
+  await expect(page.getByRole("link", { name: "หลักสูตรวิทยาการคอมพิวเตอร์ 64" })).toBeVisible();
+  await expect(page.getByText(/อ่านเมื่อ .*อ่านโดย AI ตรวจสอบกับเอกสารของคณะอีกครั้ง/)).toBeVisible();
 });
 
 test("without a curriculum the planner and import pages show no curriculum prompts", async ({ page }) => {
@@ -211,14 +217,44 @@ test("a pasted electives list is kept for this student and never confirmed on th
 });
 
 test("re-reading from the source says whether the data was replaced", async ({ page }) => {
-  let replaced = true;
-  await page.route("**/api/curriculum/refresh", (r) => r.fulfill({ json: { replaced } }));
+  let replaced: boolean | null = true;
+  await page.route("**/api/curriculum/refresh", (r) =>
+    replaced === null ? r.fulfill({ status: 502, json: { error: "อ่านเอกสารต้นทางไม่สำเร็จ ลองใหม่ภายหลัง" } }) : r.fulfill({ json: { replaced } }),
+  );
   await setUp(page);
   await page.getByRole("button", { name: "อ่านใหม่จากต้นทาง" }).click();
   await expect(page.getByRole("status")).toHaveText("อัปเดตแล้ว");
   replaced = false;
   await page.getByRole("button", { name: "อ่านใหม่จากต้นทาง" }).click();
   await expect(page.getByRole("status")).toHaveText("ยังใช้ฉบับเดิม (อ่านใหม่ได้ข้อมูลไม่ครบ)");
+  replaced = null;
+  await page.getByRole("button", { name: "อ่านใหม่จากต้นทาง" }).click();
+  await expect(page.getByRole("region", { name: "หลักสูตรของฉัน" }).getByRole("alert")).toHaveText("อ่านเอกสารต้นทางไม่สำเร็จ ลองใหม่ภายหลัง");
+});
+
+test("a refreshed curriculum without the chosen plan's name falls back and says so", async ({ page }) => {
+  await setUp(page);
+  await page.route("**/api/curriculum/refresh", (r) => r.fulfill({ json: { replaced: true } }));
+  await page.route("**/api/curriculum/abcdefghi1", (r) =>
+    r.fulfill({ json: { meta: meta("abcdefghi1", 64), curriculum: { ...curriculum, plans: [{ ...COOP, id: "p1", name: "แผนใหม่" }] } } }),
+  );
+  await page.getByRole("button", { name: "อ่านใหม่จากต้นทาง" }).click();
+  await expect(page.getByRole("status")).toHaveText("แผนการเรียนในเอกสารเปลี่ยนไป เลือกแผนอีกครั้งถ้าไม่ใช่แผนนี้");
+  await expect(page.getByText(/หลักสูตรของฉัน: .* · แผนใหม่/)).toBeVisible();
+});
+
+test("a typed course code is normalised; one storage would refuse is explained", async ({ page }) => {
+  await setUp(page);
+  const slot = page.getByRole("group", { name: "เอกเลือก 3 นก." });
+  await slot.getByRole("button", { name: /ระบุวิชา/ }).click();
+  await slot.getByLabel("รหัสวิชา").fill("ก");
+  await expect(slot.getByText("รหัสวิชาใช้ตัวอักษรอังกฤษและตัวเลข 2–12 ตัว")).toBeVisible();
+  await expect(slot.getByRole("button", { name: "บันทึกวิชา" })).toBeDisabled();
+  await slot.getByLabel("รหัสวิชา").fill("cs-101");
+  await slot.getByRole("button", { name: "บันทึกวิชา" }).click();
+  await expect(slot.getByText("CS101")).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toBeVisible(); // the workspace survived the save
 });
 
 test("a term outside the plan says so and offers the plan's terms", async ({ page }) => {

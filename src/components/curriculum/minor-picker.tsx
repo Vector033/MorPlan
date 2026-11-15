@@ -9,7 +9,8 @@ import { DocumentAdd } from "./document-add";
 import { DISCLAIMER } from "./format";
 import { call, sharedSource, Skeleton, SourceLine } from "./shared";
 
-type Entry = { minor: Minor; source: Source };
+/** `from`: the catalog id, or "mine-N" for the student's own N-th read, so one name in two catalogs keeps distinct keys. */
+type Entry = { minor: Minor; source: Source; from: string };
 type Catalog = { meta: Meta; minors: Minor[] };
 
 /** "วิชาโท": pick a minor from the university's catalog and see what is done and what is left. Never says a minor is complete. */
@@ -34,7 +35,7 @@ export function MinorPicker({ say }: { say: (s: string) => void }) {
         return setShared([]);
       }
       setErr(null);
-      setShared(((body.catalogs as Catalog[] | undefined) ?? []).flatMap((c) => c.minors.map((minor) => ({ minor, source: sharedSource(c.meta) }))));
+      setShared(((body.catalogs as Catalog[] | undefined) ?? []).flatMap((c) => c.minors.map((minor) => ({ minor, source: sharedSource(c.meta), from: c.meta.id }))));
     });
     return () => {
       live = false;
@@ -81,7 +82,7 @@ export function MinorPicker({ say }: { say: (s: string) => void }) {
             <input id={`${uid}i`} className="input" list={`${uid}l`} placeholder="พิมพ์ชื่อวิชาโท" value={text} onChange={(e) => choose(e.target.value)} autoComplete="off" />
             <datalist id={`${uid}l`}>
               {entries.map((e) => (
-                <option key={e.minor.name} value={e.minor.name} />
+                <option key={`${e.from}:${e.minor.faculty ?? ""}:${e.minor.name}`} value={e.minor.name} />
               ))}
             </datalist>
           </div>
@@ -135,7 +136,7 @@ export function MinorPicker({ say }: { say: (s: string) => void }) {
               scope={{ university, faculty: "", major: "", cohort: cur.cohort }}
               onAccept={(minors, source, isShared) => {
                 if (isShared) setReload((n) => n + 1); // the confirmed link is now part of the shared catalog
-                else setMine((m) => [...minors.map((minor) => ({ minor, source })), ...m]);
+                else setMine((m) => [...minors.map((minor) => ({ minor, source, from: `mine-${m.length}` })), ...m]);
               }}
               onClose={() => setAdding(false)}
             />

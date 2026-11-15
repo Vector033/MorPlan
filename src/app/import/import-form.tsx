@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { DISCLAIMER } from "@/components/curriculum/format";
+import { SourceLine } from "@/components/curriculum/shared";
 import { CheckIcon } from "@/components/icons";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { attachExams } from "@/lib/core/exams";
@@ -240,6 +242,11 @@ function ImportFormReady() {
                 </span>
               </div>
               {copy === "fail" && <p className="error-note">คัดลอกไม่สำเร็จ เลือกรหัสแล้วคัดลอกเอง</p>}
+              {cur && (
+                <p className="text-xs text-muted">
+                  <SourceLine source={cur.source} /> · {DISCLAIMER}
+                </p>
+              )}
             </div>
           )}
           <textarea
