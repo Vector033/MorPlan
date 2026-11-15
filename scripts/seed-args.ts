@@ -50,11 +50,23 @@ export function parseSeedArgs(argv: string[]): SeedArgs {
 export function assertWritable(databaseUrl: string | undefined, allowRemote: boolean): void {
   if (!databaseUrl) throw new Error("DATABASE_URL is not set");
   if (allowRemote) return;
-  let host = "";
+  const refuse = (why: string) => new Error(`DATABASE_URL ${why}; pass --allow-remote to seed a remote database`);
+  const authority = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]*)/i.exec(databaseUrl)?.[1] ?? "";
+  if (authority.includes(",")) throw refuse("lists several hosts");
+  let url: URL;
   try {
-    host = new URL(databaseUrl).hostname;
+    url = new URL(databaseUrl);
   } catch {
-    // unparsable: refuse
+    throw refuse("is not a valid URL");
   }
-  if (host !== "127.0.0.1" && host !== "localhost") throw new Error("DATABASE_URL is not local; pass --allow-remote to seed a remote database");
+  // postgres.js / node-postgres let these query parameters override the URL host.
+  for (const k of url.searchParams.keys()) if (/^(host|hostaddr)$/i.test(k)) throw refuse(`sets "${k}" in the query`);
+  if (url.hostname !== "127.0.0.1" && url.hostname !== "localhost") throw refuse("is not local");
+}
+
+/** Reason not to write a read result, or null when it looks sane. */
+export function refuseResult(kept: number, dropped: number): string | null {
+  if (kept === 0) return "the read found nothing (0 items); not writing";
+  if (dropped > kept) return `dropped ${dropped} items but kept only ${kept}; not writing`;
+  return null;
 }

@@ -7,9 +7,13 @@
 // a non-local host is refused unless --allow-remote. An existing shared row for the same
 // kind + university + faculty + major + source is skipped unless --replace.
 import { readFileSync } from "node:fs";
-import { assertWritable, parseSeedArgs } from "./seed-args";
+import { assertWritable, parseSeedArgs, refuseResult } from "./seed-args";
 
-process.loadEnvFile(".env.local");
+try {
+  process.loadEnvFile(".env.local");
+} catch (e) {
+  if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e; // owner may pass env explicitly
+}
 const a = parseSeedArgs(process.argv.slice(2));
 if (a.yes) assertWritable(process.env.DATABASE_URL, a.allowRemote);
 
@@ -19,7 +23,7 @@ const { curricula } = await import("../src/db/schema");
 const { normalizeKey } = await import("../src/lib/core/curriculum");
 const { readUrl, readPdf } = await import("../src/lib/curriculum/source");
 const { readDocument } = await import("../src/lib/curriculum/read");
-const { saveOwner } = await import("../src/lib/curriculum/store");
+const { confirm, saveOwner, savePending } = await import("../src/lib/curriculum/store");
 const { getLlm } = await import("../src/lib/rag/llm");
 
 const llm = getLlm();
@@ -56,6 +60,13 @@ if (result.kind === "curriculum") {
 } else console.log(`${result.kind}: ${result.data.length}`);
 console.log(`dropped: ${result.dropped.length}${result.dropped.length ? " " + result.dropped.join(", ") : ""}`);
 
+const kept = result.kind === "curriculum" ? result.data.plans.length : result.data.length;
+const bad = refuseResult(kept, result.dropped.length);
+if (bad) {
+  console.error(bad);
+  process.exit(1);
+}
+
 if (!a.yes) {
   console.log("preview only; add --yes to write");
   process.exit(0);
@@ -75,10 +86,29 @@ if (same.length && !a.replace) {
   console.log(`already seeded as ${same.map((r) => r.id).join(", ")}; pass --replace to add a new row and remove the old one`);
   process.exit(0);
 }
-const id = await saveOwner({
+if (same.length && a.kind === "curriculum") {
+  for (const r of same) {
+    const kids = await db.select({ id: curricula.id }).from(curricula).where(eq(curricula.parentId, r.id)).limit(1);
+    if (kids.length) {
+      console.error(`${r.id} has electives attached; remove or re-seed the electives first, then --replace`);
+      process.exit(1);
+    }
+  }
+}
+const row = {
   kind: a.kind, university: a.university, faculty: a.faculty, major: a.major, parentId: a.parent,
   data: result.data, cohortFrom: a.cohortFrom, cohortTo: a.cohortTo, sourceUrl: a.url, sourceTitle,
-});
+};
+// A link is stored as provenance "link" (pending, then confirmed); only a local file is "owner".
+let id: string;
+if (a.url) {
+  id = await savePending({ ...row, sourceUrl: a.url });
+  const done = await confirm(id, a.cohortFrom, a.cohortTo);
+  if (done !== "ok") {
+    console.error(`confirm failed: ${done}`);
+    process.exit(1);
+  }
+} else id = await saveOwner(row);
 for (const r of same) await db.delete(curricula).where(eq(curricula.id, r.id));
 console.log(`seeded ${a.kind}: ${id}`);
 process.exit(0);

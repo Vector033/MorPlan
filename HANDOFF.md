@@ -45,7 +45,7 @@ $S --kind curriculum --university "มหาวิทยาลัยเชีย
 $S --kind electives --university "มหาวิทยาลัยเชียงใหม่" --faculty "วิทยาศาสตร์" --major "วิทยาการคอมพิวเตอร์" --cohort-from 64 --parent <id> --url "${B}64_major_elective" --yes
 $S --kind minors --university "มหาวิทยาลัยเชียงใหม่" --file "C:/Users/User/Desktop/cmu-reg-u-2-1.pdf" --title "บัญชีวิชาโท มหาวิทยาลัยเชียงใหม่ พ.ศ. 2565" --yes
 ```
-seed ลง local แล้ว (curriculum -CMdK4aE0L, electives qVgD0UdKPn, minors ImpaWH6VSM) · **seed prod เป็นขั้นตอนของ owner ยังไม่ได้รัน**
+seed ลง local แล้ว (curriculum zgGdfbVQLX, electives w4nLRPgr4S, minors ImpaWH6VSM) · **seed prod เป็นขั้นตอนของ owner ยังไม่ได้รัน**
 
 ## งานค้าง / ต้องเช็ก
 
