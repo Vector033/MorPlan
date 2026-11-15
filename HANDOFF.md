@@ -43,7 +43,7 @@
 S="npx tsx --conditions=react-server scripts/seed-curriculum.mts"; B="https://www.cs.science.cmu.ac.th/staff/sutasinee/testprogram/doku.php?id="
 $S --kind curriculum --university "มหาวิทยาลัยเชียงใหม่" --faculty "วิทยาศาสตร์" --major "วิทยาการคอมพิวเตอร์" --cohort-from 64 --url "${B}start" --yes
 $S --kind electives --university "มหาวิทยาลัยเชียงใหม่" --faculty "วิทยาศาสตร์" --major "วิทยาการคอมพิวเตอร์" --cohort-from 64 --parent <id> --url "${B}64_major_elective" --yes
-$S --kind minors --university "มหาวิทยาลัยเชียงใหม่" --file "C:UsersUserDesktopcmu-reg-u-2-1.pdf" --title "บัญชีวิชาโท มหาวิทยาลัยเชียงใหม่ พ.ศ. 2565" --yes
+$S --kind minors --university "มหาวิทยาลัยเชียงใหม่" --file "C:/Users/User/Desktop/cmu-reg-u-2-1.pdf" --title "บัญชีวิชาโท มหาวิทยาลัยเชียงใหม่ พ.ศ. 2565" --yes
 ```
 seed ลง local แล้ว (curriculum -CMdK4aE0L, electives qVgD0UdKPn, minors ImpaWH6VSM) · **seed prod เป็นขั้นตอนของ owner ยังไม่ได้รัน**
 
