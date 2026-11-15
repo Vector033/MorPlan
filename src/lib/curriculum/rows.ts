@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS } from "@/lib/core/curriculum-limits";
 import type { curricula } from "@/db/schema";
 import type { Curriculum, ElectiveCourse, Minor } from "@/lib/core/curriculum";
 import { curriculumSchema, electiveCourseSchema, minorSchema } from "@/lib/workspace/storage";
@@ -24,7 +25,7 @@ export type Meta = {
 
 const schemas = {
   curriculum: curriculumSchema,
-  electives: z.array(electiveCourseSchema).max(500),
+  electives: z.array(electiveCourseSchema).max(LIMITS.electives),
   minors: z.array(minorSchema).max(200),
 } satisfies Record<DocKind, z.ZodType>;
 

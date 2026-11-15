@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SLOT_KINDS, type Curriculum, type ElectiveCourse, type Minor, type MinorGroup, type PlanTerm, type StudyPlan } from "./curriculum";
+import { LIMITS } from "./curriculum-limits";
 import { arabic, key } from "./extract";
 
 /**
@@ -119,6 +120,14 @@ export function levelOf(courseNo: string): number | undefined {
   return m ? Number(m[1]) * 100 : undefined;
 }
 
+const cut = (s: string, max: number) => s.trim().slice(0, max);
+/** Keep at most `max` entries; the cap is recorded in `dropped`. */
+function cap<T>(list: T[], max: number, dropped: string[], what: string): T[] {
+  if (list.length > max) dropped.push(`${what} (${list.length} > ${max})`);
+  return list.slice(0, max);
+}
+const inRange = (n: number | null | undefined, max: number): n is number => n != null && n >= 0 && n <= max;
+
 export function checkCurriculum(
   source: string,
   reply: CurriculumReply,
@@ -126,9 +135,9 @@ export function checkCurriculum(
 ): { curriculum: Curriculum; dropped: string[] } {
   const dropped: string[] = [];
   const plans: StudyPlan[] = [];
-  for (const p of reply.plans) {
+  for (const p of cap(reply.plans, LIMITS.plans, dropped, "ตัดแผนการศึกษาเกินจำนวนที่รับได้")) {
     const terms: PlanTerm[] = [];
-    for (const t of p.terms) {
+    for (const t of cap(p.terms, LIMITS.terms, dropped, `ตัดภาคเรียนเกินจำนวนที่รับได้: ${p.name}`)) {
       const items: PlanTerm["items"] = [];
       const label = `${p.name} ปี ${t.year} เทอม ${t.semester}`;
       for (const it of t.items) {
@@ -136,25 +145,29 @@ export function checkCurriculum(
           const courseNo = key(it.courseNo);
           if (!validCode(courseNo)) dropped.push(`${it.courseNo}: รหัสวิชาอ่านไม่ได้ (${label})`);
           else if (!codeInSource(source, courseNo)) dropped.push(`${courseNo}: ไม่พบในเอกสาร (${label})`);
-          else items.push({ type: "course", courseNo, title: it.title.trim() || courseNo, credits: it.credits });
+          else items.push({ type: "course", courseNo, title: cut(it.title, LIMITS.text) || courseNo, credits: it.credits });
         } else if (it.slot) {
-          const note = it.note?.trim();
+          const note = it.note ? cut(it.note, LIMITS.text) : "";
           items.push({ type: "slot", kind: it.slot, credits: it.credits, ...(note ? { note } : {}) });
         } else dropped.push(`${it.title}: ไม่มีรหัสวิชาและไม่ใช่ช่องเลือก (${label})`);
       }
-      if (items.length) terms.push({ year: t.year, semester: t.semester, items });
+      const kept = cap(items, LIMITS.items, dropped, `ตัดรายการเกินจำนวนที่รับได้ต่อภาคเรียน: ${label}`);
+      if (kept.length) terms.push({ year: t.year, semester: t.semester, items: kept });
     }
-    if (terms.length) plans.push({ id: `p${plans.length + 1}`, name: p.name.trim(), ...(p.minCredits ? { minCredits: p.minCredits } : {}), terms });
+    const minCredits = inRange(p.minCredits, LIMITS.planCredits) ? p.minCredits : undefined;
+    if (terms.length) plans.push({ id: `p${plans.length + 1}`, name: cut(p.name, LIMITS.text), ...(minCredits ? { minCredits } : {}), terms });
   }
   if (!plans.length) throw new CurriculumError("ไม่พบแผนการศึกษาที่ตรวจสอบกับเอกสารได้");
+  const cohort = (n: number | null) => (n != null && Number.isInteger(n) && n >= 0 && n <= LIMITS.cohort ? n : undefined);
+  const cohortTo = cohort(reply.cohortTo);
   return {
     curriculum: {
-      title: reply.title.trim(),
-      university: meta.university,
-      faculty: meta.faculty,
-      major: meta.major,
-      cohortFrom: reply.cohortFrom ?? meta.cohort,
-      ...(reply.cohortTo ? { cohortTo: reply.cohortTo } : {}),
+      title: cut(reply.title, LIMITS.text),
+      university: cut(meta.university, LIMITS.text),
+      faculty: cut(meta.faculty, LIMITS.text),
+      major: cut(meta.major, LIMITS.text),
+      cohortFrom: cohort(reply.cohortFrom) ?? meta.cohort,
+      ...(cohortTo ? { cohortTo } : {}),
       plans,
       electives: {},
     },
@@ -171,17 +184,18 @@ export function checkElectives(source: string, reply: ElectivesReply): { courses
     else if (!codeInSource(source, courseNo)) dropped.push(`${courseNo}: ไม่พบในเอกสาร`);
     else if (!seen.has(courseNo)) {
       const level = levelOf(courseNo);
-      seen.set(courseNo, { courseNo, title: c.title.trim() || courseNo, ...(c.credits != null ? { credits: c.credits } : {}), ...(level ? { level } : {}) });
+      seen.set(courseNo, { courseNo, title: cut(c.title, LIMITS.text) || courseNo, ...(c.credits != null ? { credits: c.credits } : {}), ...(level ? { level } : {}) });
     }
   }
-  return { courses: [...seen.values()], dropped };
+  return { courses: cap([...seen.values()], LIMITS.electives, dropped, "ตัดวิชาเลือกเกินจำนวนที่รับได้"), dropped };
 }
 
 export function checkMinors(source: string, reply: MinorsReply): { minors: Minor[]; dropped: string[] } {
   const dropped: string[] = [];
   const minors: Minor[] = [];
   for (const m of reply.minors) {
-    if (!m.name.trim()) continue;
+    const name = cut(m.name, LIMITS.text);
+    if (!name) continue;
     const groups: MinorGroup[] = [];
     for (const g of m.groups) {
       const courseNos = new Set<string>();
@@ -195,10 +209,12 @@ export function checkMinors(source: string, reply: MinorsReply): { minors: Minor
           else courseNos.add(code);
         }
       }
-      if (courseNos.size) groups.push({ label: g.label.trim(), ...(g.minCredits != null ? { minCredits: g.minCredits } : {}), courseNos: [...courseNos] });
+      const codes = cap([...courseNos], LIMITS.groupCodes, dropped, `ตัดรหัสวิชาเกินจำนวนที่รับได้ในกลุ่ม ${g.label}: ${name}`);
+      const minCredits = inRange(g.minCredits, LIMITS.credits) ? g.minCredits : undefined;
+      if (codes.length) groups.push({ label: cut(g.label, LIMITS.text), ...(minCredits != null ? { minCredits } : {}), courseNos: codes });
     }
-    const faculty = m.faculty?.trim();
-    minors.push({ name: m.name.trim(), ...(faculty ? { faculty } : {}), rules: m.rules.trim(), groups });
+    const faculty = cut(m.faculty ?? "", LIMITS.text);
+    minors.push({ name, ...(faculty ? { faculty } : {}), rules: cut(m.rules, LIMITS.rules), groups: cap(groups, LIMITS.groups, dropped, `ตัดกลุ่มวิชาโทเกิน ${LIMITS.groups} กลุ่ม: ${name}`) });
   }
   return { minors, dropped };
 }

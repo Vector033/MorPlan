@@ -3,6 +3,7 @@ import { and, desc, eq, lt, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/db";
 import { curricula } from "@/db/schema";
+import { LIMITS } from "@/lib/core/curriculum-limits";
 import { normalizeKey, type Curriculum, type ElectiveCourse, type Minor } from "@/lib/core/curriculum";
 import type { DocKind } from "./read";
 import { parseData, readRow, type Meta } from "./rows";
@@ -47,7 +48,7 @@ export async function getShared(id: string): Promise<{ meta: Meta; curriculum: C
   for (const c of [...(curriculum.electives["major-elective"] ?? []), ...children.flatMap((c) => (readRow(c)?.data as ElectiveCourse[] | undefined) ?? [])]) {
     if (!merged.has(c.courseNo)) merged.set(c.courseNo, c);
   }
-  return { meta: parsed.meta, curriculum: { ...curriculum, electives: { ...curriculum.electives, ...(merged.size ? { "major-elective": [...merged.values()] } : {}) } } };
+  return { meta: parsed.meta, curriculum: { ...curriculum, electives: { ...curriculum.electives, ...(merged.size ? { "major-elective": [...merged.values()].slice(0, LIMITS.electives) } : {}) } } };
 }
 
 export async function minorCatalogs(university: string): Promise<{ meta: Meta; minors: Minor[] }[]> {

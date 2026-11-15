@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SLOT_KINDS } from "@/lib/core/curriculum";
+import { LIMITS } from "@/lib/core/curriculum-limits";
 import { DAYS, type Workspace } from "@/lib/core/types";
 import { emptyWorkspace, VIEW_SEMESTER_MAX, VIEW_YEAR_MAX } from "./reducer";
 
@@ -38,57 +39,57 @@ export const sectionSchema = z.object({
   note: text(200).optional(),
 });
 
-const credits = z.number().min(0).max(30);
+const credits = z.number().min(0).max(LIMITS.credits);
 const source = z.object({
   url: text(500).optional(),
-  title: text(200),
+  title: text(LIMITS.text),
   readAt: text(200),
   provenance: z.enum(["link", "owner", "private"]),
 });
 const planItem = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("course"), courseNo, title: text(200), credits }),
-  z.object({ type: z.literal("slot"), kind: z.enum(SLOT_KINDS), credits, note: text(200).optional() }),
+  z.object({ type: z.literal("course"), courseNo, title: text(LIMITS.text), credits }),
+  z.object({ type: z.literal("slot"), kind: z.enum(SLOT_KINDS), credits, note: text(LIMITS.text).optional() }),
 ]);
 export const electiveCourseSchema = z.object({
   courseNo,
-  title: text(200),
+  title: text(LIMITS.text),
   credits: credits.optional(),
-  level: z.number().int().min(0).max(9).optional(),
+  level: z.number().int().min(0).max(900).optional() // hundreds, as levelOf returns (300 = third-year),
 });
 export const minorSchema = z.object({
-  name: text(200),
-  faculty: text(200).optional(),
-  rules: text(4000),
+  name: text(LIMITS.text),
+  faculty: text(LIMITS.text).optional(),
+  rules: text(LIMITS.rules),
   groups: z
-    .array(z.object({ label: text(200), minCredits: credits.optional(), courseNos: z.array(courseNo).max(200) }))
-    .max(12),
+    .array(z.object({ label: text(LIMITS.text), minCredits: credits.optional(), courseNos: z.array(courseNo).max(LIMITS.groupCodes) }))
+    .max(LIMITS.groups),
 });
 export const curriculumSchema = z.object({
-  title: text(200),
-  university: text(200),
-  faculty: text(200),
-  major: text(200),
-  cohortFrom: z.number().int().min(0).max(99),
-  cohortTo: z.number().int().min(0).max(99).optional(),
+  title: text(LIMITS.text),
+  university: text(LIMITS.text),
+  faculty: text(LIMITS.text),
+  major: text(LIMITS.text),
+  cohortFrom: z.number().int().min(0).max(LIMITS.cohort),
+  cohortTo: z.number().int().min(0).max(LIMITS.cohort).optional(),
   plans: z
     .array(
       z.object({
-        id: text(200),
-        name: text(200),
-        minCredits: z.number().min(0).max(500).optional(),
+        id: text(LIMITS.text),
+        name: text(LIMITS.text),
+        minCredits: z.number().min(0).max(LIMITS.planCredits).optional(),
         terms: z
           .array(
             z.object({
               year: z.number().int().min(1).max(20),
               semester: z.number().int().min(0).max(9),
-              items: z.array(planItem).max(20),
+              items: z.array(planItem).max(LIMITS.items),
             }),
           )
-          .max(20),
+          .max(LIMITS.terms),
       }),
     )
-    .max(8),
-  electives: z.object(Object.fromEntries(SLOT_KINDS.map((k) => [k, z.array(electiveCourseSchema).max(400).optional()]))),
+    .max(LIMITS.plans),
+  electives: z.object(Object.fromEntries(SLOT_KINDS.map((k) => [k, z.array(electiveCourseSchema).max(LIMITS.electives).optional()]))),
 });
 export const curriculumStateSchema = z.object({
   ref: text(200).optional(),
