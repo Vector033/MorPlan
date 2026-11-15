@@ -1,7 +1,7 @@
 /**
  * README / portfolio screenshots from a real deployment, using the built-in demo data.
  *   npx tsx scripts/screenshots.mts [baseUrl]   (default https://morplan.vercel.app)
- * Writes docs/screenshots/{planner,drag,compare,ask,mobile}.png at 2x.
+ * Writes docs/screenshots/{planner,drag,compare,ask,mobile,curriculum-setup,curriculum,curriculum-electives,curriculum-progress}.png at 2x.
  */
 import { chromium, devices, type Page } from "@playwright/test";
 
@@ -86,6 +86,39 @@ await chip.waitFor({ timeout: 60_000 });
 await chip.click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: out("ask") });
+
+// Curriculum advisor: pick university, faculty and major from the TCAS lists, then the co-op plan.
+const cur = await (await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 2, locale: "th-TH" })).newPage();
+await cur.goto(`${base}/curriculum`);
+await cur.getByLabel("คณะ", { exact: true }).selectOption("วิทยาศาสตร์");
+await cur.getByLabel("สาขา", { exact: true }).selectOption("วิทยาการคอมพิวเตอร์");
+await cur.getByLabel("รหัสปีที่เข้า").selectOption("67");
+await cur.getByRole("button", { name: "ค้นหาหลักสูตร" }).click();
+await cur.getByRole("button", { name: "ใช้หลักสูตรนี้" }).waitFor();
+/** Scrolls so the heading sits just under the sticky site header. */
+const scrollTo = (name: string | RegExp) =>
+  cur.getByRole("heading", { name }).evaluate((h) => window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 110));
+await cur.mouse.move(0, 0);
+await scrollTo("บอกเราว่าเรียนอะไร");
+await cur.waitForTimeout(500);
+await cur.screenshot({ path: out("curriculum-setup") });
+await cur.getByRole("button", { name: "ใช้หลักสูตรนี้" }).click();
+await cur.getByLabel("สหกิจศึกษา", { exact: true }).check();
+await cur.getByRole("button", { name: "ยืนยันแผนการเรียน" }).click();
+await cur.getByRole("heading", { name: /เทอมนี้ตามแผน/ }).waitFor();
+// A third-year student: everything up to year 3 term 1 passed.
+for (const [y, s] of [[1, 1], [1, 2], [2, 1], [2, 2], [3, 1]]) await cur.getByRole("button", { name: `ติ๊กทั้งเทอม ปี ${y} เทอม ${s}` }).click();
+await cur.mouse.move(0, 0);
+await cur.evaluate(() => window.scrollTo(0, 0));
+await cur.waitForTimeout(800);
+await cur.screenshot({ path: out("curriculum") });
+await cur.getByRole("button", { name: /ดูวิชาที่เลือกได้/ }).first().click();
+await scrollTo(/เทอมนี้ตามแผน/);
+await cur.waitForTimeout(500);
+await cur.screenshot({ path: out("curriculum-electives") });
+await scrollTo("ความคืบหน้า");
+await cur.waitForTimeout(500);
+await cur.screenshot({ path: out("curriculum-progress") });
 
 await browser.close();
 console.log("saved to docs/screenshots/");

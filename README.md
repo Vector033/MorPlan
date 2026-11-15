@@ -1,6 +1,6 @@
 # MorPlan
 
-**Plan a CMU timetable by drag and drop, see class and exam clashes instantly, and ask the university's rules in Thai with page citations.**
+**Plan a CMU timetable by drag and drop, see class and exam clashes instantly, ask the university's rules in Thai with page citations, and follow your curriculum term by term.**
 
 **Live:** https://morplan.vercel.app
 
@@ -16,7 +16,19 @@
 |---|---|
 | ![Ask](docs/screenshots/ask.png) | <img src="docs/screenshots/mobile.png" alt="Phone view" width="300"> |
 
-Screenshots are taken from the live site with the built-in demo data: `npx tsx scripts/screenshots.mts`.
+### Curriculum advisor
+
+Pick university, faculty and major from lists (every TCAS university), add the year you entered, and MorPlan finds your curriculum and study plan. Tick what you have passed; it shows this term's courses, overdue ones, the electives you can take and how far along you are.
+
+| Choose from lists, then pick the matching curriculum | This term in the co-op plan |
+|---|---|
+| ![Curriculum setup](docs/screenshots/curriculum-setup.png) | ![Curriculum term view](docs/screenshots/curriculum.png) |
+
+| Electives you can still take | Progress by category and term |
+|---|---|
+| ![Electives](docs/screenshots/curriculum-electives.png) | ![Progress](docs/screenshots/curriculum-progress.png) |
+
+Screenshots are taken from the live site with the built-in demo data and the shared CMU computer science curriculum: `npx tsx scripts/screenshots.mts`.
 
 ## What it does
 
@@ -24,6 +36,8 @@ Screenshots are taken from the live site with the built-in demo data: `npx tsx s
 - **Clash checks.** Class meetings (lecture and lab are checked separately), midterms, finals, and the same course placed twice are all flagged. Exam slots come from the Registration Office's *public* exam timetable.
 - **Plans A–E.** Compare them side by side: credits, clashes, free days, earliest and latest class. Share a read-only link, or export `.ics` (weekly series that skips midterm weeks, plus exam events) or a PNG.
 - **Rule Q&A.** Answers questions about the undergraduate regulations, exam and discipline rules, fees, the 2569 academic calendar and the Registration Office's guides. Every answer shows the document title and page with a link to the official PDF. If the answer isn't in the documents it says **"ไม่พบ"**, and every answer ends with "ตรวจสอบกับประกาศทางการอีกครั้ง".
+- **Curriculum advisor.** `/curriculum` asks for university, faculty, major and entry year. Faculties and majors come as lists for every university on TCAS, with a "type it yourself" way out. MorPlan looks for a curriculum someone has already confirmed; if there is none, it finds the faculty's curriculum page or reads a link, PDF or pasted text with AI, shows what it read for you to check, and drops any course code that is not in the document. Then it shows this term's courses from your study plan (normal, co-op or fast track), courses left over from earlier terms, the electives you can still take, minors and your credits by category. Tick what you have passed; MorPlan never asks for reg passwords or grades.
+- **Other universities.** `/import` also takes another university's registration page. AI reads the pasted page into sections, and every course code and time is checked against the text before it is kept.
 - **Account (optional).** Sign in with email or Google to open the same plans on every device. `/account` lets you set a display name, see your sign-in methods, change or set a password (the current one is asked first, and other devices are signed out), sign out everywhere, and delete the account with all saved plans. Every password field has a show/hide button.
 
 ## Where the data comes from (and what MorPlan refuses to do)
@@ -118,4 +132,4 @@ npm run dev -- -p 3100
 - Deployed 2026-11-04 to Vercel (`morplan.vercel.app`) with a hosted Supabase project (Auth + Postgres) in ap-southeast-1. The Playwright suite runs against it with `E2E_BASE_URL=https://morplan.vercel.app npm run test:e2e`.
 - No real users or usage numbers yet; anonymous counters (imports, shares, questions) are in place.
 - The reg import parser was written without a real logged-in results page, because that page isn't public. A saved sample in `samples/` will become a test fixture.
-- Curriculum advisor (`/curriculum`, branch `feat/curriculum`, not deployed): set up a curriculum from a shared record or a university web page / PDF / pasted text, term view, progress, electives, minors. Checked on real documents locally (CMU seed, KMUTT page); production seed and deploy are the owner's call. See `HANDOFF.md`.
+- Curriculum advisor (`/curriculum`) deployed 2026-11-15 with the CMU computer science curriculum (64+), its major electives and the CMU minors list seeded on production; faculty and major lists from TCAS. Other curricula are read on demand. See `HANDOFF.md`.
