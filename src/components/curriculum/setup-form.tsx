@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { covers, type Curriculum, type Source } from "@/lib/core/curriculum";
 import { isCmu } from "@/lib/core/university";
@@ -8,7 +8,8 @@ import { CURRENT_TERM } from "@/lib/terms";
 import type { Meta } from "@/lib/curriculum/rows";
 import universities from "../../../data/universities-th.json";
 import { ConfirmPreview } from "./confirm-preview";
-import { rangeLabel, thaiDate } from "./format";
+import { DISCLAIMER, rangeLabel, thaiDate } from "./format";
+import { useReveal } from "./use-reveal";
 
 const MAX_PDF = 3_000_000;
 const CMU = "มหาวิทยาลัยเชียงใหม่";
@@ -16,8 +17,8 @@ const THIS_YEAR = Number(CURRENT_TERM.split("/")[1]);
 const YEARS = Array.from({ length: 10 }, (_, i) => THIS_YEAR - i);
 
 type Link = { url: string; label: string };
-type Preview = { data: Curriculum; dropped: string[]; sourceTitle: string; sourceUrl?: string; pendingId?: string };
-type Picked = { data: Curriculum; source: Source; ref?: string };
+type Preview = { cohort: number; readAt: string; data: Curriculum; dropped: string[]; sourceTitle: string; sourceUrl?: string; pendingId?: string };
+type Picked = { cohort: number; data: Curriculum; source: Source; ref?: string };
 type Tab = "url" | "pdf" | "text";
 type Body = Record<string, unknown> & { error?: string };
 
@@ -53,7 +54,7 @@ const sharedSource = (m: Meta): Source => ({ url: m.sourceUrl, title: m.sourceTi
 
 function Skeleton({ text }: { text: string }) {
   return (
-    <div className="card flex flex-col gap-3 p-4" aria-busy="true" aria-live="polite">
+    <div className="card flex flex-col gap-3 p-4" aria-busy="true">
       <p className="text-sm">{text}</p>
       <div className="h-4 w-2/3 animate-pulse rounded-xs bg-canvas" />
       <div className="h-4 w-1/2 animate-pulse rounded-xs bg-canvas" />
@@ -111,7 +112,14 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
   const [picked, setPicked] = useState<Picked | null>(null);
   const [planId, setPlanId] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [searchErr, setSearchErr] = useState<string | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [findErr, setFindErr] = useState<string | null>(null);
+  const [readErr, setReadErr] = useState<string | null>(null);
+  const [confirmErr, setConfirmErr] = useState<string | null>(null);
+  // Every request takes a ticket; a response whose ticket is no longer the latest belongs to old input and is dropped.
+  const ticket = useRef(0);
+  const locked = useRef(false);
 
   const cohortNo = Number(cohort);
   const complete = university.trim().length >= 2 && faculty.trim() !== "" && major.trim() !== "" && cohort !== "";
@@ -122,45 +130,72 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
 
   const scope = () => ({ university: university.trim(), faculty: faculty.trim(), major: major.trim() });
 
+  const candRef = useReveal<HTMLHeadingElement>(searched && candidates.length > 0);
+  const linksRef = useReveal<HTMLHeadingElement>(!!links && !finding);
+  const planRef = useReveal<HTMLHeadingElement>(!!picked);
+  const status = searching ? "กำลังค้นหาหลักสูตร…" : finding ? "กำลังหาหน้าหลักสูตรจากเว็บคณะ…" : reading ? "กำลังอ่านหลักสูตร… ใช้เวลาไม่เกินหนึ่งนาที" : "";
+
+  /** Invalidates every request in flight and clears their loading flags. */
+  function begin(): number {
+    locked.current = false;
+    setSearching(false);
+    setFinding(false);
+    setReading(false);
+    setBusy(false);
+    return ++ticket.current;
+  }
+
   function reset() {
+    begin();
     setSearched(false);
     setCandidates([]);
     setLinks(null);
     setPreview(null);
     setPicked(null);
-    setError(null);
+    setSearchErr(null);
+    setLoadErr(null);
+    setFindErr(null);
+    setReadErr(null);
+    setConfirmErr(null);
   }
 
   async function search(e: React.FormEvent) {
     e.preventDefault();
     reset();
+    const id = ticket.current;
+    const cohortAtStart = cohortNo;
     setSearching(true);
     const s = scope();
     const { ok, body } = await call(
       `/api/curriculum?university=${encodeURIComponent(s.university)}&faculty=${encodeURIComponent(s.faculty)}&major=${encodeURIComponent(s.major)}`,
     );
+    if (id !== ticket.current) return;
     setSearching(false);
-    if (!ok) return setError(body.error ?? "ค้นหาไม่สำเร็จ ลองใหม่อีกครั้ง");
+    if (!ok) return setSearchErr(body.error ?? "ค้นหาไม่สำเร็จ ลองใหม่อีกครั้ง");
     const found = (body.candidates as Meta[] | undefined) ?? [];
     setCandidates(found);
-    const best = found.find((c) => covers({ cohortFrom: c.cohortFrom ?? 0, cohortTo: c.cohortTo }, cohortNo)) ?? found[0];
+    const best = found.find((c) => covers({ cohortFrom: c.cohortFrom ?? 0, cohortTo: c.cohortTo }, cohortAtStart)) ?? found[0];
     setChosenId(best?.id ?? "");
     setSearched(true);
     if (!found.length) void find();
   }
 
   async function find() {
+    const id = begin();
     setFinding(true);
     setLinks(null);
+    setFindErr(null);
     const { ok, body } = await call("/api/curriculum/find", scope());
+    if (id !== ticket.current) return;
     setFinding(false);
-    const found = ok ? ((body.links as Link[] | undefined) ?? []) : [];
+    if (!ok) return setFindErr(body.error ?? "หาลิงก์ไม่สำเร็จ ลองใหม่อีกครั้ง");
+    const found = (body.links as Link[] | undefined) ?? [];
     setLinks(found);
     setLinkUrl(found[0]?.url ?? "");
   }
 
   function finish(p: Picked, plan: string) {
-    dispatch({ type: "setCurriculum", curriculum: { ref: p.ref, data: p.data, source: p.source, cohort: cohortNo, planId: plan, passed: [], doneSlots: [] } });
+    dispatch({ type: "setCurriculum", curriculum: { ref: p.ref, data: p.data, source: p.source, cohort: p.cohort, planId: plan, passed: [], doneSlots: [] } });
     onDone();
   }
   function pick(p: Picked) {
@@ -170,25 +205,39 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
     } else finish(p, p.data.plans[0].id);
   }
 
-  async function loadShared(id: string) {
+  async function loadShared(sharedId: string) {
+    if (locked.current) return;
+    const id = begin();
+    locked.current = true;
+    const cohortAtStart = cohortNo;
     setBusy(true);
-    setError(null);
-    const { ok, body } = await call(`/api/curriculum/${id}`);
+    setLoadErr(null);
+    const { ok, body } = await call(`/api/curriculum/${sharedId}`);
+    if (id !== ticket.current) return;
     setBusy(false);
-    if (!ok) return setError(body.error ?? "เปิดหลักสูตรนี้ไม่ได้ ลองใหม่อีกครั้ง");
+    if (!ok) {
+      locked.current = false;
+      return setLoadErr(body.error ?? "เปิดหลักสูตรนี้ไม่ได้ ลองใหม่อีกครั้ง");
+    }
     const m = body.meta as Meta;
-    pick({ data: body.curriculum as Curriculum, ref: m.id, source: sharedSource(m) });
+    pick({ cohort: cohortAtStart, data: body.curriculum as Curriculum, ref: m.id, source: sharedSource(m) });
   }
 
   async function read(source: Record<string, unknown>) {
+    const id = begin();
+    const cohortAtStart = cohortNo;
     setReading(true);
-    setError(null);
+    setReadErr(null);
+    setConfirmErr(null);
     setPreview(null);
-    const { ok, body } = await call("/api/curriculum/read", { kind: "curriculum", ...scope(), cohort: cohortNo, source });
+    const { ok, body } = await call("/api/curriculum/read", { kind: "curriculum", ...scope(), cohort: cohortAtStart, source });
+    if (id !== ticket.current) return;
     setReading(false);
-    if (!ok) return setError(body.error ?? "อ่านหลักสูตรไม่สำเร็จ ลองใหม่อีกครั้ง");
+    if (!ok) return setReadErr(body.error ?? "อ่านหลักสูตรไม่สำเร็จ ลองใหม่อีกครั้ง");
     const p = body.preview as { data: Curriculum; dropped: string[] };
     setPreview({
+      cohort: cohortAtStart,
+      readAt: new Date().toISOString().slice(0, 10),
       data: p.data,
       dropped: p.dropped,
       sourceTitle: String(body.sourceTitle ?? ""),
@@ -201,34 +250,40 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
     if (tab === "url") return read({ url: url.trim() });
     if (tab === "text") return read({ text });
     if (!file) return;
-    if (file.size > MAX_PDF) return setError("ไฟล์ใหญ่เกิน 3 MB ลองตัดเฉพาะหน้าแผนการศึกษา หรือวางข้อความแทน");
+    if (file.size > MAX_PDF) return setReadErr("ไฟล์ใหญ่เกิน 3 MB ลองตัดเฉพาะหน้าแผนการศึกษา หรือวางข้อความแทน");
     try {
       await read({ pdfBase64: await toBase64(file), name: file.name });
     } catch {
-      setError("เปิดไฟล์นี้ไม่ได้ ลองไฟล์อื่น");
+      setReadErr("เปิดไฟล์นี้ไม่ได้ ลองไฟล์อื่น");
     }
   }
 
   async function confirmPreview(from: number, to?: number) {
-    if (!preview) return;
-    setBusy(true);
-    setError(null);
+    if (!preview || locked.current) return;
+    const id = begin();
+    locked.current = true; // stays set after success so a second click can never dispatch twice
+    setConfirmErr(null);
     if (preview.pendingId) {
-      const c = await call("/api/curriculum/confirm", { id: preview.pendingId, cohortFrom: from, cohortTo: to });
-      if (!c.ok) {
+      setBusy(true);
+      const fail = (msg: string) => {
+        locked.current = false;
         setBusy(false);
-        return setError(c.body.error ?? "ยืนยันไม่สำเร็จ ลองใหม่อีกครั้ง");
-      }
+        setConfirmErr(msg);
+      };
+      const c = await call("/api/curriculum/confirm", { id: preview.pendingId, cohortFrom: from, cohortTo: to });
+      if (id !== ticket.current) return;
+      if (!c.ok) return fail(c.body.error ?? "ยืนยันไม่สำเร็จ ลองใหม่อีกครั้ง");
       const g = await call(`/api/curriculum/${preview.pendingId}`);
+      if (id !== ticket.current) return;
+      if (!g.ok) return fail(g.body.error ?? "เปิดหลักสูตรนี้ไม่ได้ ลองใหม่อีกครั้ง");
       setBusy(false);
-      if (!g.ok) return setError(g.body.error ?? "เปิดหลักสูตรนี้ไม่ได้ ลองใหม่อีกครั้ง");
       const m = g.body.meta as Meta;
-      return pick({ data: g.body.curriculum as Curriculum, ref: m.id, source: sharedSource(m) });
+      return pick({ cohort: preview.cohort, data: g.body.curriculum as Curriculum, ref: m.id, source: sharedSource(m) });
     }
-    setBusy(false);
     pick({
+      cohort: preview.cohort,
       data: { ...preview.data, cohortFrom: from, cohortTo: to },
-      source: { url: preview.sourceUrl, title: preview.sourceTitle, readAt: new Date().toISOString().slice(0, 10), provenance: "private" },
+      source: { url: preview.sourceUrl, title: preview.sourceTitle, readAt: preview.readAt, provenance: "private" },
     });
   }
 
@@ -251,7 +306,7 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
         }}
       >
         <div className="bar">
-          <h2 id="plan-h">แผนการเรียน</h2>
+          <h2 id="plan-h" ref={planRef} tabIndex={-1}>แผนการเรียน</h2>
         </div>
         <fieldset className="flex flex-col gap-2 p-4">
           <legend className="sr-only">แผนการเรียน</legend>
@@ -337,16 +392,19 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
         </div>
       </form>
 
-      {error && (
+      <p aria-live="polite" className="sr-only">
+        {status}
+      </p>
+      {searchErr && (
         <p role="alert" className="error-note">
-          {error}
+          {searchErr}
         </p>
       )}
 
       {searched && candidates.length > 0 && (
         <section className="card anim-rise" aria-labelledby="cand-h">
           <div className="bar">
-            <h2 id="cand-h">เจอ {candidates.length} ฉบับ เลือกอันที่ตรง</h2>
+            <h2 id="cand-h" ref={candRef} tabIndex={-1}>เจอ {candidates.length} ฉบับ เลือกอันที่ตรง</h2>
           </div>
           <fieldset className="flex flex-col gap-2 p-4">
             <legend className="sr-only">หลักสูตรที่พบ</legend>
@@ -365,11 +423,17 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
                 </span>
               </Radio>
             ))}
+            <p className="text-xs text-muted">{DISCLAIMER}</p>
+            {loadErr && (
+              <p role="alert" className="error-note">
+                {loadErr}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              <button type="button" className="btn-primary" disabled={!chosenId || busy} onClick={() => loadShared(chosenId)}>
+              <button type="button" className="btn-primary" disabled={!chosenId || busy || finding || reading} onClick={() => loadShared(chosenId)}>
                 ใช้หลักสูตรนี้
               </button>
-              <button type="button" className="btn-ghost" onClick={find}>
+              <button type="button" className="btn-ghost" disabled={busy || finding || reading} onClick={find}>
                 ไม่ใช่ฉบับนี้ เพิ่มจากลิงก์อื่น
               </button>
             </div>
@@ -378,10 +442,15 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
       )}
 
       {finding && <Skeleton text="กำลังหาหน้าหลักสูตรจากเว็บคณะ…" />}
+      {findErr && !finding && (
+        <p role="alert" className="error-note">
+          {findErr}
+        </p>
+      )}
       {links && !finding && (
         <section className="card anim-rise" aria-labelledby="links-h">
           <div className="bar">
-            <h2 id="links-h">{links.length ? `เจอ ${links.length} ลิงก์ที่อาจใช่ เลือกอันที่ตรง` : "ยังไม่เจอหน้าหลักสูตร"}</h2>
+            <h2 id="links-h" ref={linksRef} tabIndex={-1}>{links.length ? `เจอ ${links.length} ลิงก์ที่อาจใช่ เลือกอันที่ตรง` : "ยังไม่เจอหน้าหลักสูตร"}</h2>
           </div>
           <div className="flex flex-col gap-2 p-4">
             {links.length === 0 && <p className="text-sm text-muted">ลองวางลิงก์ อัปโหลด PDF หรือวางข้อความจากด้านล่างแทน</p>}
@@ -395,7 +464,7 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
                   </Radio>
                 ))}
                 <div className="pt-2">
-                  <button type="button" className="btn-primary" disabled={!linkUrl || reading} onClick={() => read({ url: linkUrl })}>
+                  <button type="button" className="btn-primary" disabled={!linkUrl || reading || busy} onClick={() => read({ url: linkUrl })}>
                     อ่านหลักสูตรจากลิงก์นี้
                   </button>
                 </div>
@@ -459,16 +528,28 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
         </section>
       )}
 
+      {readErr && !reading && (
+        <p role="alert" className="error-note">
+          {readErr}
+        </p>
+      )}
       {reading && <Skeleton text="กำลังอ่านหลักสูตร… ใช้เวลาไม่เกินหนึ่งนาที" />}
       {preview && !reading && (
         <ConfirmPreview
           result={preview}
           sourceTitle={preview.sourceTitle}
           sourceUrl={preview.sourceUrl}
-          cohort={cohortNo}
+          cohort={preview.cohort}
+          readAt={preview.readAt}
+          busy={busy}
           onConfirm={confirmPreview}
           onCancel={() => setPreview(null)}
         />
+      )}
+      {confirmErr && preview && !reading && (
+        <p role="alert" className="error-note">
+          {confirmErr}
+        </p>
       )}
     </>
   );

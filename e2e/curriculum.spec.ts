@@ -51,9 +51,46 @@ test("set up a curriculum from a shared record", async ({ page }) => {
   // Two versions of one program: the one covering cohort 67 is preselected, the other stays selectable.
   await expect(page.getByRole("radio", { name: /ใช้กับรหัส 64 เป็นต้นไป/ })).toBeChecked();
   await expect(page.getByRole("radio", { name: /รหัส 59–62/ })).not.toBeChecked();
+  await expect(page.getByText("อ่านโดย AI ตรวจสอบกับเอกสารของคณะอีกครั้ง")).toBeVisible();
   await page.getByRole("button", { name: "ใช้หลักสูตรนี้" }).click();
   await page.getByLabel("แผนสหกิจศึกษา").check();
   await page.getByRole("button", { name: "ยืนยันแผนการเรียน" }).click();
   await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toBeVisible();
   await expect(page.getByText("อ่านโดย AI ตรวจสอบกับเอกสารของคณะอีกครั้ง")).toBeVisible();
+});
+
+test("a pasted document stays private, is never confirmed on the server, and a double click saves once", async ({ page }) => {
+  let confirmCalls = 0;
+  let readBody: unknown;
+  await page.route("**/api/curriculum**", async (r) => {
+    const { pathname } = new URL(r.request().url());
+    if (pathname === "/api/curriculum") return r.fulfill({ json: { candidates: [] } });
+    if (pathname.endsWith("/find")) return r.fulfill({ json: { links: [] } });
+    if (pathname.endsWith("/confirm")) {
+      confirmCalls++;
+      return r.fulfill({ json: { ok: true } });
+    }
+    if (pathname.endsWith("/read")) {
+      readBody = r.request().postDataJSON();
+      return r.fulfill({ json: { preview: { kind: "curriculum", data: { ...curriculum, plans: [COOP] }, dropped: ["999999", "888888"] }, sourceTitle: "เอกสารที่วางเอง" } });
+    }
+    return r.fulfill({ json: { options: [] } });
+  });
+  await page.goto("/curriculum");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
+  await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
+  await page.getByLabel("รหัสปีที่เข้า").selectOption("67");
+  await page.getByRole("button", { name: "ค้นหาหลักสูตร" }).click();
+  await expect(page.getByText("ยังไม่เจอหน้าหลักสูตร")).toBeVisible();
+  await page.getByText("วางข้อความ", { exact: true }).click();
+  await page.getByLabel("ข้อความจากเอกสารหลักสูตร").fill("แผนการศึกษา 204321 Database Systems");
+  await page.getByRole("button", { name: "อ่านหลักสูตร", exact: true }).click();
+  await expect(page.getByText("ตัดออก 2 รายการที่ไม่พบในเอกสาร")).toBeVisible();
+  await expect(page.getByText("อ่านโดย AI ตรวจสอบกับเอกสารของคณะอีกครั้ง")).toBeVisible();
+  expect(readBody).toMatchObject({ kind: "curriculum", cohort: 67, source: { text: "แผนการศึกษา 204321 Database Systems" } });
+  await page.getByRole("button", { name: "ใช่ หลักสูตรนี้" }).dblclick();
+  await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toHaveCount(1);
+  expect(confirmCalls).toBe(0);
 });

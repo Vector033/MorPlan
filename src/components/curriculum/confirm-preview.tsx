@@ -3,23 +3,27 @@
 import { useState } from "react";
 import type { Curriculum } from "@/lib/core/curriculum";
 import { DISCLAIMER, KIND_LABEL, thaiDate } from "./format";
+import { useReveal } from "./use-reveal";
 
 type Props = {
   result: { data: Curriculum; dropped: string[] };
   sourceTitle: string;
   sourceUrl?: string;
   cohort: number;
+  /** The day the server read the document (YYYY-MM-DD). */
+  readAt: string;
+  busy?: boolean;
   onConfirm: (cohortFrom: number, cohortTo?: number) => void;
   onCancel: () => void;
 };
 
 const credits = (items: { credits: number }[]) => items.reduce((n, i) => n + i.credits, 0);
 
-export function ConfirmPreview({ result, sourceTitle, sourceUrl, cohort, onConfirm, onCancel }: Props) {
+export function ConfirmPreview({ result, sourceTitle, sourceUrl, cohort, readAt, busy, onConfirm, onCancel }: Props) {
+  const headingRef = useReveal<HTMLHeadingElement>(true);
   const { data, dropped } = result;
   const [from, setFrom] = useState(String(data.cohortFrom || cohort));
   const [to, setTo] = useState(data.cohortTo === undefined ? "" : String(data.cohortTo));
-  const [readAt] = useState(() => new Date().toISOString());
   const f = Number(from);
   const t = to.trim() === "" ? undefined : Number(to);
   const validFrom = from.trim() !== "" && Number.isInteger(f) && f >= 0 && f <= 99;
@@ -29,7 +33,7 @@ export function ConfirmPreview({ result, sourceTitle, sourceUrl, cohort, onConfi
   return (
     <section className="card anim-rise" aria-labelledby="confirm-h">
       <div className="bar">
-        <h2 id="confirm-h">นี่คือหลักสูตรของคุณใช่ไหม</h2>
+        <h2 id="confirm-h" ref={headingRef} tabIndex={-1}>นี่คือหลักสูตรของคุณใช่ไหม</h2>
       </div>
       <div className="flex flex-col gap-4 p-4">
         <div>
@@ -111,7 +115,7 @@ export function ConfirmPreview({ result, sourceTitle, sourceUrl, cohort, onConfi
         <p className="text-xs text-muted">{DISCLAIMER}</p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className="btn-primary" disabled={!(validFrom && validTo)} onClick={() => onConfirm(f, t)}>
+          <button type="button" className="btn-primary" disabled={!(validFrom && validTo) || busy} onClick={() => onConfirm(f, t)}>
             ใช่ หลักสูตรนี้
           </button>
           <button type="button" className="btn-ghost" onClick={onCancel}>
