@@ -45,9 +45,9 @@ $S --kind curriculum --university "มหาวิทยาลัยเชีย
 $S --kind electives --university "มหาวิทยาลัยเชียงใหม่" --faculty "วิทยาศาสตร์" --major "วิทยาการคอมพิวเตอร์" --cohort-from 64 --parent <id> --url "${B}64_major_elective" --yes
 $S --kind minors --university "มหาวิทยาลัยเชียงใหม่" --file "C:/Users/User/Desktop/cmu-reg-u-2-1.pdf" --title "บัญชีวิชาโท มหาวิทยาลัยเชียงใหม่ พ.ศ. 2565" --yes
 ```
-seed ลง local แล้ว (curriculum zgGdfbVQLX, electives w4nLRPgr4S, minors ImpaWH6VSM) · **seed prod เป็นขั้นตอนของ owner ยังไม่ได้รัน**
+seed ลง local แล้ว (curriculum zgGdfbVQLX, electives w4nLRPgr4S, minors ImpaWH6VSM) · **prod seed แล้ว 2026-11-15**: curriculum nJaojkUCsG (link, รหัส 64+), electives xW_JjZxUmE (link, 52 วิชา), minors 7iSmmI-6Ot (owner, 91 สาขา) · migration 0003 รันบน prod ด้วย `MIGRATE_DATABASE_URL`; seed ใช้ `DATABASE_URL` ของ prod + `--allow-remote`
 
-## ที่ปรึกษาหลักสูตร (branch feat/curriculum, ยังไม่ merge/deploy)
+## ที่ปรึกษาหลักสูตร (merge เข้า main 90c21f1, deploy แล้ว 2026-11-15, prod e2e 29 ผ่าน / 1 ข้าม)
 
 **ที่ทำแล้ว:** หน้า `/curriculum` (ตั้งค่า → ยืนยัน → ดูเทอมนี้ตามแผน, ความคืบหน้า, วิชาเลือก, วิชาโท), API `/api/curriculum/*`, ตาราง `curricula` กลาง (หลักสูตรที่อ่านจากเว็บ .ac.th เก็บพร้อมลิงก์ต้นทาง; ไฟล์ที่อัปโหลด/ข้อความที่วางอยู่กับนักศึกษา), เชื่อมกับ planner และหน้า import, สคริปต์ seed (ดูหัวข้อ Seed ด้านบน), หัวข้อ "หลักสูตรและวิชาโท" ในหน้า about
 
