@@ -80,6 +80,23 @@ test("set up a curriculum from a shared record", async ({ page }) => {
   await expect(page.getByText("018131").first()).toBeVisible();
   await page.reload();
   await expect(page.getByText("204306").first()).toBeVisible(); // state survives a reload
+  // Wanted courses without sections point to the import page, the planner shows this term's plan.
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "ยังไม่มีตอนเรียน" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "ดูหลักสูตร" })).toBeVisible();
+  await page.goto("/import");
+  await expect(page.getByText("ค้นรหัสเหล่านี้ในเว็บลงทะเบียน:")).toBeVisible();
+});
+
+test("without a curriculum the planner and import pages show no curriculum prompts", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  for (const path of ["/", "/import"]) {
+    await page.goto(path);
+    await expect(page.getByText("ยังไม่มีตอนเรียน")).toHaveCount(0);
+    await expect(page.getByText("ดูหลักสูตร")).toHaveCount(0);
+    await expect(page.getByText("ค้นรหัสเหล่านี้ในเว็บลงทะเบียน:")).toHaveCount(0);
+  }
 });
 
 test("a pasted document stays private, is never confirmed on the server, and a double click saves once", async ({ page }) => {

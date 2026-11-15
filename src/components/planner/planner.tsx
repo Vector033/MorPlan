@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VolumeOffIcon, VolumeOnIcon, WarningIcon, XIcon } from "@/components/icons";
 import { conflictedIds, findConflicts } from "@/lib/core/conflicts";
+import { termPosition, termView } from "@/lib/core/curriculum";
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
@@ -51,7 +52,13 @@ export function Planner() {
   );
 
   const placedByCourse = useMemo(() => new Map(placed.map((s) => [s.courseNo, s])), [placed]);
-  const titleOf = (courseNo: string) => ws.pool.find((s) => s.courseNo === courseNo)?.title ?? "";
+  const cur = ws.curriculum;
+  const curPlan = cur?.data.plans.find((p) => p.id === cur.planId);
+  const curTitle = (courseNo: string) => {
+    const named = [...(curPlan?.terms.flatMap((t) => t.items) ?? []), ...Object.values(cur?.data.electives ?? {}).flat()].filter((i) => "courseNo" in i);
+    return named.find((i) => i.courseNo === courseNo)?.title ?? "";
+  };
+  const titleOf = (courseNo: string) => ws.pool.find((s) => s.courseNo === courseNo)?.title ?? curTitle(courseNo);
   const courseFromId = (id: string | number) => String(id).replace(/^(course|block):/, "").split(/[-:]/)[0];
 
   const ghosts: Ghost[] = useMemo(() => {
@@ -124,11 +131,13 @@ export function Planner() {
           ) : (
             <CourseSearch />
           )}
+          {cur && curPlan && <TermCard view={termView(curPlan, cur.viewTerm ?? termPosition(cur.cohort, ws.term), cur)} />}
           <Tray
             courseNos={plan.courseNos}
             placedByCourse={placedByCourse}
             clashIds={clashSet}
             titleOf={titleOf}
+            hasSections={(c) => sectionsOfCourse(ws, c).length > 0}
             onPick={setPicking}
             onRemove={(c) => dispatch({ type: "unwantCourse", courseNo: c })}
             dragging={!!dragCourse && dragFromCalendar(dragCourse, placedByCourse)}
@@ -285,6 +294,7 @@ function Tray({
   placedByCourse,
   clashIds,
   titleOf,
+  hasSections,
   onPick,
   onRemove,
   dragging,
@@ -293,6 +303,7 @@ function Tray({
   placedByCourse: Map<string, Section>;
   clashIds: ReadonlySet<string>;
   titleOf: (c: string) => string;
+  hasSections: (c: string) => boolean;
   onPick: (c: string) => void;
   onRemove: (c: string) => void;
   dragging: boolean;
@@ -324,6 +335,7 @@ function Tray({
                 order={courseNos}
                 title={titleOf(c)}
                 placed={placed}
+                noSections={!hasSections(c)}
                 clashed={placed ? clashIds.has(placed.id) : false}
                 onPick={() => onPick(c)}
                 onRemove={() => onRemove(c)}
@@ -337,6 +349,49 @@ function Tray({
 }
 
 function TrayItem({
+  courseNo,
+  order,
+  title,
+  placed,
+  noSections,
+  clashed,
+  onPick,
+  onRemove,
+}: {
+  courseNo: string;
+  order: string[];
+  title: string;
+  placed?: Section;
+  noSections: boolean;
+  clashed: boolean;
+  onPick: () => void;
+  onRemove: () => void;
+}) {
+  if (noSections)
+    return (
+      <li className="flex items-center gap-1 bg-white px-2 py-2 hover:bg-canvas">
+        <div className="flex min-w-0 flex-1 items-center gap-3 py-0.5">
+          <span className={`grid size-9 shrink-0 place-items-center rounded-full font-mono text-xs font-bold tabular-nums ${colorFor(courseNo, order).dot}`} aria-hidden>
+            {order.indexOf(courseNo) + 1}
+          </span>
+          <span className="min-w-0">
+            <span className="block font-mono text-sm font-bold tabular-nums">{courseNo}</span>
+            <span className="block truncate text-xs text-muted" title={title}>{title}</span>
+          </span>
+        </div>
+        <Link href="/import" className="btn min-h-8 px-2 text-xs">
+          ยังไม่มีตอนเรียน
+        </Link>
+        <button type="button" onClick={onRemove} className="btn-ghost size-8 p-0" aria-label={`เอา ${courseNo} ออก`}>
+          <XIcon className="size-3.5" />
+        </button>
+      </li>
+    );
+  return <TrayDraggable courseNo={courseNo} order={order} title={title} placed={placed} clashed={clashed} onPick={onPick} onRemove={onRemove} />;
+}
+
+// Split from TrayItem so a course without sections never registers with useDraggable.
+function TrayDraggable({
   courseNo,
   order,
   title,
@@ -396,6 +451,31 @@ function TrayItem({
         <XIcon className="size-3.5" />
       </button>
     </li>
+  );
+}
+
+function TermCard({ view }: { view: ReturnType<typeof termView> }) {
+  return (
+    <section className="card" aria-labelledby="term-card-h">
+      <h2 id="term-card-h" className="bar">
+        เทอมนี้ตามแผน
+        <span className="chip tabular-nums">
+          {view.required.length} วิชา · {view.required.reduce((n, c) => n + c.credits, 0)} นก.
+        </span>
+      </h2>
+      <p className="flex flex-wrap gap-1.5 px-4 pt-1 font-mono text-xs tabular-nums">
+        {view.required.map((c) => (
+          <span key={c.courseNo} className="chip">
+            {c.courseNo}
+          </span>
+        ))}
+      </p>
+      <div className="p-4">
+        <Link href="/curriculum" className="link text-sm">
+          ดูหลักสูตร
+        </Link>
+      </div>
+    </section>
   );
 }
 

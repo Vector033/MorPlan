@@ -7,6 +7,7 @@ import { useWorkspace } from "@/components/planner/workspace-context";
 import { attachExams } from "@/lib/core/exams";
 import type { ExtractResult } from "@/lib/core/extract";
 import { pageText, parseRegImport } from "@/lib/core/import-reg";
+import { termPosition, termView } from "@/lib/core/curriculum";
 import { isCmu, type UniversityInfo } from "@/lib/core/university";
 import { demoSections } from "@/lib/demo";
 import { EXAMS } from "@/lib/exams-data";
@@ -46,6 +47,11 @@ function ImportFormReady() {
   const [result, setResult] = useState<ExtractResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copy, setCopy] = useState<"ok" | "fail" | null>(null);
+  const cur = ws.curriculum;
+  const curPlan = cur?.data.plans.find((p) => p.id === cur.planId);
+  const toSearch = cur && curPlan ? termView(curPlan, cur.viewTerm ?? termPosition(cur.cohort, ws.term), cur) : null;
+  const codes = toSearch ? [...new Set([...toSearch.overdue, ...toSearch.required.filter((c) => !c.done)].map((c) => c.courseNo))] : [];
   // Typing "มช." under "other" still gets the CMU parser; an empty name does not.
   const cmu = !other || (name.trim() !== "" && isCmu(name));
 
@@ -76,6 +82,15 @@ function ImportFormReady() {
       setError("เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function copyCodes() {
+    try {
+      await navigator.clipboard.writeText(codes.join(" "));
+      setCopy("ok");
+    } catch {
+      setCopy("fail");
     }
   }
 
@@ -207,6 +222,27 @@ function ImportFormReady() {
           )}
         </div>
         <div className="flex flex-col gap-3 p-4">
+          {codes.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm">ค้นรหัสเหล่านี้ในเว็บลงทะเบียน:</p>
+              <p className="flex flex-wrap gap-1.5 font-mono text-xs tabular-nums">
+                {codes.map((c) => (
+                  <span key={c} className="chip">
+                    {c}
+                  </span>
+                ))}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className="btn" onClick={copyCodes}>
+                  คัดลอกรหัส
+                </button>
+                <span role="status" className="text-xs text-muted">
+                  {copy === "ok" ? "คัดลอกแล้ว" : ""}
+                </span>
+              </div>
+              {copy === "fail" && <p className="error-note">คัดลอกไม่สำเร็จ เลือกรหัสแล้วคัดลอกเอง</p>}
+            </div>
+          )}
           <textarea
             className="input min-h-40 font-mono text-xs"
             placeholder={
