@@ -34,6 +34,17 @@ test.beforeEach(async ({ page }) => {
       return r.fulfill({ json: { options: [faculty ? "วิทยาการคอมพิวเตอร์" : "วิทยาศาสตร์"] } });
     }
     if (pathname === "/api/curriculum") return r.fulfill({ json: { candidates: [meta("abcdefghi1", 64), meta("abcdefghi2", 59, 62)] } });
+    if (pathname === "/api/curriculum/minors")
+      return r.fulfill({
+        json: {
+          catalogs: [
+            {
+              meta: { ...meta("minors0001", 64), kind: "minors", title: "วิชาโท" },
+              minors: [{ name: "ภาษาญี่ปุ่น", rules: "เรียนวิชาในกลุ่มรวม 15 หน่วยกิต", groups: [{ label: "กลุ่มบังคับ", minCredits: 9, courseNos: ["018131", "018132"] }] }],
+            },
+          ],
+        },
+      });
     if (pathname === "/api/curriculum/abcdefghi1") return r.fulfill({ json: { meta: meta("abcdefghi1", 64), curriculum } });
     return r.fulfill({ status: 404, json: { error: "ไม่พบ" } });
   });
@@ -57,6 +68,18 @@ test("set up a curriculum from a shared record", async ({ page }) => {
   await page.getByRole("button", { name: "ยืนยันแผนการเรียน" }).click();
   await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toBeVisible();
   await expect(page.getByText("อ่านโดย AI ตรวจสอบกับเอกสารของคณะอีกครั้ง")).toBeVisible();
+  // Term view: cohort 67 in the current term (2/2569) is year 3 semester 2.
+  await expect(page.getByText("204306").first()).toBeVisible();
+  await expect(page.getByText("เอกเลือก 3 นก.").first()).toBeVisible();
+  await expect(page.getByText("วิชาโท 6 นก.").first()).toBeVisible();
+  await page.getByRole("button", { name: "ติ๊กทั้งเทอม" }).first().click();
+  await expect(page.getByText(/วิชาบังคับ \d+\/\d+ นก\./)).toBeVisible();
+  await page.getByRole("button", { name: "เพิ่มทั้งหมดลงรายการ" }).click();
+  await expect(page.getByRole("status")).toContainText("ลงรายการแล้ว");
+  await page.getByLabel("เลือกวิชาโท").fill("ภาษาญี่ปุ่น");
+  await expect(page.getByText("018131").first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("204306").first()).toBeVisible(); // state survives a reload
 });
 
 test("a pasted document stays private, is never confirmed on the server, and a double click saves once", async ({ page }) => {

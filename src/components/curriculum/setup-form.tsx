@@ -9,9 +9,10 @@ import type { Meta } from "@/lib/curriculum/rows";
 import universities from "../../../data/universities-th.json";
 import { ConfirmPreview } from "./confirm-preview";
 import { DISCLAIMER, rangeLabel, thaiDate } from "./format";
+import { call, Radio, sharedSource, Skeleton } from "./shared";
+import { SourceInput } from "./source-input";
 import { useReveal } from "./use-reveal";
 
-const MAX_PDF = 3_000_000;
 const CMU = "มหาวิทยาลัยเชียงใหม่";
 const THIS_YEAR = Number(CURRENT_TERM.split("/")[1]);
 const YEARS = Array.from({ length: 10 }, (_, i) => THIS_YEAR - i);
@@ -19,20 +20,6 @@ const YEARS = Array.from({ length: 10 }, (_, i) => THIS_YEAR - i);
 type Link = { url: string; label: string };
 type Preview = { cohort: number; readAt: string; data: Curriculum; dropped: string[]; sourceTitle: string; sourceUrl?: string; pendingId?: string };
 type Picked = { cohort: number; data: Curriculum; source: Source; ref?: string };
-type Tab = "url" | "pdf" | "text";
-type Body = Record<string, unknown> & { error?: string };
-
-async function call(path: string, post?: unknown): Promise<{ ok: boolean; body: Body }> {
-  try {
-    const res = await fetch(
-      path,
-      post === undefined ? undefined : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(post) },
-    );
-    return { ok: res.ok, body: (await res.json().catch(() => ({}))) as Body };
-  } catch {
-    return { ok: false, body: { error: "เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง" } };
-  }
-}
 
 const hostOf = (url: string) => {
   try {
@@ -42,38 +29,6 @@ const hostOf = (url: string) => {
   }
 };
 
-const toBase64 = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-
-const sharedSource = (m: Meta): Source => ({ url: m.sourceUrl, title: m.sourceTitle, readAt: m.readAt, provenance: m.provenance });
-
-function Skeleton({ text }: { text: string }) {
-  return (
-    <div className="card flex flex-col gap-3 p-4" aria-busy="true">
-      <p className="text-sm">{text}</p>
-      <div className="h-4 w-2/3 animate-pulse rounded-xs bg-canvas" />
-      <div className="h-4 w-1/2 animate-pulse rounded-xs bg-canvas" />
-    </div>
-  );
-}
-
-function Radio({ name, checked, onChange, children }: { name: string; checked: boolean; onChange: () => void; children: React.ReactNode }) {
-  return (
-    <label
-      className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-xs border p-3 text-sm has-focus-visible:outline-2 has-focus-visible:outline-accent ${checked ? "border-accent bg-accent-soft" : "border-line bg-white"}`}
-    >
-      <input type="radio" name={name} className="mt-1.5 accent-accent" checked={checked} onChange={onChange} />
-      <span className="min-w-0 flex-1">{children}</span>
-    </label>
-  );
-}
-
-/** Suggestions are best effort: free typing always works, so a failed lookup just leaves the list empty. */
 function useOptions(url: string | null): string[] {
   const [got, setGot] = useState<{ url: string; list: string[] }>({ url: "", list: [] });
   useEffect(() => {
@@ -103,10 +58,6 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
   const [finding, setFinding] = useState(false);
   const [links, setLinks] = useState<Link[] | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
-  const [tab, setTab] = useState<Tab>("url");
-  const [url, setUrl] = useState("");
-  const [text, setText] = useState("");
-  const [file, setFile] = useState<File>();
   const [reading, setReading] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [picked, setPicked] = useState<Picked | null>(null);
@@ -246,18 +197,6 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
     });
   }
 
-  async function readTab() {
-    if (tab === "url") return read({ url: url.trim() });
-    if (tab === "text") return read({ text });
-    if (!file) return;
-    if (file.size > MAX_PDF) return setReadErr("ไฟล์ใหญ่เกิน 3 MB ลองตัดเฉพาะหน้าแผนการศึกษา หรือวางข้อความแทน");
-    try {
-      await read({ pdfBase64: await toBase64(file), name: file.name });
-    } catch {
-      setReadErr("เปิดไฟล์นี้ไม่ได้ ลองไฟล์อื่น");
-    }
-  }
-
   async function confirmPreview(from: number, to?: number) {
     if (!preview || locked.current) return;
     const id = begin();
@@ -286,14 +225,6 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
       source: { url: preview.sourceUrl, title: preview.sourceTitle, readAt: preview.readAt, provenance: "private" },
     });
   }
-
-  const hint = "ไฟล์ที่อัปโหลดใช้เฉพาะกับคุณ ไม่แชร์ให้คนอื่น";
-  const tabs: [Tab, string][] = [
-    ["url", "วางลิงก์"],
-    ["pdf", "อัปโหลด PDF"],
-    ["text", "วางข้อความ"],
-  ];
-  const tabReady = tab === "url" ? url.trim() !== "" : tab === "pdf" ? !!file : text.trim() !== "";
 
   if (picked)
     return (
@@ -480,50 +411,7 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
             <h2 id="src-h">มีเอกสารหลักสูตรอยู่แล้ว</h2>
           </div>
           <div className="flex flex-col gap-3 p-4">
-            <fieldset className="flex flex-wrap gap-2">
-              <legend className="sr-only">วิธีใส่เอกสาร</legend>
-              {tabs.map(([v, label]) => (
-                <label
-                  key={v}
-                  className={`cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium has-focus-visible:outline-2 has-focus-visible:outline-accent ${tab === v ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink/25"}`}
-                >
-                  <input type="radio" name="src-tab" className="sr-only" checked={tab === v} onChange={() => setTab(v)} />
-                  {label}
-                </label>
-              ))}
-            </fieldset>
-            {tab === "url" && (
-              <div>
-                <label className="label" htmlFor={`${id}url`}>
-                  ลิงก์หลักสูตร
-                </label>
-                <input id={`${id}url`} className="input" type="url" inputMode="url" placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} />
-                <p className="mt-1 text-xs text-muted">ต้องเป็นเว็บของมหาวิทยาลัย (.ac.th)</p>
-              </div>
-            )}
-            {tab === "pdf" && (
-              <div>
-                <label className="label" htmlFor={`${id}pdf`}>
-                  ไฟล์ PDF (ไม่เกิน 3 MB)
-                </label>
-                <input id={`${id}pdf`} className="input" type="file" accept=".pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0])} />
-                <p className="mt-1 text-xs text-muted">{hint}</p>
-              </div>
-            )}
-            {tab === "text" && (
-              <div>
-                <label className="label" htmlFor={`${id}txt`}>
-                  ข้อความจากเอกสารหลักสูตร
-                </label>
-                <textarea id={`${id}txt`} className="input min-h-32 text-xs" value={text} onChange={(e) => setText(e.target.value)} />
-                <p className="mt-1 text-xs text-muted">{hint}</p>
-              </div>
-            )}
-            <div>
-              <button type="button" className="btn-primary" disabled={!tabReady || reading} onClick={readTab}>
-                อ่านหลักสูตร
-              </button>
-            </div>
+            <SourceInput disabled={reading} onRead={read} onError={setReadErr} />
           </div>
         </section>
       )}
