@@ -59,3 +59,33 @@ export const rateLimits = pgTable(
   },
   (t) => [primaryKey({ columns: [t.key, t.windowStart] }), index("rate_limits_window").on(t.windowStart)],
 );
+
+/**
+ * Curricula read from university pages, shared between students. `pending` rows
+ * were read from a link and wait for the reader to confirm; `shared` rows are
+ * visible to everyone. electives/minors rows point at a curriculum via parent_id.
+ */
+export const curricula = pgTable(
+  "curricula",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(), // curriculum | electives | minors
+    status: text("status").notNull(), // pending | shared
+    uniKey: text("uni_key").notNull(),
+    facultyKey: text("faculty_key"),
+    majorKey: text("major_key"),
+    university: text("university").notNull(),
+    faculty: text("faculty"),
+    major: text("major"),
+    cohortFrom: integer("cohort_from"),
+    cohortTo: integer("cohort_to"),
+    parentId: text("parent_id"),
+    data: jsonb("data").notNull(),
+    sourceUrl: text("source_url"),
+    sourceTitle: text("source_title").notNull(),
+    provenance: text("provenance").notNull(), // link | owner
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("curricula_lookup").on(t.uniKey, t.facultyKey, t.majorKey), index("curricula_status_created").on(t.status, t.createdAt)],
+);
