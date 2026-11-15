@@ -1,5 +1,6 @@
 import {
   slotId,
+  studyPlanOf,
   type Curriculum,
   type CurriculumState,
   type ElectiveCourse,
@@ -151,7 +152,7 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
 
 function curriculumReducer(ws: Workspace, cur: CurriculumState, action: Action): Workspace {
   const set = (patch: Partial<CurriculumState>): Workspace => ({ ...ws, curriculum: { ...cur, ...patch } });
-  const plan = cur.data.plans.find((p) => p.id === cur.planId) ?? cur.data.plans[0];
+  const plan = studyPlanOf(cur);
   const requiredNos = new Set(plan?.terms.flatMap((t) => t.items.flatMap((i) => (i.type === "course" ? [i.courseNo] : []))));
   const without = (courseNo: string) => cur.passed.filter((p) => p.courseNo !== courseNo);
   switch (action.type) {

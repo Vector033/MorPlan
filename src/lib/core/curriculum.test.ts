@@ -109,7 +109,10 @@ describe("currentTermView", () => {
   it("lets an explicit view term win", () => {
     expect(currentTermView({ ...state, viewTerm: { year: 3, semester: 1 } }, "2/2569")?.at).toEqual({ year: 3, semester: 1 });
   });
-  it("is null for an unknown plan id", () => {
-    expect(currentTermView({ ...state, planId: "nope" }, "2/2569")).toBeNull();
+  it("falls back to the first plan for an unknown plan id", () => {
+    expect(currentTermView({ ...state, planId: "nope" }, "2/2569")?.plan).toBe(COOP);
+  });
+  it("is null for a curriculum with no plans", () => {
+    expect(currentTermView({ ...state, data: { plans: [] } } as never, "2/2569")).toBeNull();
   });
 });

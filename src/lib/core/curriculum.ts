@@ -95,9 +95,14 @@ export function termView(plan: StudyPlan, at: { year: number; semester: number }
   return view;
 }
 
-/** The student's plan, the term being viewed (explicit choice, else today's term) and that term's view; null when the plan id is unknown. */
+/** The student's chosen plan; an unknown id falls back to the first plan, undefined only when there are none. */
+export function studyPlanOf(state: Pick<CurriculumState, "data" | "planId">): StudyPlan | undefined {
+  return state.data.plans.find((p) => p.id === state.planId) ?? state.data.plans[0];
+}
+
+/** The plan, the term being viewed (explicit choice, else today's term) and that term's view; null when the curriculum has no plans. */
 export function currentTermView(state: CurriculumState, term: string) {
-  const plan = state.data.plans.find((p) => p.id === state.planId);
+  const plan = studyPlanOf(state);
   if (!plan) return null;
   const at = state.viewTerm ?? termPosition(state.cohort, term);
   return { plan, at, view: termView(plan, at, state) };

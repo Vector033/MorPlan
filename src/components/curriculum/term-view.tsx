@@ -25,7 +25,9 @@ export function TermView({ plan, say }: { plan: StudyPlan; say: (s: string) => v
   const cur = ws.curriculum!;
   const uid = useId();
   const terms = [...plan.terms].sort((a, b) => a.year - b.year || a.semester - b.semester);
-  const { at, view } = currentTermView(cur, ws.term)!;
+  const now = currentTermView(cur, ws.term);
+  if (!now) return null;
+  const { at, view } = now;
   const value = view.inPlan ? `${at.year}-${at.semester}` : "";
   const wanted = [...new Set([...view.overdue, ...view.required.filter((c) => !c.done)].map((c) => c.courseNo))];
 

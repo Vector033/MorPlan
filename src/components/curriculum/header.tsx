@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
-import type { Curriculum } from "@/lib/core/curriculum";
+import { studyPlanOf, type Curriculum } from "@/lib/core/curriculum";
 import type { Meta } from "@/lib/curriculum/rows";
 import { DISCLAIMER } from "./format";
 import { call, sharedSource, SourceLine } from "./shared";
@@ -17,7 +17,7 @@ export function CurriculumHeader({ say }: { say: (s: string) => void }) {
   useEffect(() => {
     live.current = c.ref;
   }, [c.ref]);
-  const plan = c.data.plans.find((p) => p.id === c.planId) ?? c.data.plans[0];
+  const plan = studyPlanOf(c);
   const { source } = c;
 
   async function refresh() {
