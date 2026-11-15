@@ -18,6 +18,12 @@ const ICONS: Record<string, React.ReactNode> = {
     </>
   ),
   "/import": <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />,
+  "/curriculum": (
+    <>
+      <path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5Z" />
+      <path d="M12 6.5v13" />
+    </>
+  ),
   "/ask": <path d="M5 18.5V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H9l-4 2.5Z" />,
 };
 
@@ -25,6 +31,7 @@ const LINKS = [
   { href: "/", label: "ตาราง" },
   { href: "/compare", label: "เทียบแผน" },
   { href: "/import", label: "นำเข้า" },
+  { href: "/curriculum", label: "หลักสูตร" },
   { href: "/ask", label: "ถามระเบียบ" },
 ];
 
