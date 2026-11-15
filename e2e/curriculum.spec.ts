@@ -94,3 +94,33 @@ test("a pasted document stays private, is never confirmed on the server, and a d
   await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toHaveCount(1);
   expect(confirmCalls).toBe(0);
 });
+
+test("cancelling during a slow confirm saves nothing", async ({ page }) => {
+  await page.route("**/api/curriculum**", async (r) => {
+    const { pathname } = new URL(r.request().url());
+    if (pathname === "/api/curriculum") return r.fulfill({ json: { candidates: [] } });
+    if (pathname.endsWith("/find")) return r.fulfill({ json: { links: [] } });
+    if (pathname.endsWith("/read"))
+      return r.fulfill({ json: { preview: { kind: "curriculum", data: { ...curriculum, plans: [COOP] }, dropped: [] }, sourceTitle: "ลิงก์ทดสอบ", pendingId: "abcdefghi1" } });
+    if (pathname.endsWith("/confirm")) {
+      await new Promise((res) => setTimeout(res, 1000));
+      return r.fulfill({ json: { ok: true } });
+    }
+    if (pathname === "/api/curriculum/abcdefghi1") return r.fulfill({ json: { meta: meta("abcdefghi1", 64), curriculum: { ...curriculum, plans: [COOP] } } });
+    return r.fulfill({ json: { options: [] } });
+  });
+  await page.goto("/curriculum");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
+  await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
+  await page.getByLabel("รหัสปีที่เข้า").selectOption("67");
+  await page.getByRole("button", { name: "ค้นหาหลักสูตร" }).click();
+  await page.getByLabel("ลิงก์หลักสูตร").fill("https://science.cmu.ac.th/cs.pdf");
+  await page.getByRole("button", { name: "อ่านหลักสูตร", exact: true }).click();
+  await page.getByRole("button", { name: "ใช่ หลักสูตรนี้" }).click();
+  await page.getByRole("button", { name: "ยกเลิก" }).click();
+  await page.waitForTimeout(1600);
+  await expect(page.getByRole("heading", { name: /เทอมนี้ตามแผน/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "ค้นหาหลักสูตร" })).toBeVisible();
+});

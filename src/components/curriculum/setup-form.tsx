@@ -543,7 +543,10 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
           readAt={preview.readAt}
           busy={busy}
           onConfirm={confirmPreview}
-          onCancel={() => setPreview(null)}
+          onCancel={() => {
+            begin(); // drops a confirm still in flight
+            setPreview(null);
+          }}
         />
       )}
       {confirmErr && preview && !reading && (
