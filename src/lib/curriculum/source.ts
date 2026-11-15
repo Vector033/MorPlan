@@ -24,7 +24,10 @@ export type SourceText = { text: string; title: string; kind: "html" | "pdf" | "
 const lastSegment = (url: string) => decodeURIComponent(new URL(url).pathname.split("/").filter(Boolean).pop() ?? new URL(url).hostname);
 
 async function readBody(res: Response): Promise<Uint8Array> {
-  if (Number(res.headers.get("content-length")) > MAX_SOURCE_BYTES) throw new SourceError("too-large");
+  if (Number(res.headers.get("content-length")) > MAX_SOURCE_BYTES) {
+    await res.body?.cancel();
+    throw new SourceError("too-large");
+  }
   const chunks: Uint8Array[] = [];
   let total = 0;
   const reader = res.body?.getReader();
@@ -35,11 +38,8 @@ async function readBody(res: Response): Promise<Uint8Array> {
       chunks.push(r.value);
     }
   } catch (e) {
-    if (e instanceof SourceError) {
-      await reader?.cancel();
-      throw e;
-    }
-    throw new SourceError("unreachable");
+    await reader?.cancel().catch(() => {});
+    throw e instanceof SourceError ? e : new SourceError("unreachable");
   }
   const bytes = new Uint8Array(total);
   let at = 0;
@@ -55,13 +55,25 @@ export async function readUrl(url: string, fetchFn: typeof fetch = fetch): Promi
   if (!safe) throw new SourceError("not-academic");
   const res = await fetchAcademic(safe, fetchFn, 15_000);
   if (!res) throw new SourceError("unreachable");
-  const bytes = await readBody(res);
   const type = (res.headers.get("content-type") ?? "").toLowerCase();
-  const isPdf = type.includes("application/pdf") || ((!type || type.includes("application/octet-stream")) && new TextDecoder("latin1").decode(bytes.slice(0, 4)) === "%PDF");
-  if (isPdf) return readPdf(bytes, lastSegment(safe));
-  const isHtml = type.includes("text/html") || type.includes("application/xhtml+xml") || (!type && /<(html|body|title|table|p|div)\b/i.test(new TextDecoder().decode(bytes.slice(0, 2000))));
-  if (!isHtml) throw new SourceError("unsupported");
-  const html = new TextDecoder("utf-8").decode(bytes);
+  const typed = type !== "" && !type.includes("application/octet-stream");
+  const known = /application\/pdf|text\/html|application\/xhtml\+xml/.test(type);
+  if (typed && !known) {
+    await res.body?.cancel();
+    throw new SourceError("unsupported");
+  }
+  const bytes = await readBody(res);
+  const sniffed = new TextDecoder("latin1").decode(bytes.slice(0, 2000));
+  if (type.includes("application/pdf") || (!typed && sniffed.startsWith("%PDF"))) return readPdf(bytes, lastSegment(safe));
+  if (!known && !/<(html|body|title|table|p|div)/i.test(sniffed)) throw new SourceError("unsupported");
+  const label = /charset\s*=\s*["']?([\w-]+)/i.exec(type)?.[1] ?? /<meta[^>]+charset\s*=\s*["']?([\w-]+)/i.exec(sniffed)?.[1];
+  let decoder = new TextDecoder("utf-8");
+  try {
+    if (label) decoder = new TextDecoder(label);
+  } catch {
+    // unknown label: keep UTF-8
+  }
+  const html = decoder.decode(bytes);
   const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1];
   return { kind: "html", text: pageText(html), title: (title && pageText(title).trim()) || lastSegment(safe) };
 }

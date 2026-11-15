@@ -49,6 +49,49 @@ describe("readUrl", () => {
   });
 });
 
+describe("readUrl charset and body release", () => {
+  // "หลักสูตร 204315" in windows-874 / tis-620.
+  const thai = new Uint8Array([0xcb, 0xc5, 0xd1, 0xa1, 0xca, 0xd9, 0xb5, 0xc3, 0x20, ...new TextEncoder().encode("204315")]);
+  const bytes = (head: string, body: Uint8Array) => new Uint8Array([...new TextEncoder().encode(head), ...body]);
+  const serve = (headers: Record<string, string>, body: Uint8Array, onCancel?: () => void, onPull?: () => void) =>
+    (async () => {
+      let sent = false;
+      const stream = new ReadableStream<Uint8Array>({
+        pull(c) {
+          onPull?.();
+          if (sent) return c.close();
+          sent = true;
+          c.enqueue(body);
+        },
+        cancel: () => onCancel?.(),
+      });
+      return new Response(stream, { status: 200, headers });
+    }) as unknown as typeof fetch;
+
+  it("decodes windows-874 from the header, from <meta>, and falls back to UTF-8 on an unknown label", async () => {
+    const h = await readUrl("https://cs.x.ac.th/a", serve({ "content-type": "text/html; charset=windows-874" }, bytes("<p>", thai)));
+    expect(h.text).toContain("หลักสูตร 204315");
+    const m = await readUrl("https://cs.x.ac.th/a", serve({ "content-type": "text/html" }, bytes('<meta charset="tis-620"><p>', thai)));
+    expect(m.text).toContain("หลักสูตร 204315");
+    const u = await readUrl("https://cs.x.ac.th/a", serve({ "content-type": "text/html; charset=nonsense" }, new TextEncoder().encode("<p>หลักสูตร</p>")));
+    expect(u.text).toContain("หลักสูตร");
+  });
+  it("cancels the body when content-length is too large", async () => {
+    let cancelled = false;
+    const f = serve({ "content-type": "text/html", "content-length": String(MAX_SOURCE_BYTES + 1) }, new Uint8Array([1]), () => (cancelled = true));
+    await expect(readUrl("https://cs.x.ac.th/a", f)).rejects.toMatchObject({ code: "too-large" });
+    expect(cancelled).toBe(true);
+  });
+  it("rejects an image by type without reading its body", async () => {
+    let cancelled = false;
+    let pulls = 0;
+    const f = serve({ "content-type": "image/png" }, new Uint8Array([1]), () => (cancelled = true), () => pulls++);
+    await expect(readUrl("https://cs.x.ac.th/a", f)).rejects.toMatchObject({ code: "unsupported" });
+    expect(cancelled).toBe(true);
+    expect(pulls).toBeLessThanOrEqual(1); // the stream's initial fill only; nothing consumed
+  });
+});
+
 describe("readPdf and readPasted", () => {
   it("rejects a PDF with no text layer", async () => {
     await expect(readPdf(blankPdf(), "scan.pdf")).rejects.toMatchObject({ code: "no-text" });
