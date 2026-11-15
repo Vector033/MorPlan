@@ -5,43 +5,9 @@ import { db } from "@/db";
 import { curricula } from "@/db/schema";
 import { normalizeKey, type Curriculum, type ElectiveCourse, type Minor } from "@/lib/core/curriculum";
 import type { DocKind } from "./read";
+import { parseData, readRow, type Meta } from "./rows";
 
-export type Meta = {
-  id: string;
-  kind: DocKind;
-  title: string;
-  university: string;
-  faculty?: string;
-  major?: string;
-  cohortFrom?: number;
-  cohortTo?: number;
-  sourceUrl?: string;
-  sourceTitle: string;
-  provenance: "link" | "owner";
-  readAt: string;
-};
-
-type Row = typeof curricula.$inferSelect;
-
-const opt = <T>(v: T | null): T | undefined => v ?? undefined;
-
-function toMeta(r: Row): Meta {
-  const title = r.kind === "curriculum" ? (r.data as Curriculum).title : "";
-  return {
-    id: r.id,
-    kind: r.kind as DocKind,
-    title: title || r.sourceTitle,
-    university: r.university,
-    faculty: opt(r.faculty),
-    major: opt(r.major),
-    cohortFrom: opt(r.cohortFrom),
-    cohortTo: opt(r.cohortTo),
-    sourceUrl: opt(r.sourceUrl),
-    sourceTitle: r.sourceTitle,
-    provenance: r.provenance as "link" | "owner",
-    readAt: r.readAt.toISOString(),
-  };
-}
+export type { Meta };
 
 const shared = (kind: DocKind) => and(eq(curricula.status, "shared"), eq(curricula.kind, kind));
 
@@ -67,19 +33,21 @@ export async function candidates(university: string, faculty: string, major: str
       ),
     )
     .orderBy(desc(curricula.cohortFrom), desc(curricula.createdAt));
-  return rows.map(toMeta);
+  return rows.flatMap((r) => readRow(r)?.meta ?? []);
 }
 
 export async function getShared(id: string): Promise<{ meta: Meta; curriculum: Curriculum } | null> {
   const [row] = await db.select().from(curricula).where(and(eq(curricula.id, id), shared("curriculum"))).limit(1);
   if (!row) return null;
-  const curriculum = row.data as Curriculum;
+  const parsed = readRow(row);
+  if (!parsed) return null;
+  const curriculum = parsed.data as Curriculum;
   const children = await db.select().from(curricula).where(and(eq(curricula.parentId, id), shared("electives")));
   const merged = new Map<string, ElectiveCourse>();
-  for (const c of [...(curriculum.electives["major-elective"] ?? []), ...children.flatMap((c) => c.data as ElectiveCourse[])]) {
+  for (const c of [...(curriculum.electives["major-elective"] ?? []), ...children.flatMap((c) => (readRow(c)?.data as ElectiveCourse[] | undefined) ?? [])]) {
     if (!merged.has(c.courseNo)) merged.set(c.courseNo, c);
   }
-  return { meta: toMeta(row), curriculum: { ...curriculum, electives: { ...curriculum.electives, ...(merged.size ? { "major-elective": [...merged.values()] } : {}) } } };
+  return { meta: parsed.meta, curriculum: { ...curriculum, electives: { ...curriculum.electives, ...(merged.size ? { "major-elective": [...merged.values()] } : {}) } } };
 }
 
 export async function minorCatalogs(university: string): Promise<{ meta: Meta; minors: Minor[] }[]> {
@@ -88,7 +56,10 @@ export async function minorCatalogs(university: string): Promise<{ meta: Meta; m
     .from(curricula)
     .where(and(shared("minors"), eq(curricula.uniKey, normalizeKey(university))))
     .orderBy(desc(curricula.createdAt));
-  return rows.map((r) => ({ meta: toMeta(r), minors: r.data as Minor[] }));
+  return rows.flatMap((r) => {
+    const p = readRow(r);
+    return p ? [{ meta: p.meta, minors: p.data as Minor[] }] : [];
+  });
 }
 
 type NewRow = {
@@ -119,7 +90,7 @@ async function insert(row: Omit<NewRow, "sourceUrl"> & { sourceUrl?: string }, s
     cohortFrom: row.cohortFrom ?? null,
     cohortTo: row.cohortTo ?? null,
     parentId: row.parentId ?? null,
-    data: row.data,
+    data: parseData(row.kind, row.data),
     sourceUrl: row.sourceUrl ?? null,
     sourceTitle: row.sourceTitle,
     provenance,
@@ -141,7 +112,9 @@ export async function confirm(id: string, cohortFrom?: number, cohortTo?: number
 }
 
 export async function replaceData(id: string, data: unknown): Promise<void> {
-  await db.update(curricula).set({ data, readAt: sql`now()` }).where(eq(curricula.id, id));
+  const [row] = await db.select({ kind: curricula.kind }).from(curricula).where(eq(curricula.id, id)).limit(1);
+  if (!row) return;
+  await db.update(curricula).set({ data: parseData(row.kind as DocKind, data), readAt: sql`now()` }).where(eq(curricula.id, id));
 }
 
 export async function saveOwner(row: Omit<NewRow, "sourceUrl"> & { sourceUrl?: string }): Promise<string> {
