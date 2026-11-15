@@ -36,6 +36,17 @@
 - เช็กแล้ว: ปุ่มพาไป accounts.google.com, redirect_uri ถูก · หน้า Google แสดงโดเมน `…supabase.co` (ต้อง custom domain ถึงจะเปลี่ยน, เสียเงิน)
 - ไฟล์ `client_secret_MorePlan.json` อยู่ใน root ของ repo: gitignore แล้ว **ห้าม commit/อ่าน** ผู้ใช้ควรย้ายออกหรือลบ
 
+## Seed หลักสูตรกลาง (owner เท่านั้น)
+
+ต้องใส่ `--conditions=react-server` เพราะ store import `server-only` · ไม่ใส่ `--yes` = preview ไม่เขียน · อ่าน `DATABASE_URL` จาก `.env.local` (prod: ตั้ง env เองแล้วใส่ `--allow-remote`) · seed ซ้ำจะข้าม ถ้าอยากแทนที่ใส่ `--replace`
+```
+S="npx tsx --conditions=react-server scripts/seed-curriculum.mts"; B="https://www.cs.science.cmu.ac.th/staff/sutasinee/testprogram/doku.php?id="
+$S --kind curriculum --university "มหาวิทยาลัยเชียงใหม่" --faculty "วิทยาศาสตร์" --major "วิทยาการคอมพิวเตอร์" --cohort-from 64 --url "${B}start" --yes
+$S --kind electives --university "มหาวิทยาลัยเชียงใหม่" --faculty "วิทยาศาสตร์" --major "วิทยาการคอมพิวเตอร์" --cohort-from 64 --parent <id> --url "${B}64_major_elective" --yes
+$S --kind minors --university "มหาวิทยาลัยเชียงใหม่" --file "C:UsersUserDesktopcmu-reg-u-2-1.pdf" --title "บัญชีวิชาโท มหาวิทยาลัยเชียงใหม่ พ.ศ. 2565" --yes
+```
+seed ลง local แล้ว (curriculum -CMdK4aE0L, electives qVgD0UdKPn, minors ImpaWH6VSM) · **seed prod เป็นขั้นตอนของ owner ยังไม่ได้รัน**
+
 ## งานค้าง / ต้องเช็ก
 
 1. **ผู้ใช้ลองเอง:** ล็อกอิน Google จริง → `/account` ขึ้น Google "ใช้งานอยู่" → ลองลบบัญชีบน prod (ลบด้วย SQL `delete from auth.users` ผ่าน DB user ของแอป; สิทธิ์บน prod ยังไม่ได้ยืนยัน เพราะอ่าน prod DB ถูกบล็อก; prod ไม่มี `SUPABASE_SECRET_KEY`)

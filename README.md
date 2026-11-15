@@ -107,6 +107,7 @@ npm run dev -- -p 3100
 | `npm run test:e2e` | Playwright: mouse drag, keyboard placement + clash, picker, share link, ask, phone view |
 | `npm run eval` | RAG evaluation → `eval/results/latest.{json,md}` |
 | `EVAL_LLM_MODELS=typhoon-2.5-30b-a3b-instruct,claude-haiku-4-5 npm run eval` | compare answer models through a local FreeLLMAPI router (`FREELLMAPI_KEY` in `.env.local`; optional `EVAL_JUDGE_MODEL`, `EVAL_LLM_DELAY_MS`) → `eval/results/llm-compare.{json,md}` |
+| `npx tsx --conditions=react-server scripts/seed-curriculum.mts --kind curriculum|electives|minors --university U (--url URL | --file PATH --title T) [--yes]` | owner-only: read a trusted curriculum document into the shared table (preview without `--yes`; refuses a non-local `DATABASE_URL` without `--allow-remote`; skips an existing row unless `--replace`) |
 | `npm run fetch:exams 2/2569` | refresh the public exam timetable |
 | `docker build -t morplan-ingest ingest && docker run --rm -v "$PWD/data:/data" morplan-ingest` | re-OCR the corpus |
 
