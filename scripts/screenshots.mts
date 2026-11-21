@@ -1,7 +1,7 @@
 /**
  * README / portfolio screenshots from a real deployment, using the built-in demo data.
  *   npx tsx scripts/screenshots.mts [baseUrl]   (default https://morplan.vercel.app)
- * Writes docs/screenshots/{planner,drag,compare,ask,mobile,curriculum-setup,curriculum,curriculum-electives,curriculum-progress}.png at 2x.
+ * Writes docs/screenshots/{planner,drag,compare,ask,ask-other,import,mobile,curriculum-setup,curriculum,curriculum-electives,curriculum-progress}.png at 2x.
  */
 import { chromium, devices, type Page } from "@playwright/test";
 
@@ -77,8 +77,10 @@ await mp.evaluate(() => window.scrollTo(0, (document.querySelector("main")?.getB
 await mp.waitForTimeout(500);
 await mp.screenshot({ path: out("mobile") });
 
-// Rule Q&A with an opened citation.
+// Rule Q&A for the chosen university, with an opened citation.
 await page.goto(`${base}/ask`);
+await page.getByLabel("มหาวิทยาลัยของคุณ").fill("มหาวิทยาลัยเชียงใหม่");
+await page.getByRole("button", { name: "ใช้มหาวิทยาลัยนี้" }).click();
 await page.getByLabel("คำถาม").fill("ต้องเข้าเรียนกี่เปอร์เซ็นต์ถึงมีสิทธิ์สอบ");
 await page.getByRole("button", { name: "ถาม", exact: true }).click();
 const chip = page.getByText(/^หน้า \d+$/).first();
@@ -87,9 +89,30 @@ await chip.click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: out("ask") });
 
+// Import: one university picker for every university, the sample text read in the browser.
+await page.goto(`${base}/import`);
+await page.getByRole("button", { name: "ใส่ตัวอย่างข้อความ" }).click();
+await page.getByText("พบ 6 ตอนเรียน", { exact: false }).waitFor();
+// The university chip, the two ways to add courses and the preview of what was read.
+await page.getByRole("heading", { name: "ลองชุดตัวอย่างใน 1 คลิก" }).evaluate((h) => window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 110));
+await page.mouse.move(0, 0);
+await page.waitForTimeout(400);
+await page.screenshot({ path: out("import") });
+
+// A university with no regulation documents yet: the adder (find a link, paste a link, upload, paste text).
+const other = await (await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 2, locale: "th-TH" })).newPage();
+await other.goto(`${base}/ask`);
+await other.getByLabel("มหาวิทยาลัยของคุณ").fill("มหาวิทยาลัยมหิดล");
+await other.getByRole("button", { name: "ใช้มหาวิทยาลัยนี้" }).click();
+await other.getByRole("region", { name: "เพิ่มเอกสารระเบียบ" }).waitFor();
+await other.mouse.move(0, 0);
+await other.waitForTimeout(400);
+await other.screenshot({ path: out("ask-other") });
+
 // Curriculum advisor: pick university, faculty and major from the TCAS lists, then the co-op plan.
 const cur = await (await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 2, locale: "th-TH" })).newPage();
 await cur.goto(`${base}/curriculum`);
+await cur.getByLabel("มหาวิทยาลัย").fill("มหาวิทยาลัยเชียงใหม่");
 await cur.getByLabel("คณะ", { exact: true }).selectOption("วิทยาศาสตร์");
 await cur.getByLabel("สาขา", { exact: true }).selectOption("วิทยาการคอมพิวเตอร์");
 await cur.getByLabel("รหัสปีที่เข้า").selectOption("67");

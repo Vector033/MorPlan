@@ -1,10 +1,10 @@
 # MorPlan
 
-**Plan a CMU timetable by drag and drop, see class and exam clashes instantly, ask the university's rules in Thai with page citations, and follow your curriculum term by term.**
+**Plan a timetable at any Thai university by drag and drop, see class and exam clashes instantly, ask your university's rules in Thai with page citations, and follow your curriculum term by term.**
 
 **Live:** https://morplan.vercel.app
 
-> ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่ — a student project, not affiliated with CMU or its Registration Office.
+> ไม่ใช่ระบบทางการของมหาวิทยาลัยใดๆ — a student project, not affiliated with any university or registration office.
 
 ![Planner](docs/screenshots/planner.png)
 
@@ -12,9 +12,13 @@
 |---|---|
 | ![Drag](docs/screenshots/drag.png) | ![Compare](docs/screenshots/compare.png) |
 
-| Rule Q&A with page citations | Phone view |
+| Import for any university: pasted tables read in the browser | Phone view |
 |---|---|
-| ![Ask](docs/screenshots/ask.png) | <img src="docs/screenshots/mobile.png" alt="Phone view" width="300"> |
+| ![Import](docs/screenshots/import.png) | <img src="docs/screenshots/mobile.png" alt="Phone view" width="300"> |
+
+| Rule Q&A for your university, with page citations | A university without documents yet: add one |
+|---|---|
+| ![Ask](docs/screenshots/ask.png) | ![Add a regulation document](docs/screenshots/ask-other.png) |
 
 ### Curriculum advisor
 
@@ -28,22 +32,22 @@ Pick university, faculty and major from lists (every TCAS university), add the y
 |---|---|
 | ![Electives](docs/screenshots/curriculum-electives.png) | ![Progress](docs/screenshots/curriculum-progress.png) |
 
-Screenshots are taken from the live site with the built-in demo data and the shared CMU computer science curriculum: `npx tsx scripts/screenshots.mts`.
+Screenshots are taken from the live site with the built-in demo data (made-up courses), Chiang Mai University's bundled regulations and its shared computer science curriculum: `npx tsx scripts/screenshots.mts`.
 
 ## What it does
 
 - **Planner.** Drag a course onto the week grid. While you drag, every section of that course appears as a slot, and slots that would clash are red. Drop on one to place it, or drag it back to the list to remove it. It also works from the keyboard: Space picks up, arrows jump between sections, Space drops, Esc cancels, and screen readers get Thai announcements. On a phone you tap to pick a section and browse one day at a time.
-- **Clash checks.** Class meetings (lecture and lab are checked separately), midterms, finals, and the same course placed twice are all flagged. Exam slots come from the Registration Office's *public* exam timetable.
-- **Plans A–E.** Compare them side by side: credits, clashes, free days, earliest and latest class. Share a read-only link, or export `.ics` (weekly series that skips midterm weeks, plus exam events) or a PNG.
-- **Rule Q&A.** Answers questions about the undergraduate regulations, exam and discipline rules, fees, the 2569 academic calendar and the Registration Office's guides. Every answer shows the document title and page with a link to the official PDF. If the answer isn't in the documents it says **"ไม่พบ"**, and every answer ends with "ตรวจสอบกับประกาศทางการอีกครั้ง".
-- **Curriculum advisor.** `/curriculum` asks for university, faculty, major and entry year. Faculties and majors come as lists for every university on TCAS, with a "type it yourself" way out. MorPlan looks for a curriculum someone has already confirmed; if there is none, it finds the faculty's curriculum page or reads a link, PDF or pasted text with AI, shows what it read for you to check, and drops any course code that is not in the document. Then it shows this term's courses from your study plan (normal, co-op or fast track), courses left over from earlier terms, the electives you can still take, minors and your credits by category. Tick what you have passed; MorPlan never asks for reg passwords or grades.
-- **Other universities.** `/import` also takes another university's registration page. AI reads the pasted page into sections, and every course code and time is checked against the text before it is kept.
-- **Account (optional).** Sign in with email or Google to open the same plans on every device. `/account` lets you set a display name, see your sign-in methods, change or set a password (the current one is asked first, and other devices are signed out), sign out everywhere, and delete the account with all saved plans. Every password field has a show/hide button.
+- **Clash checks.** Class meetings (lecture and lab are checked separately), midterms, finals, and the same course placed twice are all flagged. Exam slots come from the pasted page (checked against its text), from the student, or from a university's *public* exam timetable where one is bundled (Chiang Mai University for now).
+- **Plans A–E.** Compare them side by side: credits, clashes, free days, earliest and latest class. Share a read-only link, or export `.ics` (you confirm the term's first and last day of classes; weekly series plus exam events) or a PNG. The term (1, 2 or 3/summer and the year) is editable.
+- **Rule Q&A per university.** Answers only from the chosen university's documents, never another's. Chiang Mai University comes with its regulations, fees, academic calendar and guides; for any other university a student finds or pastes a link on the university's site (shared with classmates once they confirm what was read), or uploads a PDF / pastes text that stays with them only. Every answer shows the document title and page. If the answer isn't in the documents it says **"ไม่พบ"**, and every answer ends with "ตรวจสอบกับประกาศทางการอีกครั้ง".
+- **Curriculum advisor.** `/curriculum` asks for university, faculty, major and entry year. Faculties and majors come as lists for every university on TCAS, with a "type it yourself" way out. MorPlan looks for a curriculum someone has already confirmed; if there is none, it finds the faculty's curriculum page or reads a link, PDF or pasted text with AI, shows what it read for you to check, and drops any course code that is not in the document. Then it shows this term's courses from your study plan (normal, co-op or fast track), courses left over from earlier terms, the electives you can still take, minors and your credits by category. Tick what you have passed; MorPlan never asks for registration passwords or grades.
+- **Import for any university.** `/import` has one university picker and no "default" university. A table the browser can read (codes such as `204101` or `CS101`) is parsed locally; anything else is read by AI, and every course code, time and exam date is checked against the pasted text before it is kept. "+ เพิ่มวิชาเอง" adds a course by hand with day toggles, up to six meeting times and exam dates.
+- **Account (optional).** Sign in with email or Google to open the same plans on every device. A signed-in workspace lives only in the database, so signing out or switching accounts never shows one account's plans to another; work done before signing in is offered to a new account, not copied silently. `/account` lets you set a display name, see your sign-in methods, change or set a password (the current one is asked first, and other devices are signed out), sign out everywhere, and delete the account with all saved plans. Every password field has a show/hide button.
 
 ## Where the data comes from (and what MorPlan refuses to do)
 
-- Since PDPA, reg's course search (section, time, room, instructor) needs a reg login. MorPlan never asks for reg/CMU credentials and does not scrape behind the login. The student opens reg in their own browser, copies (or saves) the results page and pastes it into `/import`. Parsing happens in the browser. A manual form covers anything the parser can't read.
-- Imported sections stay in the student's browser (or their MorPlan account). They are never pooled into a shared catalogue, so MorPlan doesn't republish what reg stopped publishing.
+- Since PDPA, most universities' course search (section, time, room, instructor) needs a login. MorPlan never asks for registration or university credentials and does not scrape behind the login. The student opens their registration site in their own browser, copies (or saves) the results page and pastes it into `/import`. Parsing happens in the browser. A manual form covers anything the parser can't read.
+- Imported sections stay in the student's browser (or their MorPlan account). They are never pooled into a shared catalogue, so MorPlan doesn't republish what registration sites stopped publishing.
 - The only thing scraped is the public exam timetable (`timetable_exam.php`, allowed by robots.txt): two requests per term with a 2 s gap, cached in `data/exams/`.
 - The curriculum setup form lists each university's faculties and majors from the public TCAS program list (course.mytcas.com, run by ทปอ.; its terms only forbid bots that abuse the service). `scripts/fetch-programs.mts` downloads it once and keeps university → faculty → majors in `data/programs-th.json`.
 - The regulation PDFs are public (`www.reg.cmu.ac.th/webreg/reg-files/…`). `data/docs.json` lists them, the PDFs themselves aren't committed, and the OCR text is in `data/pages.json`.
@@ -81,7 +85,7 @@ Known limitation: the central regulations are scanned images, and Tesseract misr
 
 ## Security and privacy
 
-- **No reg/CMU credentials, ever.** Section data is pasted by the student and parsed in the browser.
+- **No registration or university credentials, ever.** Section data is pasted by the student and parsed in the browser.
 - **Google sign-in** uses Supabase OAuth with PKCE; `/auth/callback` only redirects to same-site paths. The button appears when `AUTH_GOOGLE_ENABLED=true`, after the Google provider is set up in Supabase (Google Cloud OAuth client, redirect URI `https://<project>.supabase.co/auth/v1/callback`).
 - **CSP with per-request nonces** (`script-src 'nonce-…' 'strict-dynamic'`, `frame-ancestors 'none'`, `object-src 'none'`), plus nosniff, `X-Frame-Options: DENY`, strict referrer and permissions policies, HSTS, no `X-Powered-By`, and `no-store` on API responses. See `src/proxy.ts` and `next.config.ts`.
 - **CSRF:** every state-changing API requires same-origin JSON (which forces a CORS preflight that is never granted). Sign-out checks Origin, and server actions are origin-checked by Next.js.
@@ -133,3 +137,4 @@ npm run dev -- -p 3100
 - No real users or usage numbers yet; anonymous counters (imports, shares, questions) are in place.
 - The reg import parser was written without a real logged-in results page, because that page isn't public. A saved sample in `samples/` will become a test fixture.
 - Curriculum advisor (`/curriculum`) deployed 2026-11-15 with the CMU computer science curriculum (64+), its major electives and the CMU minors list seeded on production; faculty and major lists from TCAS. Other curricula are read on demand. See `HANDOFF.md`.
+- Any Thai university, account isolation and per-university regulations (`regulations` table, migration 0004) deployed 2026-11-21. Only Chiang Mai University has bundled regulations and an exam table so far; other universities start empty until a student adds a document.
