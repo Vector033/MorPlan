@@ -33,8 +33,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <span className="inline-block">เข้าสู่ระบบเมื่ออยากเปิดแผนเดียวกันจากหลายเครื่อง</span>
       </p>
       <div className="mb-5 rounded-xs bg-accent-soft p-3 text-sm text-ink" role="note">
-        <strong>บัญชีนี้แยกจาก CMU Account และ reg</strong>{" "}
-        <span className="inline-block">ห้ามใช้รหัสผ่าน CMU หรือ reg ที่นี่</span> ตั้งรหัสผ่านใหม่
+        <strong>บัญชีนี้แยกจากบัญชีมหาวิทยาลัยและระบบลงทะเบียน</strong>{" "}
+        <span className="inline-block">ห้ามใช้รหัสผ่านบัญชีมหาวิทยาลัยที่นี่</span> ตั้งรหัสผ่านใหม่
         <span className="whitespace-nowrap">สำหรับ MorPlan เท่านั้น</span>
       </div>
       {(error || notice) && (

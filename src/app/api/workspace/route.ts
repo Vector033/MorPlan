@@ -34,3 +34,13 @@ export async function PUT(request: Request) {
     .onConflictDoUpdate({ target: workspaces.userId, set: { data: ws, updatedAt: sql`now()` } });
   return NextResponse.json({ ok: true });
 }
+
+/** Wipes the account's saved workspace (account page, "ล้างข้อมูลพื้นที่ทำงาน"). */
+export async function DELETE(request: Request) {
+  const user = await getOptionalUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const blocked = await guardMutation(request, LIMITS.workspace, user.id);
+  if (blocked) return blocked;
+  await db.delete(workspaces).where(eq(workspaces.userId, user.id));
+  return NextResponse.json({ ok: true });
+}

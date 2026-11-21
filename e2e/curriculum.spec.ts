@@ -129,6 +129,7 @@ test("a pasted document stays private, is never confirmed on the server, and a d
   await page.goto("/curriculum");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await page.getByLabel("มหาวิทยาลัย").fill("มหาวิทยาลัยเชียงใหม่"); // no university is assumed
   await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
   await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
   await page.getByLabel("รหัสปีที่เข้า").selectOption("67");
@@ -162,6 +163,7 @@ test("cancelling during a slow confirm saves nothing", async ({ page }) => {
   await page.goto("/curriculum");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await page.getByLabel("มหาวิทยาลัย").fill("มหาวิทยาลัยเชียงใหม่"); // no university is assumed
   await page.getByLabel("คณะ").fill("วิทยาศาสตร์");
   await page.getByLabel("สาขา").fill("วิทยาการคอมพิวเตอร์");
   await page.getByLabel("รหัสปีที่เข้า").selectOption("67");
@@ -179,6 +181,7 @@ async function setUp(page: Page, cohort = "67") {
   await page.goto("/curriculum");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await page.getByLabel("มหาวิทยาลัย").fill("มหาวิทยาลัยเชียงใหม่"); // no university is assumed
   await page.getByLabel("คณะ", { exact: true }).selectOption("วิทยาศาสตร์");
   await page.getByLabel("สาขา", { exact: true }).selectOption("วิทยาการคอมพิวเตอร์");
   await page.getByLabel("รหัสปีที่เข้า").selectOption(cohort);

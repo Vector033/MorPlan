@@ -15,7 +15,7 @@ export function buildIcs(sections: Section[], term: TermInfo, opts: { now?: Date
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//MorPlan//CMU timetable//TH",
+    "PRODID:-//MorPlan//Timetable//TH",
     "CALSCALE:GREGORIAN",
     `X-WR-CALNAME:${escape(`MorPlan ${term.term}${opts.planName ? ` ${opts.planName}` : ""}`)}`,
     "BEGIN:VTIMEZONE",

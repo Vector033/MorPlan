@@ -49,3 +49,19 @@ describe("parseTimeRange", () => {
     expect(fmtTime(1110)).toBe("18:30");
   });
 });
+
+describe("parseDays in Thai", () => {
+  it("reads Thai names, abbreviations with or without dots, and ranges", () => {
+    expect(parseDays("จ พ ศ")).toEqual(["Mo", "We", "Fr"]);
+    expect(parseDays("อ.พฤ.")).toEqual(["Tu", "Th"]);
+    expect(parseDays("วันอังคาร")).toEqual(["Tu"]);
+    expect(parseDays("พฤหัสบดี, เสาร์")).toEqual(["Th", "Sa"]);
+    expect(parseDays("อา")).toEqual(["Su"]);
+    expect(parseDays("จ.-ศ.")).toEqual(["Mo", "Tu", "We", "Th", "Fr"]);
+  });
+
+  it("refuses what it cannot read", () => {
+    expect(() => parseDays("จันทร์ถึงศุกร์")).toThrow();
+    expect(() => parseDays("ศ-จ")).toThrow();
+  });
+});

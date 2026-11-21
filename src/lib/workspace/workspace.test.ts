@@ -3,7 +3,32 @@ import { demoSections } from "@/lib/demo";
 import { activePlan, emptyWorkspace, MAX_PLANS, planSections, workspaceReducer, type Action } from "./reducer";
 import { progress } from "@/lib/core/curriculum";
 import { STATE } from "@/lib/core/__fixtures__/coop-plan";
-import { loadWorkspace, parseWorkspace, saveWorkspace, storableJson, STORAGE_KEY } from "./storage";
+import {
+  clearAccountStorage,
+  clearGuestStorage,
+  GUEST_KEY,
+  hasNonEmptyWorkspace,
+  LEGACY_KEY,
+  loadGuestWorkspace,
+  parseWorkspace,
+  saveGuestWorkspace,
+  storableJson,
+} from "./storage";
+
+/** An in-memory localStorage. */
+function memory(entries: Record<string, string> = {}) {
+  const store = new Map(Object.entries(entries));
+  return {
+    store,
+    get length() {
+      return store.size;
+    },
+    key: (i: number) => [...store.keys()][i] ?? null,
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  };
+}
 import { COURSE_NO } from "@/lib/core/curriculum-limits";
 import { key } from "@/lib/core/extract";
 import { toMeta, type Row } from "@/lib/curriculum/rows";
@@ -11,21 +36,21 @@ import { sharedSource } from "@/components/curriculum/shared";
 import type { Workspace } from "@/lib/core/types";
 
 const run = (...actions: Action[]) => actions.reduce(workspaceReducer, emptyWorkspace());
-const seeded = () => run({ type: "import", sections: demoSections(null) });
+const seeded = () => run({ type: "import", sections: demoSections() });
 
 describe("workspaceReducer", () => {
   it("keeps one section per course when placing", () => {
     const ws = workspaceReducer(
-      workspaceReducer(seeded(), { type: "place", sectionId: "204101-001-000" }),
-      { type: "place", sectionId: "204101-002-000" },
+      workspaceReducer(seeded(), { type: "place", sectionId: "CS101-001-000" }),
+      { type: "place", sectionId: "CS101-002-000" },
     );
-    expect(activePlan(ws).sectionIds).toEqual(["204101-002-000"]);
-    expect(activePlan(ws).courseNos).toEqual(["204101"]);
+    expect(activePlan(ws).sectionIds).toEqual(["CS101-002-000"]);
+    expect(activePlan(ws).courseNos).toEqual(["CS101"]);
   });
 
   it("removing a wanted course also unplaces it", () => {
-    let ws = workspaceReducer(seeded(), { type: "place", sectionId: "206111-001-000" });
-    ws = workspaceReducer(ws, { type: "unwantCourse", courseNo: "206111" });
+    let ws = workspaceReducer(seeded(), { type: "place", sectionId: "MATH101-001-000" });
+    ws = workspaceReducer(ws, { type: "unwantCourse", courseNo: "MATH101" });
     expect(activePlan(ws)).toMatchObject({ courseNos: [], sectionIds: [] });
   });
 
@@ -36,10 +61,10 @@ describe("workspaceReducer", () => {
   });
 
   it("caps plans at five and copies the source plan", () => {
-    let ws = workspaceReducer(seeded(), { type: "place", sectionId: "206111-001-000" });
+    let ws = workspaceReducer(seeded(), { type: "place", sectionId: "MATH101-001-000" });
     ws = workspaceReducer(ws, { type: "addPlan", copyFrom: "A" });
     expect(ws.activePlanId).toBe("B");
-    expect(activePlan(ws).sectionIds).toEqual(["206111-001-000"]);
+    expect(activePlan(ws).sectionIds).toEqual(["MATH101-001-000"]);
     for (let i = 0; i < 10; i++) ws = workspaceReducer(ws, { type: "addPlan" });
     expect(ws.plans).toHaveLength(MAX_PLANS);
   });
@@ -52,11 +77,11 @@ describe("workspaceReducer", () => {
   });
 
   it("re-importing replaces sections by id and removing a course cleans plans", () => {
-    let ws = workspaceReducer(seeded(), { type: "place", sectionId: "204217-001-000" });
-    const changed = { ...ws.pool.find((s) => s.id === "204217-001-000")!, title: "NEW" };
+    let ws = workspaceReducer(seeded(), { type: "place", sectionId: "CS201-001-000" });
+    const changed = { ...ws.pool.find((s) => s.id === "CS201-001-000")!, title: "NEW" };
     ws = workspaceReducer(ws, { type: "import", sections: [changed] });
     expect(planSections(ws)[0].title).toBe("NEW");
-    ws = workspaceReducer(ws, { type: "removeFromPool", courseNo: "204217" });
+    ws = workspaceReducer(ws, { type: "removeFromPool", courseNo: "CS201" });
     expect(activePlan(ws)).toMatchObject({ courseNos: [], sectionIds: [] });
   });
 
@@ -67,42 +92,74 @@ describe("workspaceReducer", () => {
 });
 
 describe("storage", () => {
-  it("round-trips a workspace", () => {
-    const store = new Map<string, string>();
-    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
-    const ws = workspaceReducer(seeded(), { type: "place", sectionId: "204101-001-000" });
-    saveWorkspace(ws, storage);
-    expect(loadWorkspace(storage)).toEqual(ws);
+  it("round-trips a workspace under the guest key", () => {
+    const storage = memory();
+    const ws = workspaceReducer(seeded(), { type: "place", sectionId: "CS101-001-000" });
+    saveGuestWorkspace(ws, storage);
+    expect([...storage.store.keys()]).toEqual([GUEST_KEY]);
+    expect(loadGuestWorkspace(storage)).toEqual(ws);
   });
 
   it("falls back to an empty workspace on corrupt or foreign data", () => {
-    const of = (v: string | null) => ({ getItem: () => v });
-    expect(loadWorkspace(of("{not json"))).toEqual(emptyWorkspace());
-    expect(loadWorkspace(of(JSON.stringify({ version: 2 })))).toEqual(emptyWorkspace());
-    expect(loadWorkspace(of(null))).toEqual(emptyWorkspace());
-    expect(loadWorkspace({ getItem: () => { throw new Error("SecurityError"); } })).toEqual(emptyWorkspace());
-    expect(loadWorkspace(undefined)).toEqual(emptyWorkspace());
-    expect(STORAGE_KEY).toMatch(/v1$/);
+    const of = (v: string) => memory({ [GUEST_KEY]: v });
+    expect(loadGuestWorkspace(of("{not json"))).toEqual(emptyWorkspace());
+    expect(loadGuestWorkspace(of(JSON.stringify({ version: 2 })))).toEqual(emptyWorkspace());
+    expect(loadGuestWorkspace(memory())).toEqual(emptyWorkspace());
+    const blocked = { ...memory(), getItem: () => { throw new Error("SecurityError"); } };
+    expect(loadGuestWorkspace(blocked)).toEqual(emptyWorkspace());
+    expect(loadGuestWorkspace(undefined)).toEqual(emptyWorkspace());
+  });
+
+  it("moves the legacy shared copy to the guest key once, never over an existing guest copy", () => {
+    const ws = seeded();
+    const moved = memory({ [LEGACY_KEY]: JSON.stringify(ws) });
+    expect(loadGuestWorkspace(moved)).toEqual(ws);
+    expect([...moved.store.keys()]).toEqual([GUEST_KEY]);
+    const kept = memory({ [LEGACY_KEY]: "{}", [GUEST_KEY]: JSON.stringify(ws) });
+    expect(loadGuestWorkspace(kept)).toEqual(ws);
+    expect(kept.store.has(LEGACY_KEY)).toBe(false);
+  });
+
+  it("clears account copies and the legacy key, and the guest copy only when asked", () => {
+    const storage = memory({ [GUEST_KEY]: "g", [LEGACY_KEY]: "l", "morplan:workspace:u:a": "a", "morplan:workspace:u:b": "b", other: "x" });
+    clearAccountStorage(storage);
+    expect([...storage.store.keys()].sort()).toEqual([GUEST_KEY, "other"]);
+    clearGuestStorage(storage);
+    expect([...storage.store.keys()]).toEqual(["other"]);
+  });
+
+  it("tells an empty workspace from one worth importing", () => {
+    expect(hasNonEmptyWorkspace(emptyWorkspace())).toBe(false);
+    expect(hasNonEmptyWorkspace(seeded())).toBe(true);
+    expect(hasNonEmptyWorkspace(workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE }))).toBe(true);
   });
 });
 
 describe("other universities", () => {
   const ku = { id: "01204111-1-000", courseNo: "01204111", title: "Computer Programming", lec: "1", lab: "000", meetings: [], instructors: [] };
 
-  it("import sets, keeps and resets the university", () => {
+  it("import sets and keeps the university; setUniversity changes, canonicalises and clears it", () => {
     let ws = run({ type: "import", sections: [ku], university: "มหาวิทยาลัยเกษตรศาสตร์" });
     expect(ws.university).toBe("มหาวิทยาลัยเกษตรศาสตร์");
     ws = workspaceReducer(ws, { type: "import", sections: [] });
     expect(ws.university).toBe("มหาวิทยาลัยเกษตรศาสตร์");
-    ws = workspaceReducer(ws, { type: "import", sections: [], university: null });
+    ws = workspaceReducer(ws, { type: "setUniversity", university: " มช. " });
+    expect(ws.university).toBe("มหาวิทยาลัยเชียงใหม่");
+    ws = workspaceReducer(ws, { type: "setUniversity", university: "" });
     expect(ws.university).toBeUndefined();
+    expect("university" in ws).toBe(false);
+  });
+
+  it("choosing a curriculum sets the university everywhere", () => {
+    const ws = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
+    expect(ws.university).toBe(STATE.data.university);
   });
 
   it("storage round-trips non-CMU codes and sections", () => {
-    let saved = "";
+    const storage = memory();
     const ws = workspaceReducer(run({ type: "import", sections: [ku], university: "KU" }), { type: "place", sectionId: ku.id });
-    saveWorkspace(ws, { setItem: (_k, v) => (saved = v) });
-    expect(loadWorkspace({ getItem: () => saved })).toEqual(ws);
+    saveGuestWorkspace(ws, storage);
+    expect(loadGuestWorkspace(storage)).toEqual(ws);
   });
 });
 
@@ -270,14 +327,13 @@ describe("every curriculum action leaves a workspace that loads back", () => {
 
 describe("save guard", () => {
   it("never writes a workspace that would load back as empty", () => {
-    const store = new Map<string, string>();
-    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+    const storage = memory();
     const good = workspaceReducer(emptyWorkspace(), { type: "setCurriculum", curriculum: STATE });
-    expect(saveWorkspace(good, storage)).toBe(true);
+    expect(saveGuestWorkspace(good, storage)).toBe(true);
     const bad = { ...good, curriculum: { ...STATE, passed: [{ courseNo: "cs-101", credits: 3 }] } };
     expect(storableJson(bad)).toBeNull();
-    expect(saveWorkspace(bad, storage)).toBe(false);
-    expect(loadWorkspace(storage)).toEqual(good);
+    expect(saveGuestWorkspace(bad, storage)).toBe(false);
+    expect(loadGuestWorkspace(storage)).toEqual(good);
     expect(storableJson(good)).toBe(JSON.stringify(good));
   });
 });
@@ -302,5 +358,15 @@ describe("refreshCurriculum keeps the plan by name", () => {
     expect(ws.curriculum!.doneSlots).toEqual([]);
     expect(ws.curriculum!.passed.every((p) => p.slotId === undefined)).toBe(true);
     expect(ws.curriculum!.passed.map((p) => p.courseNo)).toContain("204311");
+  });
+});
+
+describe("setTerm", () => {
+  it("takes a semester 1–3 and a year, and ignores anything else", () => {
+    let ws = workspaceReducer(emptyWorkspace(), { type: "setTerm", term: "3/2570" });
+    expect(ws.term).toBe("3/2570");
+    ws = workspaceReducer(ws, { type: "setTerm", term: "4/2570" });
+    expect(ws.term).toBe("3/2570");
+    expect(workspaceReducer(ws, { type: "setTerm", term: "1/25700" }).term).toBe("3/2570");
   });
 });

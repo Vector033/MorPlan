@@ -36,8 +36,8 @@ export default function AboutPage() {
         <h1 className="text-title font-bold sm:text-display">เกี่ยวกับ MorPlan</h1>
         <p className="mt-2 max-w-[65ch] text-base">
           ช่วยจัดตารางลงทะเบียนแบบเห็นเวลาเรียนและวันสอบชนทันที พร้อมเทียบหลายแผนก่อนกดยืนยัน{" "}
-          (โปรเจกต์ของนักศึกษา <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยเชียงใหม่</strong> และไม่เกี่ยวข้องกับ
-          <span className="whitespace-nowrap">สำนักทะเบียนและประมวลผล</span> ข้อมูลทั้งหมดอาจผิดพลาดหรือล้าสมัย{" "}
+          (โปรเจกต์ของนักศึกษา <strong>ไม่ใช่ระบบทางการของมหาวิทยาลัยใดๆ</strong> และไม่เกี่ยวข้องกับ
+          <span className="whitespace-nowrap">สำนักทะเบียนของมหาวิทยาลัยใด</span> ข้อมูลทั้งหมดอาจผิดพลาดหรือล้าสมัย{" "}
           <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้งเสมอ</span>)
         </p>
       </header>
@@ -45,12 +45,12 @@ export default function AboutPage() {
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">ข้อมูลวิชาและตอนเรียน</h2>
         <p>
-          หน้าค้นหากระบวนวิชาของ reg ต้องล็อกอินเพราะ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล MorPlan จึงไม่ดึงหรือเผยแพร่ข้อมูลตอนเรียน{" "}
-          นักศึกษาคัดลอกผลค้นหาจาก reg ที่ตัวเองเปิดมาวางเอง ข้อมูลนั้นอยู่ในเบราว์เซอร์ของนักศึกษา (หรือในบัญชี MorPlan ของนักศึกษาเองถ้าเข้าสู่ระบบ){" "}
+          หน้าค้นหารายวิชาของเว็บลงทะเบียนส่วนใหญ่ต้องล็อกอินเพราะ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล MorPlan จึงไม่ดึงหรือเผยแพร่ข้อมูลตอนเรียน{" "}
+          นักศึกษาคัดลอกผลค้นหาจากเว็บลงทะเบียนที่ตัวเองเปิดมาวางเอง ข้อมูลนั้นอยู่ในเบราว์เซอร์ของนักศึกษา (หรือในบัญชี MorPlan ของนักศึกษาเองถ้าเข้าสู่ระบบ){" "}
           <span className="inline-block">และไม่ถูกรวมเป็นฐานข้อมูลกลาง</span>
         </p>
         <p className="mt-2">
-          MorPlan <strong>ไม่เคยขอ username หรือ password ของ reg หรือ CMU Account</strong>{" "}
+          MorPlan <strong>ไม่เคยขอ username หรือ password ของระบบลงทะเบียนหรือบัญชีมหาวิทยาลัย</strong>{" "}
           <span className="whitespace-nowrap">ถ้าเห็นหน้าไหนขอ อย่ากรอก</span>
         </p>
       </section>
@@ -58,10 +58,9 @@ export default function AboutPage() {
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">วันสอบ</h2>
         <p>
-          ดึงจากตารางสอบกลางภาคและปลายภาคที่<span className="whitespace-nowrap">สำนักทะเบียนฯ</span> เผยแพร่สาธารณะ{" "}
-          <span className="whitespace-nowrap">(timetable_exam.php)</span>{" "}
-          <span className="whitespace-nowrap">วันละไม่กี่ครั้ง</span> และเก็บไว้ในไฟล์{" "}
-          วิชาที่ภาควิชาหรือผู้สอนกำหนดวันสอบเอง<span className="inline-block">อาจไม่มีในตารางนี้</span>
+          วันสอบมาจากหน้าที่นักศึกษาวางหรือกรอกเองในหน้าเพิ่มวิชา{" "}
+          ถ้ามหาวิทยาลัยเผยแพร่ตารางสอบเป็นหน้าสาธารณะ MorPlan ดึงมาไม่กี่ครั้งต่อภาค เก็บไว้ในไฟล์ และเติมให้อัตโนมัติ{" "}
+          วิชาที่ภาควิชาหรือผู้สอนกำหนดวันสอบเอง<span className="inline-block">อาจไม่มีในตารางนั้น</span>
         </p>
       </section>
 
@@ -86,7 +85,12 @@ export default function AboutPage() {
       <section>
         <h2 className="mb-3 border-t border-line pt-3 text-heading font-bold">เอกสารที่ใช้ตอบคำถามเรื่องระเบียบ</h2>
         <p className="mb-2">
-          เอกสารสาธารณะจากเว็บ<span className="whitespace-nowrap">สำนักทะเบียนฯ</span> แปลงเป็นข้อความด้วย OCR (Tesseract){" "}
+          แต่ละมหาวิทยาลัยมีชุดเอกสารของตัวเอง และคำตอบมาจากเอกสารของมหาวิทยาลัยที่เลือกเท่านั้น{" "}
+          เอกสารที่นักศึกษาเพิ่มจากลิงก์เว็บมหาวิทยาลัยจะเก็บไว้กลางพร้อมลิงก์ต้นทาง ให้เพื่อนมหาวิทยาลัยเดียวกันใช้ต่อได้{" "}
+          ส่วนไฟล์ที่อัปโหลดหรือข้อความที่วางใช้เฉพาะคนนั้นและไม่ถูกเก็บ
+        </p>
+        <p className="mb-2">
+          ชุดที่มีมาให้ตั้งแต่แรกแปลงจากเอกสารสาธารณะด้วย OCR (Tesseract){" "}
           ซึ่งอาจอ่านตัวเลขหรือคำผิดได้ คำตอบทุกข้อจึงมี<span className="whitespace-nowrap">ลิงก์ไปหน้าเอกสารต้นฉบับ</span>
         </p>
         <ul className="list-disc space-y-1.5 pl-5">

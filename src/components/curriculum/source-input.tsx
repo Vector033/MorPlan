@@ -59,7 +59,7 @@ export function SourceInput({ onRead, onError, disabled, tabs = ["url", "pdf", "
             {urlLabel}
           </label>
           <input id={`${id}url`} className="input" type="url" inputMode="url" placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} />
-          <p className="mt-1 text-xs text-muted">ต้องเป็นเว็บของมหาวิทยาลัย (.ac.th)</p>
+          <p className="mt-1 text-xs text-muted">ต้องเป็นเว็บของมหาวิทยาลัย (.ac.th หรือ .edu)</p>
         </div>
       )}
       {tab === "pdf" && (

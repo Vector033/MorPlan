@@ -38,14 +38,14 @@ Reply with one JSON object:
 
 /**
  * A link is only worth checking when it is plainly a Thai academic site: http(s),
- * a host under .ac.th, no credentials and no odd port. This is also what keeps the
+ * a host under .ac.th, or .edu (some Thai private universities: au.edu, siam.edu), no credentials and no odd port. This is also what keeps the
  * server-side reachability check from being pointed at anything else.
  */
 export function academicUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
   try {
     const u = new URL(url);
-    const ok = (u.protocol === "https:" || u.protocol === "http:") && u.hostname.toLowerCase().endsWith(".ac.th") && !u.username && !u.password && !u.port;
+    const ok = (u.protocol === "https:" || u.protocol === "http:") && /\.(ac\.th|edu)$/.test(u.hostname.toLowerCase()) && !u.username && !u.password && !u.port;
     return ok ? u.toString() : undefined;
   } catch {
     return undefined;
@@ -54,7 +54,7 @@ export function academicUrl(url?: string | null): string | undefined {
 
 /**
  * GET a page, following at most three redirects by hand and only while each hop is
- * still an academic URL, so a fetch never leaves .ac.th. Null on any other outcome.
+ * still an academic URL, so a fetch never leaves .ac.th / .edu. Null on any other outcome.
  */
 export async function fetchAcademic(url: string, fetchFn: typeof fetch = fetch, timeoutMs = 4_000): Promise<Response | null> {
   try {
@@ -75,6 +75,9 @@ export async function fetchAcademic(url: string, fetchFn: typeof fetch = fetch, 
   }
 }
 
+/** The university's own site for a host: "reg.cmu.ac.th" → "cmu.ac.th", "registrar.au.edu" → "au.edu". */
+const siteOf = (host: string) => host.split(".").slice(host.endsWith(".edu") ? -2 : -3).join(".");
+
 /** Does the page really open? */
 export async function linkAlive(url: string, fetchFn: typeof fetch = fetch): Promise<boolean> {
   const res = await fetchAcademic(url, fetchFn);
@@ -92,7 +95,7 @@ export async function verifyUniversity(reply: z.infer<typeof universityReplySche
   // The model often knows the university's domain but guesses the registrar's host wrong:
   // then offer the university's own home page on that domain instead of nothing.
   const guess = academicUrl(reply.registrarUrl) ?? academicUrl(reply.courseSearchUrl);
-  const homeUrl = registrarUrl || courseSearchUrl || !guess ? undefined : await keep(`https://www.${new URL(guess).hostname.split(".").slice(-3).join(".")}/`);
+  const homeUrl = registrarUrl || courseSearchUrl || !guess ? undefined : await keep(`https://www.${siteOf(new URL(guess).hostname)}/`);
   return {
     officialName: reply.officialName.trim(),
     registrarUrl,
@@ -102,13 +105,13 @@ export async function verifyUniversity(reply: z.infer<typeof universityReplySche
   };
 }
 
-/** มช. in any common spelling: those students get the built-in parser and exam dates. */
+/** Chiang Mai University in any common spelling: the one university with a bundled exam table and regulations corpus. */
 export const CMU_NAME = "มหาวิทยาลัยเชียงใหม่";
 
 /** One name for every CMU spelling ("มช", "CMU", …); any other name, and an empty one, is kept as given. */
 export const canonicalUniversity = (name: string): string => (name.trim() && isCmu(name) ? CMU_NAME : name);
 
 export function isCmu(name: string | null | undefined): boolean {
-  if (!name) return true;
+  if (!name) return false;
   return /^(มช\.?|cmu|chiang ?mai university|มหาวิทยาลัยเชียงใหม่)$/i.test(name.trim());
 }

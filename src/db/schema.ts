@@ -89,3 +89,25 @@ export const curricula = pgTable(
   },
   (t) => [index("curricula_lookup").on(t.uniKey, t.facultyKey, t.majorKey), index("curricula_status_created").on(t.status, t.createdAt)],
 );
+
+/**
+ * Regulation documents per university for the Q&A: read from a university link (shared once confirmed)
+ * or by the owner. Uploads and pasted text never come here; they stay in the student's request.
+ */
+export const regulations = pgTable(
+  "regulations",
+  {
+    id: text("id").primaryKey(),
+    uniKey: text("uni_key").notNull(),
+    university: text("university").notNull(),
+    title: text("title").notNull(),
+    kind: text("kind").notNull(), // regulation | calendar | announcement | guide
+    status: text("status").notNull(), // pending | shared
+    provenance: text("provenance").notNull(), // link | owner
+    sourceUrl: text("source_url"),
+    pages: jsonb("pages").notNull(), // { page: number; text: string }[]
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("regulations_uni").on(t.uniKey, t.status), index("regulations_status_created").on(t.status, t.createdAt)],
+);

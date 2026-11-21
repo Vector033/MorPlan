@@ -2,6 +2,8 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import type { Section } from "@/lib/core/types";
+import { XIcon } from "@/components/icons";
+import { DEMO_NOTE } from "@/lib/demo";
 import { examLabel, meetingLabel, sectionLabel } from "@/lib/ui";
 import { useWorkspace } from "./workspace-context";
 
@@ -24,8 +26,14 @@ export function CourseSearch() {
   }, [ws.pool]);
 
   const results = query
-    ? courses.filter((c) => c.courseNo.startsWith(query) || c.title.toLowerCase().includes(query))
+    ? courses.filter((c) => c.courseNo.toLowerCase().includes(query) || c.title.toLowerCase().includes(query))
     : courses;
+  const demo = courses.filter((c) => c.sections.every((s) => s.note === DEMO_NOTE)).map((c) => c.courseNo);
+
+  function remove(courseNos: string[], question: string) {
+    if (!window.confirm(question)) return;
+    for (const courseNo of courseNos) dispatch({ type: "removeFromPool", courseNo });
+  }
 
   return (
     <section className="card" aria-label="ค้นหาวิชา">
@@ -36,7 +44,7 @@ export function CourseSearch() {
       <input
         id="course-q"
         className="input"
-        placeholder="เช่น 204 หรือ calculus"
+        placeholder="เช่น CS101 หรือ calculus"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         inputMode="search"
@@ -72,6 +80,15 @@ export function CourseSearch() {
                 >
                   {wanted ? "เพิ่มแล้ว" : "เพิ่ม"}
                 </button>
+                <button
+                  type="button"
+                  className="btn-ghost min-h-8 px-2 text-muted"
+                  aria-label={`ลบ ${c.courseNo} ออกจากรายการ`}
+                  title="ลบออกจากรายการ"
+                  onClick={() => remove([c.courseNo], `ลบ ${c.courseNo} ออกจากรายการและทุกแผน?`)}
+                >
+                  <XIcon className="size-3.5" />
+                </button>
               </div>
               {expanded && (
                 <ul className="mx-3 mb-3 flex flex-col gap-2 border-t border-line pt-2 text-xs tabular-nums">
@@ -92,6 +109,22 @@ export function CourseSearch() {
           );
         })}
       </ul>
+      {courses.length > 0 && (
+        <div className="flex flex-wrap gap-1 border-t border-line px-2 py-1.5">
+          {demo.length > 0 && demo.length < courses.length && (
+            <button type="button" className="btn-ghost text-xs" onClick={() => remove(demo, `ลบวิชาตัวอย่าง ${demo.length} วิชาออกจากรายการและทุกแผน?`)}>
+              ล้างวิชาตัวอย่าง
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn-ghost text-xs"
+            onClick={() => remove(courses.map((c) => c.courseNo), `ลบทั้ง ${courses.length} วิชาออกจากรายการและทุกแผน?`)}
+          >
+            ล้างรายการทั้งหมด
+          </button>
+        </div>
+      )}
     </section>
   );
 }

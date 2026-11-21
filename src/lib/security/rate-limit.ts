@@ -21,6 +21,9 @@ export const LIMITS = {
   curriculumRead: { bucket: "curriculum-read", limit: 8, windowSec: 3600 },
   curriculumFind: { bucket: "curriculum-find", limit: 8, windowSec: 3600 },
   curriculumConfirm: { bucket: "curriculum-confirm", limit: 20, windowSec: 3600 },
+  regulationsRead: { bucket: "regulations-read", limit: 8, windowSec: 3600 },
+  regulationsFind: { bucket: "regulations-find", limit: 8, windowSec: 3600 },
+  regulationsConfirm: { bucket: "regulations-confirm", limit: 20, windowSec: 3600 },
 } satisfies Record<string, Limit>;
 
 /**

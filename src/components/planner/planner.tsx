@@ -24,7 +24,6 @@ import { currentTermView, type Source, type TermView as TermViewData } from "@/l
 import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
-import { EXAMS } from "@/lib/exams-data";
 import { playClashSound, playSnapSound, useMicroSound } from "@/lib/sound";
 import { colorFor, conflictText } from "@/lib/ui";
 import { sectionsOfCourse } from "@/lib/workspace/reducer";
@@ -37,6 +36,7 @@ import { ExportBar } from "./export-bar";
 import { IssuesPanel } from "./issues-panel";
 import { useCountUp, usePlacementMotion } from "./motion";
 import { PlanTabs } from "./plan-tabs";
+import { TermPicker } from "./term-picker";
 import { SectionPicker } from "./section-picker";
 import { useWorkspace } from "./workspace-context";
 
@@ -117,9 +117,9 @@ export function Planner() {
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         {hero && (
           <header className="pt-2 pb-2 sm:pt-6 lg:col-span-2">
-            <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
+            <TermPicker />
             <h1 className="mt-1 text-title font-bold sm:text-display">
-              จัดตารางเรียน มช. <span className="whitespace-nowrap">ให้ลงตัวในไม่กี่นาที</span>
+              จัดตารางเรียน<span className="whitespace-nowrap">ให้ลงตัวในไม่กี่นาที</span>
             </h1>
             <p className="mt-2 max-w-[65ch] text-base text-muted sm:text-lg">
               เช็กเวลาเรียนและวันสอบชนอัตโนมัติ <span className="whitespace-nowrap">เทียบแผน A / B / C ได้ทันที</span>
@@ -129,7 +129,7 @@ export function Planner() {
         {/* On phones the timetable leads once it has something on it; search and tray follow. */}
         <aside className={`flex flex-col gap-4 ${placed.length ? "order-last lg:order-none" : ""} lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1`}>
           {ws.pool.length === 0 ? (
-            <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections(EXAMS), university: null })} />
+            <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections() })} />
           ) : (
             <CourseSearch />
           )}
@@ -150,7 +150,7 @@ export function Planner() {
           {!hero && (
             <header className="order-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2 md:order-none">
               <div>
-                <p className="eyebrow">ภาคการศึกษา {ws.term}</p>
+                <TermPicker />
                 <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
               </div>
               {/* Three giant zeros say nothing on an empty plan; the summary appears with the first course. */}
@@ -180,21 +180,20 @@ export function Planner() {
                 <span>{soundOn ? "เสียงสัมผัส: เปิด" : "เสียงสัมผัส: ปิด"}</span>
               </button>
               <div className="flex flex-wrap items-center gap-2">
-                {/* The regulations corpus is CMU's only. */}
-                {!ws.university && <AskDrawer />}
+                <AskDrawer />
                 <ExportBar calendarRef={calendarRef} />
               </div>
             </div>
           </div>
 
-          <div className="order-3 grid grid-cols-5 gap-1.5 md:hidden" role="tablist" aria-label="เลือกวัน">
+          <div className="order-3 flex gap-1.5 md:hidden" role="tablist" aria-label="เลือกวัน">
             {days.map((d) => (
               <button
                 key={d}
                 role="tab"
                 aria-selected={mobileDay === d}
                 onClick={() => setMobileDay(d)}
-                className={`rounded-full py-2 text-sm font-semibold ${
+                className={`min-w-0 flex-1 rounded-full py-2 text-sm font-semibold ${
                   mobileDay === d ? "bg-accent text-white shadow-sm" : "border border-line bg-white text-ink"
                 }`}
               >
@@ -513,7 +512,7 @@ function EmptyPool({ onDemo }: { onDemo: () => void }) {
         <ol className="flex flex-col gap-1.5 text-xs text-ink">
           <li className="flex items-center gap-2">
             <span className="grid size-5 shrink-0 place-items-center rounded-full bg-canvas font-mono text-[11px] font-bold">1</span>
-            <span>นำเข้าผลค้นหารายวิชาจาก reg</span>
+            <span>นำเข้าผลค้นหารายวิชาจากเว็บลงทะเบียน</span>
           </li>
           <li className="flex items-center gap-2">
             <span className="grid size-5 shrink-0 place-items-center rounded-full bg-canvas font-mono text-[11px] font-bold">2</span>
@@ -525,13 +524,13 @@ function EmptyPool({ onDemo }: { onDemo: () => void }) {
           </li>
         </ol>
         <p className="text-xs text-muted">
-          คัดลอกผลค้นหาจาก <span className="whitespace-nowrap">reg ของ มช.</span> มาวางเองได้เลย{" "}
-          <strong className="font-medium whitespace-nowrap text-ink">MorPlan ไม่เคยขอรหัสผ่าน reg</strong>
+          คัดลอกผลค้นหาจากเว็บลงทะเบียนของมหาวิทยาลัยมาวางได้เลย{" "}
+          <strong className="font-medium whitespace-nowrap text-ink">MorPlan ไม่เคยขอรหัสผ่านเว็บลงทะเบียน</strong>
         </p>
       </div>
       <div className="flex flex-wrap gap-2 p-4">
         <Link href="/import" className="btn-primary">
-          นำเข้าจาก reg
+          นำเข้าวิชา
         </Link>
         <button className="btn" onClick={onDemo}>
           ลองด้วยข้อมูลตัวอย่าง

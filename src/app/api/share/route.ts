@@ -4,10 +4,11 @@ import { z } from "zod";
 import { db } from "@/db";
 import { events, shares } from "@/db/schema";
 import { guardMutation, LIMITS } from "@/lib/security/rate-limit";
+import { TERM } from "@/lib/workspace/reducer";
 import { sectionSchema } from "@/lib/workspace/storage";
 
 const body = z.object({
-  term: z.string().regex(/^[123]\/\d{4}$/),
+  term: z.string().regex(TERM),
   name: z.string().trim().min(1).max(30),
   sections: z.array(sectionSchema).max(20),
 });

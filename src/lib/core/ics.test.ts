@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TERMS } from "@/lib/terms";
+import { termDefaults, TERMS } from "@/lib/terms";
 import { buildIcs, fold } from "./ics";
 import type { Section } from "./types";
 
@@ -58,5 +58,14 @@ describe("fold", () => {
     const folded = fold(line);
     for (const l of folded.split("\r\n")) expect(new TextEncoder().encode(l).length).toBeLessThanOrEqual(75);
     expect(folded.replace(/\r\n /g, "")).toBe(line);
+  });
+});
+
+describe("termDefaults", () => {
+  it("uses the known calendar only for its university, a typical Thai one otherwise", () => {
+    expect(termDefaults("2/2569", "มช")).toBe(TERMS["2/2569"]);
+    expect(termDefaults("2/2569", "มหาวิทยาลัยมหิดล")).toMatchObject({ start: "2026-11-23", end: "2027-03-19", noClass: [] });
+    expect(termDefaults("1/2570")).toMatchObject({ start: "2027-08-03", end: "2027-11-27", label: "ภาคการศึกษาที่ 1/2570" });
+    expect(termDefaults("3/2569")).toMatchObject({ start: "2027-04-05", label: "ภาคฤดูร้อน 2569" });
   });
 });

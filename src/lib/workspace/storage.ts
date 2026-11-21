@@ -2,9 +2,14 @@ import { z } from "zod";
 import { SLOT_KINDS } from "@/lib/core/curriculum";
 import { COURSE_NO, LIMITS } from "@/lib/core/curriculum-limits";
 import { DAYS, type Workspace } from "@/lib/core/types";
-import { emptyWorkspace, VIEW_SEMESTER_MAX, VIEW_YEAR_MAX } from "./reducer";
+import { emptyWorkspace, TERM, VIEW_SEMESTER_MAX, VIEW_YEAR_MAX } from "./reducer";
 
-export const STORAGE_KEY = "morplan:workspace:v1";
+/** The signed-out workspace. A signed-in workspace lives in memory and the database only. */
+export const GUEST_KEY = "morplan:workspace:guest:v1";
+/** Before accounts were kept apart: one key for everyone, so it may hold a signed-in account's copy. */
+export const LEGACY_KEY = "morplan:workspace:v1";
+/** Per-account copies; never written now, removed wherever they are found. */
+export const ACCOUNT_PREFIX = "morplan:workspace:u:";
 
 // Every field is bounded: this schema guards the share and workspace APIs as
 // well as browser storage, so nothing unbounded reaches the database.
@@ -106,7 +111,7 @@ export const curriculumStateSchema = z.object({
 const planId = z.string().max(4);
 export const workspaceSchema = z.object({
   version: z.literal(1),
-  term: z.string().regex(/^[123]\/\d{4}$/),
+  term: z.string().regex(TERM),
   university: text(100).optional(),
   pool: z.array(sectionSchema).max(3000),
   plans: z
@@ -130,10 +135,20 @@ export function parseWorkspace(raw: unknown): Workspace | null {
   return r.success ? (r.data as Workspace) : null;
 }
 
-/** Never throws: private mode, blocked storage or corrupt JSON give an empty workspace. */
-export function loadWorkspace(storage: Pick<Storage, "getItem"> | undefined = safeLocalStorage()): Workspace {
+type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+/**
+ * The guest workspace. Never throws: private mode, blocked storage or corrupt JSON give an empty workspace.
+ * Moves a legacy copy to the guest key once; call it only while signed out, as the legacy key may hold an account's copy.
+ */
+export function loadGuestWorkspace(storage: Store | undefined = safeLocalStorage()): Workspace {
   try {
-    const text = storage?.getItem(STORAGE_KEY);
+    const legacy = storage?.getItem(LEGACY_KEY);
+    if (legacy != null) {
+      if (!storage?.getItem(GUEST_KEY)) storage?.setItem(GUEST_KEY, legacy);
+      storage?.removeItem(LEGACY_KEY);
+    }
+    const text = storage?.getItem(GUEST_KEY);
     if (!text) return emptyWorkspace();
     return parseWorkspace(JSON.parse(text)) ?? emptyWorkspace();
   } catch {
@@ -148,15 +163,39 @@ export function storableJson(ws: Workspace): string | null {
 }
 
 /** Writes only a workspace that loads back; returns false (and writes nothing) otherwise. */
-export function saveWorkspace(ws: Workspace, storage: Pick<Storage, "setItem"> | undefined = safeLocalStorage()): boolean {
+export function saveGuestWorkspace(ws: Workspace, storage: Pick<Storage, "setItem"> | undefined = safeLocalStorage()): boolean {
   const json = storableJson(ws);
   if (json === null) return false;
   try {
-    storage?.setItem(STORAGE_KEY, json);
+    storage?.setItem(GUEST_KEY, json);
   } catch {
     // Quota or blocked storage: the session keeps working in memory.
   }
   return true;
+}
+
+export function clearGuestStorage(storage: Pick<Storage, "removeItem"> | undefined = safeLocalStorage()): void {
+  try {
+    storage?.removeItem(GUEST_KEY);
+  } catch {
+    // Blocked storage holds nothing to clear.
+  }
+}
+
+/** Removes every copy that may belong to an account: per-account keys and the legacy shared key. */
+export function clearAccountStorage(storage: Pick<Storage, "length" | "key" | "removeItem"> | undefined = safeLocalStorage()): void {
+  try {
+    if (!storage) return;
+    const keys = Array.from({ length: storage.length }, (_, i) => storage.key(i)).filter((k): k is string => !!k?.startsWith(ACCOUNT_PREFIX));
+    for (const k of [...keys, LEGACY_KEY]) storage.removeItem(k);
+  } catch {
+    // Blocked storage holds nothing to clear.
+  }
+}
+
+/** True when there is anything worth offering to carry into an account. */
+export function hasNonEmptyWorkspace(ws: Workspace): boolean {
+  return ws.pool.length > 0 || ws.curriculum != null || ws.plans.some((p) => p.courseNos.length > 0 || p.sectionIds.length > 0);
 }
 
 function safeLocalStorage(): Storage | undefined {

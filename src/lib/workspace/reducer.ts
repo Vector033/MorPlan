@@ -10,16 +10,23 @@ import {
 } from "@/lib/core/curriculum";
 import { boundTitle, COURSE_NO, LIMITS } from "@/lib/core/curriculum-limits";
 import type { Plan, Section, Workspace } from "@/lib/core/types";
+import { canonicalUniversity } from "@/lib/core/university";
 
 export const MAX_PLANS = 5;
 /** Bounds of a view position; the workspace schema uses the same ones. */
 export const VIEW_YEAR_MAX = 20;
 export const VIEW_SEMESTER_MAX = 9;
 export const PLAN_NAMES = ["A", "B", "C", "D", "E"];
+/** A term as stored: the workspace and share schemas use the same pattern. */
+export const TERM = /^[123]\/\d{4}$/;
 
 export type Action =
-  /** `university`: a name sets it, null resets to มช., absent leaves it as is. */
-  | { type: "import"; sections: Section[]; university?: string | null }
+  /** `university`: a name sets it, absent leaves it as is. */
+  | { type: "import"; sections: Section[]; university?: string }
+  /** The student's university for every page (import, curriculum, regulations); an empty name clears it. */
+  | { type: "setUniversity"; university: string }
+  /** "1/2569": semester 1 or 2, or 3 for summer / a third trimester, then the Buddhist-era year. */
+  | { type: "setTerm"; term: string }
   | { type: "removeFromPool"; courseNo: string }
   | { type: "wantCourse"; courseNo: string }
   | { type: "unwantCourse"; courseNo: string }
@@ -44,6 +51,15 @@ export type Action =
   /** A new copy of the same curriculum: keeps progress and minor; keeps the plan with the same name, else the first plan with slot progress cleared. */
   | { type: "refreshCurriculum"; data: Curriculum; source: Source; ref?: string }
   | { type: "wantCourses"; courseNos: string[] };
+
+/** Sets the university by its one canonical name ("มช" → the full name), within the stored bound; "" clears it. */
+function withUniversity(ws: Workspace, name: string): Workspace {
+  const university = canonicalUniversity(name.trim()).slice(0, 100);
+  if (university === (ws.university ?? "")) return ws;
+  const next: Workspace = { ...ws, university };
+  if (!university) delete next.university;
+  return next;
+}
 
 export function emptyWorkspace(term = "2/2569"): Workspace {
   return { version: 1, term, pool: [], plans: [newPlan("A")], activePlanId: "A" };
@@ -73,10 +89,12 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
       const byId = new Map(ws.pool.map((s) => [s.id, s]));
       for (const s of action.sections) byId.set(s.id, s);
       const next = { ...ws, pool: [...byId.values()].sort((a, b) => a.id.localeCompare(b.id)) };
-      if (action.university === null) delete next.university;
-      else if (action.university) next.university = action.university;
-      return next;
+      return action.university?.trim() ? withUniversity(next, action.university) : next;
     }
+    case "setUniversity":
+      return withUniversity(ws, action.university);
+    case "setTerm":
+      return TERM.test(action.term) && action.term !== ws.term ? { ...ws, term: action.term } : ws;
     case "removeFromPool": {
       const pool = ws.pool.filter((s) => s.courseNo !== action.courseNo);
       const plans = ws.plans.map((p) => ({
@@ -134,7 +152,10 @@ export function workspaceReducer(ws: Workspace, action: Action): Workspace {
     case "replace":
       return action.workspace;
     case "setCurriculum":
-      return { ...ws, curriculum: { ...action.curriculum, source: fitSource(action.curriculum.source) } };
+      return withUniversity(
+        { ...ws, curriculum: { ...action.curriculum, source: fitSource(action.curriculum.source) } },
+        action.curriculum.data.university,
+      );
     case "clearCurriculum": {
       const next = { ...ws };
       delete next.curriculum;

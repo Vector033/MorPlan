@@ -11,6 +11,7 @@ export function IssuesPanel() {
     new Set(conflicts.filter((c) => c.kind === kind).flatMap((c) => [c.a, c.b]));
   const exams = (kind: "midterm" | "final") =>
     [...placed].sort((a, b) => (a[kind]?.date ?? "9").localeCompare(b[kind]?.date ?? "9") || (a[kind]?.start ?? 0) - (b[kind]?.start ?? 0));
+  const hasExams = placed.some((s) => s.midterm || s.final);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -69,11 +70,10 @@ export function IssuesPanel() {
           ตารางสอบ
         </h2>
         <div className="p-4">
-          {ws.university ? (
-            // Exam dates come from CMU's public exam table only.
-            <p className="text-sm text-muted">ยังไม่มีวันสอบของ{ws.university} ตรวจสอบจากเว็บของมหาวิทยาลัย</p>
-          ) : placed.length === 0 ? (
+          {placed.length === 0 ? (
             <p className="text-sm text-muted">วันสอบจะแสดงเมื่อวางวิชาลงตาราง</p>
+          ) : !hasExams ? (
+            <p className="text-sm text-muted">ยังไม่มีข้อมูลวันสอบของวิชาในตาราง เพิ่มวันสอบได้ในหน้าเพิ่มวิชา หรือเช็กจากเว็บมหาวิทยาลัย</p>
           ) : (
             <div className="grid gap-4 text-sm sm:grid-cols-2 md:grid-cols-1">
               {(["midterm", "final"] as const).map((kind) => {
@@ -105,10 +105,9 @@ export function IssuesPanel() {
               })}
             </div>
           )}
-          {!ws.university && (
+          {hasExams && (
             <p className="mt-3 text-xs text-muted">
-              วันสอบมาจากตารางสอบสาธารณะของ<span className="whitespace-nowrap">สำนักทะเบียนฯ มช.</span>{" "}
-              วิชาที่ภาควิชากำหนดเองอาจไม่มีในตารางนี้{" "}
+              วันสอบมาจากข้อมูลที่นำเข้า กรอกเอง หรือตารางสอบสาธารณะของมหาวิทยาลัยถ้ามี วิชาที่ภาควิชากำหนดเองอาจไม่มีในนี้{" "}
               <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้ง</span>
             </p>
           )}

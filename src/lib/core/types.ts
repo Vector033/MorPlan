@@ -37,7 +37,7 @@ export type Plan = { id: string; name: string; courseNos: string[]; sectionIds: 
 export type Workspace = {
   version: 1;
   term: string;
-  /** Unset means มช.: exam dates and the regulations assistant only cover CMU. */
+  /** The student's university, by its canonical name; unset until they choose one. */
   university?: string;
   pool: Section[];
   plans: Plan[];

@@ -5,9 +5,13 @@ describe("academicUrl", () => {
   it("accepts Thai academic hosts only", () => {
     expect(academicUrl("https://registrar.ku.ac.th/")).toBe("https://registrar.ku.ac.th/");
     expect(academicUrl("http://reg.example.ac.th/search?x=1")).toBe("http://reg.example.ac.th/search?x=1");
+    expect(academicUrl("https://www.au.edu/registrar")).toBe("https://www.au.edu/registrar");
     for (const bad of [
       "https://made-up-reg.example.com/search",
       "https://ku.ac.th.evil.com/",
+      "https://au.edu.evil.com/",
+      "https://evil-edu/",
+      "https://user@au.edu/",
       "https://evil.com/?u=ku.ac.th",
       "https://user:pw@ku.ac.th/",
       "https://ku.ac.th:8443/",
@@ -101,9 +105,9 @@ describe("verifyUniversity", () => {
 });
 
 describe("isCmu", () => {
-  it("treats empty and CMU spellings as CMU", () => {
-    for (const n of [undefined, "", "มช", "มช.", "CMU", "Chiang Mai University", "มหาวิทยาลัยเชียงใหม่"]) expect(isCmu(n)).toBe(true);
-    expect(isCmu("มหาวิทยาลัยมหิดล")).toBe(false);
+  it("knows CMU spellings and never assumes CMU when no university is chosen", () => {
+    for (const n of ["มช", "มช.", "CMU", "Chiang Mai University", "มหาวิทยาลัยเชียงใหม่"]) expect(isCmu(n)).toBe(true);
+    for (const n of [undefined, null, "", "มหาวิทยาลัยมหิดล"]) expect(isCmu(n)).toBe(false);
   });
 });
 

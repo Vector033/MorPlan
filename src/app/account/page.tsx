@@ -3,8 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { initialOf } from "@/lib/account";
 import { requireAccount } from "@/lib/auth";
-import { signOutEverywhere } from "./actions";
-import { DeleteForm, PasswordForm, ProfileForm } from "./forms";
+import { DeleteForm, PasswordForm, ProfileForm, ResetWorkspaceButton, SignOutButtons } from "./forms";
 
 export const metadata: Metadata = { title: "ตั้งค่าบัญชี" };
 
@@ -79,7 +78,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
         <div className="flex flex-col gap-5">
           <Card
             title="ความปลอดภัย"
-            description="บัญชี MorPlan แยกจาก CMU Account และ reg อย่าใช้รหัสผ่านเดียวกัน"
+            description="บัญชี MorPlan แยกจากบัญชีมหาวิทยาลัยและระบบลงทะเบียน อย่าใช้รหัสผ่านเดียวกัน"
           >
             <Row
               label={account.hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}
@@ -95,14 +94,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
               <p>{thaiDate(account.lastSignInAt, true)}</p>
             </Row>
             <Row label="อุปกรณ์ที่เข้าสู่ระบบ" description="ออกจากทุกเบราว์เซอร์และทุกเครื่อง รวมเครื่องนี้">
-              <div className="flex flex-wrap gap-2">
-                <form action={signOutEverywhere}>
-                  <button className="btn">ออกจากระบบทุกเครื่อง</button>
-                </form>
-                <form action="/auth/signout" method="post">
-                  <button className="btn-ghost">ออกจากระบบเครื่องนี้</button>
-                </form>
-              </div>
+              <SignOutButtons />
             </Row>
           </Card>
         </div>
@@ -114,12 +106,15 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
             <Row label="สิ่งที่เก็บในบัญชี">
               <ul className="list-disc space-y-1 pl-5 text-sm">
                 <li>อีเมล ชื่อที่แสดง และวันที่สมัคร</li>
-                <li>แผนตารางเรียนทุกแผนและวิชาที่นำเข้า</li>
+                <li>แผนตารางเรียนทุกแผน วิชาที่นำเข้า และหลักสูตรที่เลือก</li>
               </ul>
+            </Row>
+            <Row label="ล้างข้อมูลพื้นที่ทำงาน" description="ลบแผน วิชา และหลักสูตรในบัญชีนี้ แต่ยังเก็บบัญชีไว้ กู้คืนไม่ได้">
+              <ResetWorkspaceButton />
             </Row>
             <Row label="สิ่งที่ไม่เก็บ">
               <ul className="list-disc space-y-1 pl-5 text-sm">
-                <li>รหัสผ่าน CMU หรือ reg (ไม่เคยขอ)</li>
+                <li>รหัสผ่านบัญชีมหาวิทยาลัยหรือระบบลงทะเบียน (ไม่เคยขอ)</li>
                 <li>IP address: ตัวจำกัดการใช้งานเก็บเป็นค่าแฮชเท่านั้น</li>
               </ul>
             </Row>
@@ -132,7 +127,6 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
               </h2>
               <p className="mt-1 text-sm text-muted">
                 ลบบัญชีและแผนทุกแผนที่เก็บในบัญชีทันที กู้คืนไม่ได้ ลิงก์แชร์ที่เคยส่งให้เพื่อนเป็นสำเนาแยกและยังเปิดได้
-                แผนในเบราว์เซอร์นี้ยังอยู่จนกว่าจะล้างข้อมูลเบราว์เซอร์
               </p>
             </div>
             <div className="px-5 pt-2 pb-5">

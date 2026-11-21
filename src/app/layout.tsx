@@ -10,9 +10,9 @@ import "./globals.css";
 const anuphan = Anuphan({ variable: "--font-anuphan", subsets: ["thai", "latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: { default: "MorPlan · จัดตารางเรียน มช.", template: "%s · MorPlan" },
+  title: { default: "MorPlan · จัดตารางเรียน", template: "%s · MorPlan" },
   description:
-    "จัดตารางเรียน มช. แบบลากวาง เตือนเวลาเรียนและวันสอบชน เทียบหลายแผน และถามระเบียบการศึกษาพร้อมอ้างอิงหน้าเอกสาร (ไม่ใช่ระบบทางการ)",
+    "จัดตารางเรียนแบบลากวาง เตือนเวลาเรียนและวันสอบชน เทียบหลายแผน ดูหลักสูตร และถามระเบียบการศึกษาพร้อมอ้างอิงหน้าเอกสาร (ไม่ใช่ระบบทางการ)",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#ffffff" };
@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="th" className={`${anuphan.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col pb-24 sm:pb-0">
         <SiteHeader />
-        <WorkspaceProvider signedIn={!!user}>
+        <WorkspaceProvider userId={user?.id ?? null}>
           <SiteBackdrop />
           <div className="relative z-10 flex flex-1 flex-col">{children}</div>
         </WorkspaceProvider>
@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </p>
             <p>
               <strong className="font-semibold text-ink">
-                ไม่ใช่ระบบทางการ<span className="whitespace-nowrap">ของ มช.</span>
+                ไม่ใช่ระบบทางการ<span className="whitespace-nowrap">ของมหาวิทยาลัยใดๆ</span>
               </strong>{" "}
               โปรเจกต์ของนักศึกษา ข้อมูลอาจผิดพลาด{" "}
               <span className="inline-block">ตรวจสอบกับประกาศทางการอีกครั้งเสมอ</span>

@@ -34,7 +34,7 @@ export function AskDrawer() {
           </header>
           <div className="flex-1 overflow-y-auto overscroll-contain p-4">
             <p className="mb-3 max-w-[65ch] text-xs leading-[1.65] text-muted">
-              ตอบจากเอกสารสาธารณะของ<span className="whitespace-nowrap">สำนักทะเบียนฯ</span>{" "}
+              ตอบจากเอกสารระเบียบของ<span className="whitespace-nowrap">มหาวิทยาลัยที่คุณเลือก</span>{" "}
               <span className="whitespace-nowrap">พร้อมเลขหน้า</span> · ไม่ใช่ระบบทางการ ·{" "}
               <Link href="/ask" className="whitespace-nowrap underline underline-offset-4 hover:text-ink">
                 เปิดเต็มหน้า

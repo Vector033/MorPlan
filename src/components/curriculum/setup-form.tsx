@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useWorkspace } from "@/components/planner/workspace-context";
 import { covers, type Curriculum, type Source } from "@/lib/core/curriculum";
-import { canonicalUniversity, CMU_NAME, isCmu } from "@/lib/core/university";
+import { canonicalUniversity } from "@/lib/core/university";
 import { CURRENT_TERM } from "@/lib/terms";
 import type { Meta } from "@/lib/curriculum/rows";
 import universities from "../../../data/universities-th.json";
@@ -127,7 +127,7 @@ function ChoiceField(props: {
 export function SetupForm({ onDone }: { onDone: () => void }) {
   const { ws, dispatch } = useWorkspace();
   const id = useId();
-  const [university, setUniversity] = useState(isCmu(ws.university) ? CMU_NAME : (ws.university ?? ""));
+  const [university, setUniversity] = useState(ws.university ?? "");
   const [faculty, setFaculty] = useState("");
   const [major, setMajor] = useState("");
   const [cohort, setCohort] = useState("");
@@ -198,6 +198,7 @@ export function SetupForm({ onDone }: { onDone: () => void }) {
     const cohortAtStart = cohortNo;
     setSearching(true);
     const s = scope();
+    dispatch({ type: "setUniversity", university: s.university }); // one university across import, curriculum and regulations
     const { ok, body } = await call(
       `/api/curriculum?university=${encodeURIComponent(s.university)}&faculty=${encodeURIComponent(s.faculty)}&major=${encodeURIComponent(s.major)}`,
     );

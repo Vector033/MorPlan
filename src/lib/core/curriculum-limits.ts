@@ -16,7 +16,7 @@ export const LIMITS = {
   doneSlots: 200,
 } as const;
 
-/** A stored course code: มช. codes are 6 digits; other universities use 7–8 digits or letters ("01204111", "ITCS101"). */
+/** A stored course code, letters and digits: "204101", "01204111", "ITCS101", "240101" (from 240-101). */
 export const COURSE_NO = /^[0-9A-Z]{2,12}$/;
 
 /** A document or page title as stored: whitespace collapsed, cut to the text limit. */

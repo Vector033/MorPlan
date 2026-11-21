@@ -29,6 +29,13 @@
       "when": 1794721747818,
       "tag": "0003_curricula",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795243451923,
+      "tag": "0004_regulations",
+      "breakpoints": true
     }
   ]
 }

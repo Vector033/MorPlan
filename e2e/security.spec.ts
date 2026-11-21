@@ -42,6 +42,19 @@ test("curriculum API rejects cross-site and non-JSON writes", async ({ request }
   expect((await request.post("/api/curriculum/confirm", { data: { id: "zzzzzzzzzz", cohortFrom: 25 } })).status()).toBe(404);
 });
 
+test("regulations API rejects cross-site writes and non-university links", async ({ request }) => {
+  const body = JSON.stringify({ id: "zzzzzzzzzz" });
+  for (const path of ["/api/regulations/read", "/api/regulations/confirm", "/api/regulations/find"]) {
+    const evil = await request.post(path, { data: body, headers: { "content-type": "application/json", origin: "https://evil.example" } });
+    expect(evil.status(), path).toBe(403);
+  }
+  const offSite = await request.post("/api/regulations/read", { data: { university: "มหาวิทยาลัยทดสอบ", source: { url: "http://169.254.169.254/latest" } } });
+  expect(offSite.status()).toBe(422);
+  expect((await request.post("/api/regulations/confirm", { data: { id: "zzzzzzzzzz" } })).status()).toBe(404);
+  const tooMany = { question: "ถามอะไรก็ได้", university: "มหาวิทยาลัยทดสอบ", privateDocs: Array.from({ length: 4 }, () => ({ title: "x", pages: [{ page: 1, text: "x" }] })) };
+  expect((await request.post("/api/ask", { data: tooMany })).status()).toBe(400);
+});
+
 test("signing out cannot be triggered from another site", async ({ request }) => {
   const res = await request.post("/auth/signout", { headers: { origin: "https://evil.example" }, maxRedirects: 0 });
   expect(res.status()).toBe(403);
@@ -54,7 +67,7 @@ test("no CSP violations while using the planner", async ({ page }) => {
   });
   await page.goto("/");
   await page.getByRole("button", { name: "ลองด้วยข้อมูลตัวอย่าง" }).click();
-  await page.getByLabel("ค้นหาด้วยรหัสหรือชื่อวิชา", { exact: false }).fill("206111");
+  await page.getByLabel("ค้นหาด้วยรหัสหรือชื่อวิชา", { exact: false }).fill("MATH101");
   await page.getByRole("button", { name: "เพิ่ม", exact: true }).first().click();
   await page.goto("/ask");
   await page.goto("/compare");

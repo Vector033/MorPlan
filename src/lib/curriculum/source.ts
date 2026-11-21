@@ -7,7 +7,7 @@ export const MAX_UPLOAD_BYTES = 3_000_000;
 export const MIN_TEXT_CHARS = 200;
 
 const MESSAGES = {
-  "not-academic": "รับเฉพาะลิงก์เว็บไซต์มหาวิทยาลัย (.ac.th)",
+  "not-academic": "รับเฉพาะลิงก์เว็บไซต์มหาวิทยาลัย (.ac.th หรือ .edu)",
   unreachable: "เปิดลิงก์นี้ไม่ได้ ลองอัปโหลดไฟล์หรือวางข้อความแทน",
   "too-large": "เอกสารใหญ่เกินไป ลองใช้ลิงก์หน้าเว็บของหลักสูตร หรือวางเฉพาะส่วนแผนการศึกษา",
   "no-text": "อ่านข้อความจากไฟล์นี้ไม่ได้ (อาจเป็นภาพสแกน) ลองใช้ลิงก์หน้าเว็บหรือวางข้อความแทน",
@@ -100,8 +100,8 @@ export function readPasted(text: string): SourceText {
 
 const LOOKS_LIKE_CURRICULUM = /หลักสูตร|แผนการ(ศึกษา|เรียน)|มคอ|curriculum|program|study[\s-]?plan|tqf/i;
 
-/** Links on a page that look like curriculum pages or files: academic URLs only, deduplicated, at most 12. */
-export function curriculumLinks(html: string, baseUrl: string): { url: string; label: string }[] {
+/** Links on a page that look like curriculum pages or files (or whatever `looksLike` says): academic URLs only, deduplicated, at most 12. */
+export function curriculumLinks(html: string, baseUrl: string, looksLike = LOOKS_LIKE_CURRICULUM): { url: string; label: string }[] {
   const out = new Map<string, string>();
   for (const m of html.matchAll(/<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>([\s\S]*?)<\/a>/gi)) {
     let url: string | undefined;
@@ -111,7 +111,7 @@ export function curriculumLinks(html: string, baseUrl: string): { url: string; l
       continue;
     }
     const label = pageText(m[3]).replace(/\s+/g, " ").trim();
-    if (url && !out.has(url) && LOOKS_LIKE_CURRICULUM.test(`${label} ${url}`)) out.set(url, label);
+    if (url && !out.has(url) && looksLike.test(`${label} ${url}`)) out.set(url, label);
   }
   return [...out].slice(0, 12).map(([url, label]) => ({ url, label }));
 }

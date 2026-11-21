@@ -125,7 +125,7 @@ export function PlanTabs() {
         {sync === "loading" && "กำลังโหลด…"}
         {sync === "saving" && "กำลังบันทึก…"}
         {sync === "saved" && "บันทึกในบัญชีแล้ว"}
-        {sync === "error" && <span className="font-semibold text-ink">บันทึกในบัญชีไม่สำเร็จ (ยังเก็บในเบราว์เซอร์)</span>}
+        {sync === "error" && <span className="font-semibold text-ink">บันทึกในบัญชีไม่สำเร็จ ลองแก้อีกครั้งเมื่อเชื่อมต่อได้</span>}
       </span>
     </div>
   );

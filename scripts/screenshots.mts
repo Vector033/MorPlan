@@ -31,20 +31,20 @@ await page.goto(base);
 await page.evaluate(() => localStorage.clear());
 await page.reload();
 await page.getByRole("button", { name: "ลองด้วยข้อมูลตัวอย่าง" }).click();
-for (const c of ["204101", "206111", "208101", "001101", "140104"]) await want(page, c);
+for (const c of ["CS101", "MATH101", "STAT101", "ENG101", "GEN101"]) await want(page, c);
 await page.getByLabel("ค้นหาด้วยรหัสหรือชื่อวิชา", { exact: false }).fill("");
-await place(page, "204101", "ตอน 001");
-await place(page, "206111", "ตอน 002"); // same TuF 08:00 slot: one visible clash
-await place(page, "208101", "ตอน 001");
-await place(page, "001101", "ตอน 001");
+await place(page, "CS101", "ตอน 001");
+await place(page, "MATH101", "ตอน 002"); // same TuF 08:00 slot: one visible clash
+await place(page, "STAT101", "ตอน 001");
+await place(page, "ENG101", "ตอน 001");
 await page.mouse.move(0, 0);
 await page.waitForTimeout(600); // snap / shake settle
 await page.screenshot({ path: out("planner") });
 
 // Mid-drag: every section of the course appears as a slot, clashing ones in red.
-// 206111 sits high in the list, so the pointer stays clear of the edge that autoscrolls.
+// MATH101 sits high in the list, so the pointer stays clear of the edge that autoscrolls.
 await page.evaluate(() => window.scrollTo(0, 0));
-const item = trayItem(page, "206111");
+const item = trayItem(page, "MATH101");
 const box = (await item.boundingBox())!;
 await page.mouse.move(box.x + 20, box.y + box.height / 2);
 await page.mouse.down();
@@ -60,7 +60,7 @@ await page.waitForTimeout(300);
 // Plan B: copy of A without the clash, then compare.
 await page.getByRole("button", { name: "+ แผนใหม่" }).click();
 await page.getByRole("tab", { name: "แผน B", selected: true }).waitFor();
-await place(page, "206111", "ตอน 003");
+await place(page, "MATH101", "ตอน 003");
 await page.goto(`${base}/compare`);
 await page.getByRole("table").first().waitFor();
 await page.screenshot({ path: out("compare") });

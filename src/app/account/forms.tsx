@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { CheckIcon } from "@/components/icons";
 import { PasswordField } from "@/components/password-field";
+import { useWorkspace } from "@/components/planner/workspace-context";
 import { submitKeepingValues } from "@/components/submit-keeping-values";
 import { PASSWORD_MIN } from "@/lib/account";
-import { changePassword, deleteAccount, updateProfile, type FormState } from "./actions";
+import { clearAccountStorage } from "@/lib/workspace/storage";
+import { changePassword, deleteAccount, signOutEverywhere, updateProfile, type FormState } from "./actions";
 
 function Feedback({ state }: { state: FormState }) {
   if (state.error)
@@ -71,7 +73,7 @@ export function PasswordForm({ hasPassword, email }: { hasPassword: boolean; ema
       )}
       <PasswordField
         label={hasPassword ? "รหัสผ่านใหม่" : "ตั้งรหัสผ่าน"}
-        hint={`อย่างน้อย ${PASSWORD_MIN} ตัวอักษร ห้ามใช้รหัสผ่าน CMU หรือ reg`}
+        hint={`อย่างน้อย ${PASSWORD_MIN} ตัวอักษร ห้ามใช้รหัสผ่านบัญชีมหาวิทยาลัย`}
         name="next"
         required
         minLength={PASSWORD_MIN}
@@ -98,8 +100,15 @@ export function PasswordForm({ hasPassword, email }: { hasPassword: boolean; ema
 
 export function DeleteForm({ email }: { email: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(deleteAccount, {});
+  const submit = submitKeepingValues(action);
   return (
-    <form onSubmit={submitKeepingValues(action)} className="flex flex-col gap-3">
+    <form
+      onSubmit={(e) => {
+        clearAccountStorage();
+        submit(e);
+      }}
+      className="flex flex-col gap-3"
+    >
       <div>
         <label htmlFor="delete-confirm" className="label">
           พิมพ์ <span className="font-mono">{email}</span> เพื่อยืนยัน
@@ -123,5 +132,52 @@ export function DeleteForm({ email }: { email: string }) {
         <Feedback state={state} />
       </div>
     </form>
+  );
+}
+
+/** Both sign-out buttons; each clears what the browser may hold of an account before leaving. */
+export function SignOutButtons() {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <form action={signOutEverywhere} onSubmit={() => clearAccountStorage()}>
+        <button className="btn">ออกจากระบบทุกเครื่อง</button>
+      </form>
+      <form action="/auth/signout" method="post" onSubmit={() => clearAccountStorage()}>
+        <button className="btn-ghost">ออกจากระบบเครื่องนี้</button>
+      </form>
+    </div>
+  );
+}
+
+/** Deletes the plans, courses and curriculum saved in this account, after a confirm. */
+export function ResetWorkspaceButton() {
+  const { clearWorkspace } = useWorkspace();
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        className="btn"
+        disabled={state === "busy"}
+        onClick={async () => {
+          if (!window.confirm("ลบแผนตารางเรียน วิชาที่นำเข้า และหลักสูตรทั้งหมดในบัญชีนี้? กู้คืนไม่ได้")) return;
+          setState("busy");
+          setState((await clearWorkspace()) ? "done" : "error");
+        }}
+      >
+        {state === "busy" ? "กำลังล้าง…" : "ล้างข้อมูลพื้นที่ทำงาน"}
+      </button>
+      {state === "done" && (
+        <p className="inline-flex items-center gap-1.5 text-sm font-medium text-ok" role="status">
+          <CheckIcon />
+          ล้างแล้ว เริ่มใหม่จากพื้นที่ว่าง
+        </p>
+      )}
+      {state === "error" && (
+        <p className="error-note" role="alert">
+          ล้างไม่สำเร็จ ลองใหม่อีกครั้ง
+        </p>
+      )}
+    </div>
   );
 }

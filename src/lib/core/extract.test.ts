@@ -32,6 +32,25 @@ describe("checkExtraction", () => {
     expect(r.sections[0].meetings[0]).toEqual({ days: ["Mo", "We"], start: 540, end: 630, room: "IT-201" });
   });
 
+  it("keeps exam dates found in the paste and drops invented ones without dropping the section", () => {
+    const paste = `${PASTE}
+ITCS 101 Sec 1 สอบกลางภาค 12 ม.ค. 2570 09:00-12:00 สอบปลายภาค 16/03/2027 13.00-16.00`;
+    const r = checkExtraction(paste, {
+      sections: [
+        row({
+          midterm: { date: "2027-01-12", start: "09:00", end: "12:00" },
+          final: { date: "2027-03-16", start: "13:00", end: "16:00" },
+        }),
+        row({ section: "2", meetings: [{ days: ["Tu", "Th"], start: "13:00", end: "14:30" }], midterm: { date: "2027-02-20", start: "09:00", end: "12:00" }, final: null }),
+      ],
+    });
+    expect(r.sections[0].midterm).toEqual({ date: "2027-01-12", start: 540, end: 720 });
+    expect(r.sections[0].final).toEqual({ date: "2027-03-16", start: 780, end: 960 });
+    expect(r.sections[1].midterm).toBeUndefined();
+    expect(r.sections).toHaveLength(2);
+    expect(r.warnings).toEqual(["ITCS101 ตอน 2: ไม่พบวันสอบ 2027-02-20 09:00–12:00 ในข้อความที่วาง จึงไม่ใส่วันสอบนี้"]);
+  });
+
   it("drops a course the model invented", () => {
     const r = checkExtraction(PASTE, { sections: [row({ courseNo: "MATH200" })] });
     expect(r.sections).toEqual([]);

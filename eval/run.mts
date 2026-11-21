@@ -185,7 +185,7 @@ async function endToEnd(
     if (llm && LLM_DELAY_MS) await new Promise((r) => setTimeout(r, LLM_DELAY_MS));
     let a;
     try {
-      a = await withRetry(() => answerQuestion(q.question, retrieval, { strategy: best.strategy, ...cfg, llm }));
+      a = await withRetry(() => answerQuestion(q.question, retrieval, { strategy: best.strategy, ...cfg, llm, university: "มหาวิทยาลัยเชียงใหม่" }));
     } catch (e) {
       errors++;
       console.warn(`[${llm?.name}] ${q.id}: ${String(e).slice(0, 120)}`);

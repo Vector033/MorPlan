@@ -98,6 +98,14 @@ describe("checkMinors", () => {
     expect(minors[0].groups[0].courseNos).toEqual(["018131", "018132"]);
     expect(dropped).toHaveLength(1);
   });
+
+  it("takes full codes with an empty prefix, still checked against the document", () => {
+    const source = "วิชาโทวิทยาการข้อมูล เรียน CSC105 และ ITCS-101 รวม 15 หน่วยกิต";
+    const reply = { minors: [{ name: "วิทยาการข้อมูล", faculty: null, rules: "r", groups: [{ label: "บังคับ", minCredits: null, courses: [{ prefix: "", numbers: ["CSC105", "ITCS101", "ITCS999"] }, { prefix: "A", numbers: ["105"] }] }] }] };
+    const { minors, dropped } = checkMinors(source, reply);
+    expect(minors[0].groups[0].courseNos).toEqual(["CSC105", "ITCS101"]);
+    expect(dropped).toEqual(["ITCS999: ไม่พบในเอกสาร (วิทยาการข้อมูล)", "A 105: รหัสวิชาอ่านไม่ได้ (วิทยาการข้อมูล)"]);
+  });
 });
 describe("levelOf and chunking", () => {
   it("reads the level from the last three digits", () => {

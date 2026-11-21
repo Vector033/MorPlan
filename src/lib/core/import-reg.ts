@@ -27,7 +27,8 @@ export function parseRegImport(input: string): ImportResult {
   rows.forEach((cells, idx) => {
     const joined = cells.join(" ");
     if (!joined.trim()) return;
-    const course = /\b(\d{6})\b/.exec(joined);
+    // A 6-digit code anywhere, or a letters+digits code ("CS101") only at the start: rooms such as "RB5210" come later in the row.
+    const course = /\b(\d{6})\b/.exec(joined) ?? /^\s*([A-Z]{2,5}\d{3,4}[A-Z]?)\b/.exec(joined);
     if (course) {
       const title = guessTitle(cells, course[1]);
       last = { courseNo: course[1], title };
@@ -64,7 +65,7 @@ export function parseRegImport(input: string): ImportResult {
       byId.set(parsed.id, parsed);
     }
   }
-  if (records.length === 0) warnings.push("ไม่พบรหัสกระบวนวิชา 6 หลักในข้อมูลที่วาง");
+  if (records.length === 0) warnings.push("ไม่พบรหัสวิชาในข้อมูลที่วาง");
   return { sections: [...byId.values()], warnings };
 }
 
@@ -74,7 +75,7 @@ function parseRecord(
   cells: string[],
 ): Section | { error: string } | { header: true } {
   const text = cells.join("\t");
-  const afterCourse = text.slice(Math.max(0, text.indexOf(courseNo) + (text.includes(courseNo) ? 6 : 0)));
+  const afterCourse = text.slice(Math.max(0, text.indexOf(courseNo) + (text.includes(courseNo) ? courseNo.length : 0)));
   const firstMeeting = afterCourse.search(DAY_TIME);
   DAY_TIME.lastIndex = 0;
   const head = firstMeeting >= 0 ? afterCourse.slice(0, firstMeeting) : afterCourse;

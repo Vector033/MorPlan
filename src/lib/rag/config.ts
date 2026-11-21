@@ -9,3 +9,5 @@ export const RAG_RETRIEVER: Retriever = process.env.RAG_RETRIEVER === "bm25" ? "
 const lexical = RAG_RETRIEVER === "bm25";
 export const RAG_SIGNAL: Signal = lexical ? "coverage" : "combined";
 export const RAG_THRESHOLD = Number(process.env.RAG_THRESHOLD ?? (lexical ? 0.535 : 0.428));
+/** Word search over one university's added documents (scope.ts): the eval's lexical threshold. */
+export const LEXICAL_THRESHOLD = 0.535;

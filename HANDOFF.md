@@ -8,9 +8,19 @@
 - **ดีไซน์ (ชุด ai-design-skills ใน `~/.claude/skills`):** `better-interface` (รีวิวรวม), `better-ui`, `better-layout`, `better-typography`, `better-colors`, `better-writing`, `better-accessibility`, `break-ui` (ข้อมูลแย่สุด), `no-ai-design-slop` (ใช้ระหว่างทำ), `audit-ai-design-slop` (รีวิวอย่างเดียว), `animate` / `review-animations` / `improve-animations`, `form-design`, `loading-states`, `error-handling-ux`, `responsive-design`
 - **รีวิวโค้ด:** `ponytail:ponytail-review`, `ponytail:ponytail-audit`
 
+## Universal Thailand refactor (2026-11-21, ยังไม่ commit / push / deploy)
+
+ทำตาม `.claude/prompts/universal-morplan.md` ครบ 4 phase · unit 281 · e2e 36 (`--workers=1`) · lint · typecheck · build ผ่าน
+
+- **Phase 1 แยกข้อมูลตามบัญชี:** guest เก็บใน `morplan:workspace:guest:v1` (ย้าย `morplan:workspace:v1` เดิมครั้งเดียวตอนยังไม่เข้าระบบ) · เข้าระบบแล้ว DB คือที่เก็บเดียว ไม่เขียนลงเบราว์เซอร์ · `WorkspaceProvider userId` (ไม่ใช่ `signedIn`) โหลดใหม่ทุกครั้งที่ userId เปลี่ยน และ save เฉพาะเจ้าของที่โหลดมา (`owner`) · บัญชีใหม่ที่มีงาน guest ค้าง → แถบ "นำเข้าบัญชีนี้ / เริ่มใหม่" · ปุ่มออกจากระบบ/ลบบัญชีล้าง `clearAccountStorage()` · `/account?tab=data` มี "ล้างข้อมูลพื้นที่ทำงาน" (`DELETE /api/workspace`) · e2e `account.spec.ts` ใช้ล็อกอิน 4 ครั้ง ถ้ารันซ้ำใน 10 นาทีจะโดน rate limit signin (ล้าง `rate_limits` ใน DB local ก่อน)
+- **Phase 2 เอา มช./reg ออก:** ข้อความทุกหน้าเป็นกลาง · ชุดตัวอย่างใช้ `CS101 MATH101 STAT101 …` (`src/lib/demo.ts` มีวันสอบสมมติในตัว) · `/import` ใหม่: ช่องมหาวิทยาลัยช่องเดียว (chip + เปลี่ยน + ค้นหาหน้าลงทะเบียน) · เลือกตัวอ่านเอง (ตัวอ่านตารางในเครื่องถ้าอ่านได้สะอาด ไม่งั้นส่ง Gemini) · ตัวอ่านในเครื่องรับรหัสแบบ `CS101` ที่ต้นบรรทัด · แท็บ "+ เพิ่มวิชาเอง": ปุ่มวัน จ–อา, เวลาแบบ time, ได้ถึง 6 ช่วง, ใส่วันสอบเองได้
+- **Phase 3 ทุกมหาวิทยาลัยไทย:** `isCmu("")` = false · action `setUniversity` / `setTerm` · `setCurriculum` ตั้งมหาวิทยาลัยให้ · `academicUrl` รับ `.ac.th` และ `.edu` · เลือกภาค 1/2/3 + ปีที่หัวตาราง · `.ics` มี dialog ให้ตั้งวันแรก/วันสุดท้าย (`termDefaults` ใน `src/lib/terms.ts`) · prompt หลักสูตรไม่ล็อก 6 หลัก, วิชาโทรับรหัสเต็ม (prefix "") · AI อ่านวันสอบจากหน้าที่วาง แล้วเช็กกับข้อความ (ทิ้งเฉพาะวันสอบที่ไม่เจอ) · `parseDays` อ่านชื่อวันไทย · ค้นวิชาแบบ substring + ปุ่มลบรายวิชา/ล้างทั้งหมด · แท็บวันบนมือถือเป็น flex
+- **Phase 4 ถามระเบียบรายมหาวิทยาลัย:** ตาราง `regulations` (**migration `drizzle/0004_regulations.sql` ต้องรันบน prod ก่อน deploy**: `DATABASE_URL=$MIGRATE_DATABASE_URL npx drizzle-kit migrate`) · `retrievalFor()` ใน `src/lib/rag/server.ts`: มช. ที่ไม่มีเอกสารเพิ่มใช้ corpus เดิม (eval เดิมไม่เปลี่ยน) ส่วนอื่นเป็น BM25 เฉพาะเอกสารของมหาวิทยาลัยนั้น + เอกสารส่วนตัว · `/api/ask` ต้องมี `university` และรับ `privateDocs` (ไม่เกิน 3 ฉบับ / 600k ตัวอักษร) · ไม่มีเอกสาร → `{ status: "no_docs" }` · API `/api/regulations` (list), `/find`, `/read` (ลิงก์ → pending, ไฟล์/ข้อความ → ส่งกลับให้ผู้ใช้เท่านั้น), `/confirm` · หน้า `/ask` และลิ้นชักบนตาราง (แสดงทุกมหาวิทยาลัยแล้ว) มีตัวเลือกมหาวิทยาลัย รายการเอกสาร และ "+ เพิ่มเอกสารระเบียบ"
+- ยังไม่ได้ทำ/เช็ก: ยังไม่ได้ลองหา/อ่านลิงก์ระเบียบจริงด้วย Gemini (e2e mock ไว้), README/About ยังไม่อัปเดตรูปและข้อความใหม่ทั้งหมด, ผู้ใช้เดิมที่บัญชีโดนข้อมูลคนอื่นปนให้กด "ล้างข้อมูลพื้นที่ทำงาน" เอง
+
 ## กติกาจากผู้ใช้ (ยังใช้อยู่)
 
-- ห้ามขอหรือรับรหัสผ่าน reg / CMU เด็ดขาด
+- ห้ามขอหรือรับรหัสผ่านระบบลงทะเบียน / บัญชีมหาวิทยาลัยเด็ดขาด
 - **ถามก่อน deploy ทุกครั้ง** · push ขึ้น `main` ได้เลย
 - ก่อน commit ต้องผ่าน: `npm test`, `npm run test:e2e`, `npm run lint`, `npm run typecheck`
 - e2e ต้องมี Supabase local: เปิด Docker Desktop → `npx supabase start -x studio,storage-api,imgproxy,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta` → เสร็จแล้ว `npx supabase stop`

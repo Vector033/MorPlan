@@ -94,6 +94,13 @@ describe("parseRegImport", () => {
   });
 
   it("explains when nothing looks like a course list", () => {
-    expect(parseRegImport("hello world").warnings).toEqual(["ไม่พบรหัสกระบวนวิชา 6 หลักในข้อมูลที่วาง"]);
+    expect(parseRegImport("hello world").warnings).toEqual(["ไม่พบรหัสวิชาในข้อมูลที่วาง"]);
+  });
+
+  it("reads letters-and-digits codes at the start of a row, never a room later in it", () => {
+    const r = parseRegImport(["CS101  INTRO COMP PROG  001  000  3  TuF  0800-0930  A101", "002  000  3  MTh  0930-1100  RB5205"].join("\n"));
+    expect(r.warnings).toEqual([]);
+    expect(r.sections.map((s) => s.id)).toEqual(["CS101-001-000", "CS101-002-000"]);
+    expect(r.sections[1].meetings[0].room).toBe("RB5205");
   });
 });
