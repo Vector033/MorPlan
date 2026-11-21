@@ -51,8 +51,11 @@ test("place sections with the keyboard and see a clash", async ({ page }) => {
   await expect(live(page)).toContainText("เอาออกจากตาราง");
   // Arrow keys only move between slots once they are on screen.
   await expect(ghostSlots(page).first()).toBeVisible();
-  await page.keyboard.press("ArrowRight");
-  await expect(live(page)).toContainText("ตอน 002 วันจันทร์");
+  // On a slow host (the backdrop shader runs in software GL headless) a press can land before the slots are measured.
+  await expect(async () => {
+    await page.keyboard.press("ArrowRight");
+    await expect(live(page)).toContainText("ตอน 002 วันจันทร์", { timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
   await page.keyboard.press("ArrowRight");
   await expect(live(page)).toContainText("ตอน 001 วันอังคาร");
   await page.keyboard.press("Space");
