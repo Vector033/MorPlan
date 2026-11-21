@@ -32,15 +32,14 @@ const LEFT_MARGIN_CONTOURS = [0, 20, 40].map((off) => {
 });
 
 /**
- * Landing-Hero / Empty-State GPU Shader + #13 Vignelli transit curves.
- * Strictly active ONLY on `/` before courses are imported (`ws.pool.length === 0`),
- * keeping `/compare` and active timetable workspaces calm on `--color-canvas` + `--paper-grain`.
+ * Planner GPU shader + #13 Vignelli transit curves behind `/`, with or without courses (the timetable sits on
+ * opaque cards). Other pages, such as `/compare`, stay calm on `--color-canvas` + `--paper-grain`.
  */
 export function SiteBackdrop() {
   const pathname = usePathname();
-  const { ws, ready } = useWorkspace();
+  const { ready } = useWorkspace();
 
-  if (pathname !== "/" || !ready || ws.pool.length > 0) return null;
+  if (pathname !== "/" || !ready) return null;
 
   return (
     <div
