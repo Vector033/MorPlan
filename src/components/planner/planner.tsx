@@ -25,7 +25,7 @@ import { DAY_TH_SHORT } from "@/lib/core/time";
 import { DAYS, type Day, type Section } from "@/lib/core/types";
 import { demoSections } from "@/lib/demo";
 import { playClashSound, playSnapSound, useMicroSound } from "@/lib/sound";
-import { colorFor, conflictText } from "@/lib/ui";
+import { colorFor, conflictText, sectionLabel } from "@/lib/ui";
 import { sectionsOfCourse } from "@/lib/workspace/reducer";
 import { AskDrawer } from "./ask-drawer";
 import { Calendar, type Ghost } from "./calendar";
@@ -40,9 +40,11 @@ import { TermPicker } from "./term-picker";
 import { SectionPicker } from "./section-picker";
 import { useWorkspace } from "./workspace-context";
 
+type DragActive = { courseNo: string; sectionId?: string; from: string };
+
 export function Planner() {
   const { ws, dispatch, plan, placed, conflicts, ready } = useWorkspace();
-  const [dragCourse, setDragCourse] = useState<string | null>(null);
+  const [drag, setDrag] = useState<DragActive | null>(null);
   const [picking, setPicking] = useState<string | null>(null);
   const [mobileDay, setMobileDay] = useState<Day>(todayDay());
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -61,16 +63,18 @@ export function Planner() {
     return named.find((i) => i.courseNo === courseNo)?.title ?? "";
   };
   const titleOf = (courseNo: string) => ws.pool.find((s) => s.courseNo === courseNo)?.title ?? curTitle(courseNo);
-  const courseFromId = (id: string | number) => String(id).replace(/^(course|block):/, "").split(/[-:]/)[0];
+  const courseFromId = (id: string | number) => String(id).replace(/^(course|block|search-course|search-section):/, "").split(/[-:]/)[0];
 
   const ghosts: Ghost[] = useMemo(() => {
-    if (!dragCourse) return [];
-    return sectionsOfCourse(ws, dragCourse).map((section) => ({
+    if (!drag) return [];
+    const sections = sectionsOfCourse(ws, drag.courseNo);
+    const candidates = drag.from === "search-section" && drag.sectionId ? sections.filter((s) => s.id === drag.sectionId) : sections;
+    return candidates.map((section) => ({
       section,
-      current: placedByCourse.get(dragCourse)?.id === section.id,
+      current: placedByCourse.get(drag.courseNo)?.id === section.id,
       clash: wouldClash(placed, section),
     }));
-  }, [dragCourse, ws, placed, placedByCourse]);
+  }, [drag, ws, placed, placedByCourse]);
 
   const motion = usePlacementMotion(plan.id, placed, conflicts);
   const [soundOn, toggleSound] = useMicroSound();
@@ -86,14 +90,15 @@ export function Planner() {
 
   function onDragStart(e: DragStartEvent) {
     resetKeyboardTarget();
-    setDragCourse((e.active.data.current as { courseNo: string }).courseNo);
+    const data = e.active.data.current as { courseNo: string; sectionId?: string; from: string };
+    setDrag({ courseNo: data.courseNo, sectionId: data.sectionId, from: data.from });
   }
   function onDragEnd(e: DragEndEvent) {
-    const data = e.active.data.current as { courseNo: string; from: string };
+    const data = e.active.data.current as { courseNo: string; sectionId?: string; from: string };
     const overId = e.over ? String(e.over.id) : null;
     if (overId?.startsWith("slot:")) dispatch({ type: "place", sectionId: (e.over!.data.current as { sectionId: string }).sectionId });
     else if (overId === "tray" && data.from === "calendar") dispatch({ type: "unplace", courseNo: data.courseNo });
-    setDragCourse(null);
+    setDrag(null);
   }
 
   if (!ready) return <PlannerSkeleton />;
@@ -111,10 +116,10 @@ export function Planner() {
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onDragCancel={() => setDragCourse(null)}
+      onDragCancel={() => setDrag(null)}
       accessibility={{ screenReaderInstructions, announcements: announcements((id) => courseFromId(id)) }}
     >
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 pt-6 pb-8 sm:pt-7 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
         {hero && (
           <header className="pt-2 pb-2 sm:pt-6 lg:col-span-2">
             <TermPicker />
@@ -126,8 +131,10 @@ export function Planner() {
             </p>
           </header>
         )}
-        {/* On phones the timetable leads once it has something on it; search and tray follow. */}
-        <aside className={`flex flex-col gap-4 ${placed.length ? "order-last lg:order-none" : ""} lg:sticky lg:top-18 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1`}>
+        {/* On phones the timetable leads once it has something on it; on desktop (lg+) the sidebar stays pinned left. */}
+        <aside
+          className={`flex min-w-0 flex-col gap-4 ${placed.length ? "max-lg:order-last" : ""} lg:col-start-1 lg:self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1`}
+        >
           {ws.pool.length === 0 ? (
             <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections() })} />
           ) : (
@@ -142,13 +149,13 @@ export function Planner() {
             hasSections={(c) => sectionsOfCourse(ws, c).length > 0}
             onPick={setPicking}
             onRemove={(c) => dispatch({ type: "unwantCourse", courseNo: c })}
-            dragging={!!dragCourse && dragFromCalendar(dragCourse, placedByCourse)}
+            dragging={drag?.from === "calendar"}
           />
         </aside>
 
-        <main className="flex min-w-0 flex-col gap-4">
+        <main className="flex min-w-0 flex-col gap-4 lg:col-start-2">
           {!hero && (
-            <header className="order-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-2 md:order-none">
+            <header className="order-1 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-8 gap-y-4 pt-1 pb-2 md:order-none">
               <div>
                 <TermPicker />
                 <h1 className="mt-1 text-title font-bold sm:text-display">ตารางเรียน</h1>
@@ -257,12 +264,12 @@ export function Planner() {
       </div>
 
       <DragOverlay dropAnimation={null}>
-        {dragCourse ? (
+        {drag ? (
           <CourseDragOverlayCard
-            courseNo={dragCourse}
-            title={titleOf(dragCourse)}
-            palette={colorFor(dragCourse, plan.courseNos)}
-            placedSection={placedByCourse.get(dragCourse)}
+            courseNo={drag.courseNo}
+            title={titleOf(drag.courseNo)}
+            palette={colorFor(drag.courseNo, plan.courseNos)}
+            placedSection={(drag.sectionId ? byId.get(drag.sectionId) : undefined) ?? placedByCourse.get(drag.courseNo)}
           />
         ) : null}
       </DragOverlay>
@@ -284,10 +291,6 @@ function Stat({ value, label, alert = false }: { value: number; label: string; a
 function wouldClash(placed: Section[], candidate: Section): boolean {
   const others = placed.filter((s) => s.courseNo !== candidate.courseNo);
   return findConflicts([...others, candidate]).some((c) => c.a === candidate.id || c.b === candidate.id);
-}
-
-function dragFromCalendar(courseNo: string, placed: Map<string, Section>) {
-  return placed.has(courseNo);
 }
 
 function Tray({
@@ -421,7 +424,7 @@ function TrayDraggable({
         ref={setNodeRef}
         type="button"
         className="flex min-w-0 flex-1 cursor-grab touch-none items-center gap-3 py-0.5 text-left active:cursor-grabbing"
-        aria-label={`${courseNo} ${title} ${placed ? `วางแล้ว ตอน ${placed.lec}` : "ยังไม่ได้วาง"}`}
+        aria-label={`${courseNo} ${title} ${placed ? `วางแล้ว ${sectionLabel(placed)}` : "ยังไม่ได้วาง"}`}
         {...listeners}
         {...attributes}
       >
@@ -446,7 +449,7 @@ function TrayDraggable({
         }
       >
         {clashed && placed && <WarningIcon className="size-3 shrink-0" />}
-        {placed ? `ตอน ${placed.lec === "000" ? placed.lab : placed.lec}` : "เลือกตอน"}
+        {placed ? sectionLabel(placed) : "เลือกตอน"}
       </button>
       <button type="button" onClick={onRemove} className="btn-ghost size-8 p-0" aria-label={`เอา ${courseNo} ออก`}>
         <XIcon className="size-3.5" />

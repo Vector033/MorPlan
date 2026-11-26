@@ -83,3 +83,17 @@ export function ArrowRightIcon({ className = "size-4 shrink-0", ...props }: Icon
     </svg>
   );
 }
+
+/** Six-dot drag affordance for directly draggable search courses and sections. */
+export function GripIcon({ className = "size-3.5 shrink-0", ...props }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" className={className} {...props}>
+      <circle cx="9" cy="6" r="1.5" />
+      <circle cx="15" cy="6" r="1.5" />
+      <circle cx="9" cy="12" r="1.5" />
+      <circle cx="15" cy="12" r="1.5" />
+      <circle cx="9" cy="18" r="1.5" />
+      <circle cx="15" cy="18" r="1.5" />
+    </svg>
+  );
+}
