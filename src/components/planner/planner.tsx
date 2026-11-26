@@ -133,7 +133,7 @@ export function Planner() {
         )}
         {/* On phones the timetable leads once it has something on it; on desktop (lg+) the sidebar stays pinned left. */}
         <aside
-          className={`flex min-w-0 flex-col gap-4 ${placed.length ? "max-lg:order-last" : ""} lg:col-start-1 lg:self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1`}
+          className={`flex min-w-0 flex-col gap-4 [&>*]:shrink-0 ${placed.length ? "max-lg:order-last" : ""} lg:col-start-1 lg:self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:pb-3`}
         >
           {ws.pool.length === 0 ? (
             <EmptyPool onDemo={() => dispatch({ type: "import", sections: demoSections() })} />
@@ -317,7 +317,7 @@ function Tray({
     <section
       ref={setNodeRef}
       aria-label="วิชาที่จะลง"
-      className={`card overflow-hidden ${dragging ? "outline-2 outline-offset-2 outline-accent outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
+      className={`card shrink-0 overflow-hidden ${dragging ? "outline-2 outline-offset-2 outline-accent outline-dashed" : ""} ${isOver ? "bg-accent-soft" : ""}`}
     >
       <h2 className="bar">
         วิชาที่จะลง
