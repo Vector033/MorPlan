@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AskForm } from "@/app/ask/ask-form";
 import { XIcon } from "@/components/icons";
 
@@ -24,10 +24,12 @@ export function AskDrawer() {
 /** Regulations assistant slide-over mounted once in layout so top-nav and toolbar triggers share state. */
 export function GlobalAskDrawer() {
   const ref = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     const onOpen = () => {
+      setOpen(true);
       if (ref.current && !ref.current.open) ref.current.showModal();
     };
     window.addEventListener(OPEN_ASK_EVENT, onOpen);
@@ -43,6 +45,7 @@ export function GlobalAskDrawer() {
       ref={ref}
       className="drawer rounded-l-md border-l border-line bg-white p-0 text-ink shadow-lg"
       aria-labelledby="ask-drawer-h"
+      onClose={() => setOpen(false)}
       // Click on the backdrop (the dialog box itself, outside the panel) closes it.
       onClick={(e) => e.target === e.currentTarget && ref.current?.close()}
     >
@@ -70,7 +73,7 @@ export function GlobalAskDrawer() {
               เปิดเต็มหน้า
             </Link>
           </p>
-          <AskForm compact />
+          {open && <AskForm compact />}
         </div>
       </div>
     </dialog>
