@@ -2,7 +2,7 @@
 
 **Plan a timetable at any Thai university by drag and drop, see class and exam clashes instantly, ask your university's rules in Thai with page citations, and follow your curriculum term by term.**
 
-**Live:** https://morplan.vercel.app
+**Live:** https://morplan.vercel.app · **[▶ Watch 16s Feature Showcase (1920×1080)](docs/demo/morplan-showcase.mp4)**
 
 > ไม่ใช่ระบบทางการของมหาวิทยาลัยใดๆ — a student project, not affiliated with any university or registration office.
 
