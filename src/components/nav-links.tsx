@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
+import { openAskDrawer } from "./planner/ask-drawer";
 
 // 20px line icons, drawn on the same 24 grid so they share stroke weight.
 const ICONS: Record<string, React.ReactNode> = {
@@ -39,6 +41,12 @@ const LINKS = [
 export function NavLinks({ variant }: { variant: "top" | "bottom" }) {
   const path = usePathname();
   const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const onNavClick = (href: string, e: MouseEvent<HTMLAnchorElement>) => {
+    if (href === "/ask" && path !== "/ask" && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      openAskDrawer();
+    }
+  };
 
   if (variant === "bottom") {
     return (
@@ -53,6 +61,7 @@ export function NavLinks({ variant }: { variant: "top" | "bottom" }) {
             <Link
               key={l.href}
               href={l.href}
+              onClick={(e) => onNavClick(l.href, e)}
               aria-current={active ? "page" : undefined}
               className={`flex min-h-11 items-center justify-center gap-1.5 rounded-full text-sm font-semibold ${
                 active ? "flex-[1.6] bg-accent px-3 text-white" : "flex-1 text-muted hover:text-ink"
@@ -77,6 +86,7 @@ export function NavLinks({ variant }: { variant: "top" | "bottom" }) {
           <Link
             key={l.href}
             href={l.href}
+            onClick={(e) => onNavClick(l.href, e)}
             aria-current={active ? "page" : undefined}
             className={`whitespace-nowrap rounded-full px-3.5 py-1.5 ${
               active ? "bg-ink font-semibold text-white" : "text-muted hover:bg-white hover:text-ink"

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Anuphan } from "next/font/google";
+import { GlobalAskDrawer } from "@/components/planner/ask-drawer";
 import { WorkspaceProvider } from "@/components/planner/workspace-context";
 import { SiteBackdrop } from "@/components/site-backdrop";
 import { SiteHeader } from "@/components/site-header";
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <WorkspaceProvider userId={user?.id ?? null}>
           <SiteBackdrop />
           <div className="relative z-10 flex flex-1 flex-col">{children}</div>
+          <GlobalAskDrawer />
         </WorkspaceProvider>
         <footer className="relative z-10 mt-10 border-t border-line bg-white px-4 py-6 text-xs text-muted">
           <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-baseline sm:gap-8">
